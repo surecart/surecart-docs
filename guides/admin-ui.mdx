@@ -1,0 +1,222 @@
+---
+title: "Admin UI"
+icon: "list"
+---
+
+If you want to add custom UI elements to admin pages of SureCart like Order, Product, Customer, Affiliate pages etc. you can use this API to add either in the Main or the Sidebar area.
+
+## Page Metaboxes
+
+To add metaboxes to individual pages, you will need to register an addon, client-side using react. This lets you render whatever you want in the metabox, hook into page content, or display whatever you want in the sidebar.
+
+### Registering an Addon
+
+To add a custom addon, you need to call the `registerAddon` function. This function can be accessed from the `window.surecart` object. It accepts 2 parameters, `name` & `settings`.
+
+```javascript
+import SidebarComponent from "./SidebarComponent";
+
+window.surecart.registerAddon("custom-sidebar", {
+  render: () => <SidebarComponent />,
+  scope: "sidebar",
+  title: "Custom Sidebar Box",
+});
+```
+
+#### registerAddon(name, settings)
+
+<ParamField path="name" type="string" required>
+  The name of the addon.
+</ParamField>
+
+<ResponseField name="settings" type="object" required>
+  <Expandable title="properties" expanded defaultOpen>
+    <ParamField path="render" type="HTML" required>
+        Pass what needs to be rendered. It can be HTML or a React component.
+    </ParamField>
+
+    <ParamField path="scope" type="string" required>
+        Context where you want to render the addon. It can be `main` or `sidebar`.
+    </ParamField>
+
+    <ParamField path="title" type="string" required>
+        Title for your addon Box, if not passed this defaults to the name of your
+        addon
+    </ParamField>
+
+  </Expandable>
+</ResponseField>
+
+### Getting Page Data
+
+SureCart uses [WordPress Core Data](https://developer.wordpress.org/block-editor/reference-guides/data/data-core/) (WordPress' flavor of Redux) to store data.
+This means you can use familiar WordPress redux functions to get SureCart data.
+
+#### Get The Current Page ID
+
+In order to query page data, you need to get the current page id. This function is available in the global `window.surecart` object.
+
+```javascript
+const id = window.surecart.getCurrentPageId();
+```
+
+#### Query Page Data
+
+You can use the `useSelect` function to query page data. If we are on the order page, we can get the order data from the id.
+
+#### Querying an Order
+
+```javascript
+import { useSelect } from "@wordpress/data";
+import { store } from "@wordpress/core-data";
+
+// fetch or get the order data from redux.
+const order = useSelect(
+  (select) =>
+    select(store).getEntityRecord("surecart", "order", id, {
+      // expand any nested resources you need.
+      expand: ["checkout"],
+    }),
+  // the id from the previous function
+  [id]
+);
+```
+
+#### Querying A Product
+
+```javascript
+import { useSelect } from "@wordpress/data";
+import { store } from "@wordpress/core-data";
+
+// fetch or get the order data from redux.
+const product = useSelect(
+  (select) =>
+    select(store).getEntityRecord("surecart", "product", id, {
+      // expand any nested resources you need.
+      expand: ["prices", "variants"],
+    }),
+  // the id from the previous function
+  [id]
+);
+
+// get nested prices.
+const prices = product?.prices;
+```
+
+### Order Page Example
+
+In this example we are adding a custom order display. We are using some WordPress redux functions to query orders and display them in a custom way.
+
+```javascript expandable
+import { useSelect } from "@wordpress/data";
+import { store as coreStore } from "@wordpress/core-data";
+
+export default () => {
+  const getCurrentPage = window.surecart.getCurrentPage;
+  const getCurrentPageId = window.surecart.getCurrentPageId;
+  const id = getCurrentPageId();
+  const page = getCurrentPage();
+
+  if (page !== "sc-orders") {
+    return null;
+  }
+
+  const { order, hasLoadedOrder, orderError } = useSelect(
+    (select) => {
+      const queryArgs = [
+        "surecart",
+        "order",
+        id,
+        {
+          expand: [
+            "checkout",
+            "checkout.charge",
+            "checkout.customer",
+            "checkout.tax_identifier",
+            "checkout.payment_failures",
+            "checkout.shipping_address",
+            "checkout.billing_address",
+            "checkout.discount",
+            "checkout.line_items",
+            "checkout.selected_shipping_choice",
+            "checkout.invoice",
+            "shipping_choice.shipping_method",
+            "discount.promotion",
+            "line_item.price",
+            "line_item.fees",
+            "line_item.variant",
+            "customer.balances",
+            "price.product",
+            "product.featured_product_media",
+            "product.product_medias",
+            "product_media.media",
+            "variant.image",
+          ],
+        },
+      ];
+      return {
+        order: select(coreStore)?.getEntityRecord?.(...queryArgs),
+        hasLoadedOrder: select(coreStore)?.hasFinishedResolution?.(
+          "getEntityRecord",
+          [...queryArgs]
+        ),
+        orderError: select(coreStore)?.getResolutionError?.(
+          "getEntityRecord",
+          ...queryArgs
+        ),
+      };
+    },
+    [id]
+  );
+
+  return (
+    <div>
+      <h1>Orders - Stats</h1>
+      {/* Use the order to display stats. */}
+    </div>
+  );
+};
+```
+
+# Admin List Tables
+
+SureCart provides the ability to customize the list table views in its admin pages—like Orders, Products, Invoices, and more—by adding custom columns. This can help you display additional information relevant to your store’s workflow, at-a-glance, without needing to open individual records.
+
+### Adding Custom Columns
+
+Since we are using WordPress tables, you can use the `manage_{$post_type}_posts_columns` functions [WordPress provides](https://developer.wordpress.org/reference/hooks/manage_post_type_posts_columns/) to add custom columns. The `page` is the page query parameter found in the url.
+
+<Steps>
+  <Step title="Add the column">
+First we need to add our column to the list of columns. 
+```php
+// sc-orders, sc-products, etc. which are found in the url.
+add_action( 'admin_sc-products_columns', 'my_custom_column' );
+
+// Add a new column labeled "Metabox."
+function my_custom_column( $columns ) {
+    $columns['metabox'] = 'Metabox';
+    return $columns;
+}
+```
+
+  </Step>
+  <Step title="Add the column content">
+  Next we need to add the content for our column.
+```php
+// sc-orders, sc-products, etc. which are found in the url.
+add_action( 'manage_sc-products_custom_column', 'my_custom_column_content', 10, 2 );
+
+function my_custom_column_content( $column_name, $data ) {
+   // $data is the model object for the current row in the table.
+    if ( 'metabox' === $column_name ) {
+        // Replace this with whatever you want to display from $data.
+        echo esc_html( $data->id );
+    }
+}
+````
+
+  </Step>
+</Steps>
+
+This lets you add any custom content to the admin list tables, while still providing access to the underlying data.
