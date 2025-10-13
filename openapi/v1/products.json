@@ -833,7 +833,7 @@
               "line_item",
               "shipping"
             ],
-            "description": "The entity to which this auto fee applies."
+            "description": "The entity to which this auto fee applies. (This can only be set when the auto fee is created.)"
           },
           "metadata": {
             "type": "object",
@@ -5913,6 +5913,55 @@
           }
         ]
       },
+      "rule_schema_attribute": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The attribute key that can be used in rule conditions (e.g., `subtotal_amount`, `customer.created_at`)."
+          },
+          "metadata": {
+            "type": "boolean",
+            "description": "Whether this attribute represents a metadata field."
+          },
+          "supported_values": {
+            "type": "array",
+            "description": "A list of allowed values that can be used for comparison. Empty array if no specific values are enforced.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "type": {
+            "type": "string",
+            "description": "The data type of the attribute. One of `numeric`, `string`, or `date`."
+          },
+          "operators": {
+            "type": "array",
+            "description": "The list of comparison operators available for this attribute (e.g., `is`, `is_not`, `is_more_than`).",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "rule_schema_response": {
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": "A string describing the object type returned."
+          },
+          "schema_id": {
+            "type": "string",
+            "description": "The unique identifier for this rule schema (e.g., `auto_fee__checkout`, `auto_fee__line_item`)."
+          },
+          "attributes": {
+            "type": "array",
+            "description": "The list of attributes available for building rule conditions.",
+            "items": {
+              "$ref": "#/components/schemas/rule_schema_attribute"
+            }
+          }
+        }
+      },
       "list_response": {
         "type": "object",
         "properties": {
@@ -8039,7 +8088,7 @@
                   },
                   "data": [
                     {
-                      "id": "c6afd703-6ef3-44ab-ad15-829db107f9ed",
+                      "id": "df37a5bc-346d-4601-bd08-f68ca32e3bbc",
                       "object": "auto_fee",
                       "enabled": true,
                       "amount_adjustment": null,
@@ -8053,9 +8102,9 @@
                       "ongoing": true,
                       "percent_adjustment": 5.0,
                       "rules": null,
-                      "start_at": 1758903949,
-                      "created_at": 1758903949,
-                      "updated_at": 1758903949
+                      "start_at": 1760366833,
+                      "created_at": 1760366833,
+                      "updated_at": 1760366833
                     }
                   ]
                 },
@@ -8081,7 +8130,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "dff8a71e-303f-47c3-81e1-ab99b09fa0ad",
+                  "id": "7993ed67-eb27-4f6b-b5e9-24ac476fda42",
                   "object": "auto_fee",
                   "enabled": true,
                   "amount_adjustment": 1000,
@@ -8106,9 +8155,9 @@
                       }
                     ]
                   },
-                  "start_at": 1758903949,
-                  "created_at": 1758903949,
-                  "updated_at": 1758903949
+                  "start_at": 1760366833,
+                  "created_at": 1760366833,
+                  "updated_at": 1760366833
                 },
                 "schema": {
                   "$ref": "#/components/schemas/auto_fee_response"
@@ -8134,10 +8183,10 @@
                 "example": {
                   "auto_fee": {
                     "name": "Handling Fee",
-                    "active": true,
+                    "enabled": true,
                     "amount_adjustment": 1000,
                     "fee_target": "line_item",
-                    "start_at": 1758903949,
+                    "start_at": 1760366833,
                     "rules": {
                       "type": "group",
                       "combinator": "or",
@@ -8182,7 +8231,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "29073007-2f83-4929-8ca7-8a08afac35a7",
+                  "id": "2709606c-b4e6-411e-ac61-46b2100d6916",
                   "object": "auto_fee",
                   "enabled": true,
                   "amount_adjustment": null,
@@ -8196,9 +8245,9 @@
                   "ongoing": true,
                   "percent_adjustment": 5.0,
                   "rules": null,
-                  "start_at": 1758903949,
-                  "created_at": 1758903949,
-                  "updated_at": 1758903949
+                  "start_at": 1760366833,
+                  "created_at": 1760366833,
+                  "updated_at": 1760366833
                 },
                 "schema": {
                   "$ref": "#/components/schemas/auto_fee_response"
@@ -8222,7 +8271,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f74495eb-f50f-4a2a-90b3-e7d7b7f45939",
+                  "id": "9293f881-590a-4f2a-a01c-14aa9b359a23",
                   "object": "auto_fee",
                   "enabled": true,
                   "amount_adjustment": null,
@@ -8235,10 +8284,21 @@
                   "name": "Updated Auto Fee",
                   "ongoing": true,
                   "percent_adjustment": 10.0,
-                  "rules": null,
-                  "start_at": 1758903949,
-                  "created_at": 1758903949,
-                  "updated_at": 1758903949
+                  "rules": {
+                    "type": "group",
+                    "combinator": "or",
+                    "conditions": [
+                      {
+                        "type": "condition",
+                        "attribute_name": "subtotal_amount",
+                        "operator_label": "is_less_than",
+                        "comparison_value": "100"
+                      }
+                    ]
+                  },
+                  "start_at": 1760366834,
+                  "created_at": 1760366834,
+                  "updated_at": 1760366834
                 },
                 "schema": {
                   "$ref": "#/components/schemas/auto_fee_response"
@@ -8297,12 +8357,375 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7dd7a30f-f5ec-410c-9c0f-abc88abaee28",
+                  "id": "1cfb7ec2-b68d-4f5f-8a6e-1bd5003dc24d",
                   "object": "auto_fee",
                   "deleted": true
                 },
                 "schema": {
                   "$ref": "#/components/schemas/model_destroy_response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auto_fees/rule_schema/{fee_target}": {
+      "parameters": [
+        {
+          "name": "fee_target",
+          "in": "path",
+          "schema": {
+            "type": "string"
+          },
+          "description": "The fee target type (checkout, line_item, or shipping)",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Rule Schema",
+        "tags": [
+          "Auto Fees"
+        ],
+        "operationId": "rule_schema_auto_fee",
+        "description": "Retrieves the rule schema for a specific fee target.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "rule_schema",
+                  "schema_id": "auto_fee__line_item",
+                  "attributes": [
+                    {
+                      "key": "quantity",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "numeric",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_more_than",
+                        "is_less_than",
+                        "is_at_least",
+                        "is_at_most"
+                      ]
+                    },
+                    {
+                      "key": "subtotal_amount",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "numeric",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_more_than",
+                        "is_less_than",
+                        "is_at_least",
+                        "is_at_most"
+                      ]
+                    },
+                    {
+                      "key": "note",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "checkout.metadata",
+                      "metadata": true,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "checkout.subtotal_amount",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "numeric",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_more_than",
+                        "is_less_than",
+                        "is_at_least",
+                        "is_at_most"
+                      ]
+                    },
+                    {
+                      "key": "checkout.email",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "checkout.email_domain",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "checkout.first_name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "checkout.last_name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "checkout.order.order_type",
+                      "metadata": false,
+                      "supported_values": [
+                        "checkout",
+                        "subscription"
+                      ],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "customer.created_at",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "date",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_after",
+                        "is_before",
+                        "is_on_or_after",
+                        "is_on_or_before"
+                      ]
+                    },
+                    {
+                      "key": "customer.order_count",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "numeric",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_more_than",
+                        "is_less_than",
+                        "is_at_least",
+                        "is_at_most"
+                      ]
+                    },
+                    {
+                      "key": "price.created_at",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "date",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_after",
+                        "is_before",
+                        "is_on_or_after",
+                        "is_on_or_before"
+                      ]
+                    },
+                    {
+                      "key": "price.metadata",
+                      "metadata": true,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "price.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "price.recurring_period_count",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "numeric",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_more_than",
+                        "is_less_than",
+                        "is_at_least",
+                        "is_at_most"
+                      ]
+                    },
+                    {
+                      "key": "price.recurring_interval",
+                      "metadata": false,
+                      "supported_values": [
+                        "day",
+                        "week",
+                        "month",
+                        "year"
+                      ],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "price.price_type",
+                      "metadata": false,
+                      "supported_values": [
+                        "one_time",
+                        "finite_recurring",
+                        "infinite_recurring"
+                      ],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.created_at",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "date",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_after",
+                        "is_before",
+                        "is_on_or_after",
+                        "is_on_or_before"
+                      ]
+                    },
+                    {
+                      "key": "product.metadata",
+                      "metadata": true,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.sku",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.slug",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.product_collections.metadata",
+                      "metadata": true,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.product_collections.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.product_collections.slug",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.product_group.metadata",
+                      "metadata": true,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.product_group.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/rule_schema_response"
                 }
               }
             }
@@ -8386,7 +8809,7 @@
                   },
                   "data": [
                     {
-                      "id": "97bca10a-201d-48fb-8846-3196ba99c389",
+                      "id": "df5977f9-bac9-434f-bf89-dd61096f9ef7",
                       "object": "bump",
                       "amount_off": null,
                       "archived": false,
@@ -8399,10 +8822,10 @@
                       "name": "Bundle Discount",
                       "percent_off": null,
                       "priority": 5,
-                      "price": "58b5d492-b9c7-4d18-9609-9fbe895e73d8",
+                      "price": "21197955-1bf1-42c7-913a-38251b26cc65",
                       "discarded_at": null,
-                      "created_at": 1758903950,
-                      "updated_at": 1758903950
+                      "created_at": 1760366835,
+                      "updated_at": 1760366835
                     }
                   ]
                 },
@@ -8428,7 +8851,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fca4d295-02d3-405a-b373-969f3194ee7f",
+                  "id": "907e8bda-eeb4-4602-9a80-e931ed380fee",
                   "object": "bump",
                   "amount_off": null,
                   "archived": false,
@@ -8441,10 +8864,10 @@
                   "name": "Bundle Discount",
                   "percent_off": null,
                   "priority": 5,
-                  "price": "51410f35-5ae8-472e-9861-1a18904fecf9",
+                  "price": "751f5e56-7981-459e-873f-933f8c21bfe9",
                   "discarded_at": null,
-                  "created_at": 1758903950,
-                  "updated_at": 1758903950
+                  "created_at": 1760366835,
+                  "updated_at": 1760366835
                 },
                 "schema": {
                   "$ref": "#/components/schemas/bump_response"
@@ -8470,7 +8893,7 @@
                 "example": {
                   "bump": {
                     "name": "Bundle Discount",
-                    "price": "51410f35-5ae8-472e-9861-1a18904fecf9"
+                    "price": "751f5e56-7981-459e-873f-933f8c21bfe9"
                   }
                 }
               }
@@ -8503,7 +8926,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2d27e1d5-f86f-4cde-a4c9-4090b6234129",
+                  "id": "b63d5a44-a652-4fbc-ba3e-5e10d3396c06",
                   "object": "bump",
                   "amount_off": null,
                   "archived": false,
@@ -8516,10 +8939,10 @@
                   "name": "Bundle Discount",
                   "percent_off": null,
                   "priority": 5,
-                  "price": "7a6a20c6-034d-4b93-bc45-e340855ff430",
+                  "price": "2ffb10f6-8352-42f2-8747-5123fc2056d4",
                   "discarded_at": null,
-                  "created_at": 1758903950,
-                  "updated_at": 1758903950
+                  "created_at": 1760366835,
+                  "updated_at": 1760366835
                 },
                 "schema": {
                   "$ref": "#/components/schemas/bump_response"
@@ -8552,7 +8975,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b4c65718-b1d6-400b-8d92-0456adb7b841",
+                  "id": "30218a36-4b9d-4427-b4f0-7ad2e7ff30c7",
                   "object": "bump",
                   "amount_off": null,
                   "archived": false,
@@ -8565,10 +8988,10 @@
                   "name": "Matching Socks",
                   "percent_off": null,
                   "priority": 5,
-                  "price": "09412a1c-8475-4125-821e-05c155d5690c",
+                  "price": "ca13f746-7170-41f8-a5ef-a13c382b7cb9",
                   "discarded_at": null,
-                  "created_at": 1758903951,
-                  "updated_at": 1758903951
+                  "created_at": 1760366835,
+                  "updated_at": 1760366835
                 },
                 "schema": {
                   "$ref": "#/components/schemas/bump_response"
@@ -8624,7 +9047,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3e9eae67-ae4c-4ce2-b06f-0f2ae661f95f",
+                  "id": "3cb538f0-fc39-4324-b38c-e95e08f92d0b",
                   "object": "bump",
                   "deleted": true
                 },
@@ -8661,7 +9084,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e4a539cd-d4a6-49c9-b1bf-1674b5143fbc",
+                  "id": "f3a1400a-a669-46ee-89b2-c9252f5e3a4e",
                   "object": "bump",
                   "amount_off": null,
                   "archived": false,
@@ -8674,10 +9097,10 @@
                   "name": "Bundle Discount (Duplicate)",
                   "percent_off": null,
                   "priority": 5,
-                  "price": "a2ea61ef-75c0-499f-a7e1-502b00f5a24f",
+                  "price": "49d62677-0e96-4cc4-866c-5aa4b413f48c",
                   "discarded_at": null,
-                  "created_at": 1758903951,
-                  "updated_at": 1758903951
+                  "created_at": 1760366835,
+                  "updated_at": 1760366835
                 },
                 "schema": {
                   "$ref": "#/components/schemas/bump_response"
@@ -8761,7 +9184,7 @@
                   },
                   "data": [
                     {
-                      "id": "079f09f7-1ba1-498c-8f77-86996bdb889c",
+                      "id": "29193987-d844-40ce-a3da-df25c4e947e0",
                       "object": "coupon",
                       "archived": false,
                       "archived_at": null,
@@ -8781,11 +9204,11 @@
                       "redeem_by": null,
                       "times_redeemed": 0,
                       "discarded_at": null,
-                      "created_at": 1758903957,
-                      "updated_at": 1758903957
+                      "created_at": 1760366842,
+                      "updated_at": 1760366842
                     },
                     {
-                      "id": "32f23a54-8340-4e3b-971d-a84bc452c916",
+                      "id": "8fec4126-3f0c-4daa-b52e-2168a0c59047",
                       "object": "coupon",
                       "archived": false,
                       "archived_at": null,
@@ -8805,11 +9228,11 @@
                       "redeem_by": null,
                       "times_redeemed": 0,
                       "discarded_at": null,
-                      "created_at": 1758903957,
-                      "updated_at": 1758903957
+                      "created_at": 1760366842,
+                      "updated_at": 1760366842
                     },
                     {
-                      "id": "1ca0476b-6caa-4c6e-b040-0da9ad404ac0",
+                      "id": "7f4c8257-e7d5-4676-9850-24667b386317",
                       "object": "coupon",
                       "archived": false,
                       "archived_at": null,
@@ -8829,8 +9252,8 @@
                       "redeem_by": null,
                       "times_redeemed": 0,
                       "discarded_at": null,
-                      "created_at": 1758903957,
-                      "updated_at": 1758903957
+                      "created_at": 1760366842,
+                      "updated_at": 1760366842
                     }
                   ]
                 },
@@ -8856,7 +9279,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e8a6faf0-04e5-4f7f-85f3-1d6c7aa96452",
+                  "id": "60c8da96-e01a-4d73-8ad4-bf35ad54ead0",
                   "object": "coupon",
                   "archived": false,
                   "archived_at": null,
@@ -8876,8 +9299,8 @@
                   "redeem_by": null,
                   "times_redeemed": 0,
                   "discarded_at": null,
-                  "created_at": 1758903957,
-                  "updated_at": 1758903957
+                  "created_at": 1760366842,
+                  "updated_at": 1760366842
                 },
                 "schema": {
                   "$ref": "#/components/schemas/coupon_response"
@@ -8936,7 +9359,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "40ac782d-132a-4a7a-9d8e-f2b1432a4b95",
+                  "id": "b3883494-0a92-4a56-a1e7-b4de89446d16",
                   "object": "coupon",
                   "archived": false,
                   "archived_at": null,
@@ -8956,8 +9379,8 @@
                   "redeem_by": null,
                   "times_redeemed": 0,
                   "discarded_at": null,
-                  "created_at": 1758903957,
-                  "updated_at": 1758903957
+                  "created_at": 1760366842,
+                  "updated_at": 1760366842
                 },
                 "schema": {
                   "$ref": "#/components/schemas/coupon_response"
@@ -8981,7 +9404,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c7d7be20-9847-4e45-966f-ec0244bf8694",
+                  "id": "d3cef5be-2dab-4070-98b9-152d737ef291",
                   "object": "coupon",
                   "archived": false,
                   "archived_at": null,
@@ -9001,8 +9424,8 @@
                   "redeem_by": null,
                   "times_redeemed": 0,
                   "discarded_at": null,
-                  "created_at": 1758903957,
-                  "updated_at": 1758903957
+                  "created_at": 1760366842,
+                  "updated_at": 1760366842
                 },
                 "schema": {
                   "$ref": "#/components/schemas/coupon_response"
@@ -9048,7 +9471,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ad6ae4df-e1bd-4d50-aeff-c22d30c720d2",
+                  "id": "1ac58527-bda1-4539-ab57-0255ae2967e2",
                   "object": "coupon",
                   "deleted": true
                 },
@@ -9085,7 +9508,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ace166d9-23cc-43a9-96a4-6e5c48c51be9",
+                  "id": "e0aa52cb-06bf-4a93-8276-1a7d0b51e26b",
                   "object": "coupon",
                   "archived": false,
                   "archived_at": null,
@@ -9105,8 +9528,8 @@
                   "redeem_by": null,
                   "times_redeemed": 0,
                   "discarded_at": null,
-                  "created_at": 1758903957,
-                  "updated_at": 1758903957
+                  "created_at": 1760366842,
+                  "updated_at": 1760366842
                 },
                 "schema": {
                   "$ref": "#/components/schemas/coupon_response"
@@ -9217,20 +9640,20 @@
                   },
                   "data": [
                     {
-                      "id": "e5a07a3c-c120-498c-b1fa-9104eb5fd393",
+                      "id": "b041313b-e189-4afe-a5fe-915870ee0de1",
                       "object": "discount",
                       "discount_amount": -500,
                       "primary": true,
                       "redeemable_status": "redeemable",
-                      "redeemed_at": 1758903901,
+                      "redeemed_at": 1760366787,
                       "used_up": false,
-                      "checkout": "d4bb37ad-2c0c-4e62-b716-358ffce92c41",
-                      "coupon": "31dd8167-e8ad-4c8d-9206-7d3ed6b0b988",
-                      "customer": "9c03a9b2-0050-4b9c-90cb-a150301dbf98",
+                      "checkout": "a145c45f-92c2-44a6-999b-6e8b182dc4c7",
+                      "coupon": "e29508cc-9bae-4cb9-b746-d1c4cd6e20e1",
+                      "customer": "14caa044-54b4-4106-a29b-db4bcf72c97b",
                       "primary_discount": null,
                       "promotion": null,
-                      "created_at": 1758903961,
-                      "updated_at": 1758903961
+                      "created_at": 1760366847,
+                      "updated_at": 1760366847
                     }
                   ]
                 },
@@ -9267,20 +9690,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ebdba71b-6857-467c-bd79-5adcd7d7b5f5",
+                  "id": "b48830b6-5bcd-4213-a188-a4e0a1662556",
                   "object": "discount",
                   "discount_amount": -500,
                   "primary": true,
                   "redeemable_status": "redeemable",
-                  "redeemed_at": 1758903901,
+                  "redeemed_at": 1760366787,
                   "used_up": false,
-                  "checkout": "582a74f1-8611-4d5b-b6e8-966bdf438996",
-                  "coupon": "83e702de-983a-432a-9aa6-b4539b135234",
-                  "customer": "381f237e-7629-45bc-b24a-6a822673dbb3",
+                  "checkout": "5aea1d7e-a5e4-4c07-9955-1dea5e8f4eb8",
+                  "coupon": "fb017f90-c95b-4409-b66f-3362316fe898",
+                  "customer": "3793be3f-42b7-401b-a54d-c06cf6600a84",
                   "primary_discount": null,
                   "promotion": null,
-                  "created_at": 1758903961,
-                  "updated_at": 1758903961
+                  "created_at": 1760366847,
+                  "updated_at": 1760366847
                 },
                 "schema": {
                   "$ref": "#/components/schemas/discount_response"
@@ -9379,7 +9802,7 @@
                   },
                   "data": [
                     {
-                      "id": "08c01bec-ea25-4b09-b46f-9c851e944d80",
+                      "id": "43368191-e6a4-4290-8b02-21e9d26a182d",
                       "object": "download",
                       "alt": null,
                       "archived": false,
@@ -9387,10 +9810,10 @@
                       "name": null,
                       "title": null,
                       "url": null,
-                      "media": "0ee7969a-f883-4928-8100-1ecc71dfa836",
-                      "product": "e4cb62fb-2bda-4859-bd03-77ea6787eeab",
-                      "created_at": 1758903963,
-                      "updated_at": 1758903963
+                      "media": "1d4c2bd9-f3aa-4d5a-b7ec-34805879bc93",
+                      "product": "c3b523c6-6e8f-40bc-8cbd-dc556e0d01a0",
+                      "created_at": 1760366848,
+                      "updated_at": 1760366848
                     }
                   ]
                 },
@@ -9416,7 +9839,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9c23e2c9-3b99-4c72-8303-a6c940143ba1",
+                  "id": "59921d5d-3fcb-42fb-b769-eb9b2b61e233",
                   "object": "download",
                   "alt": null,
                   "archived": false,
@@ -9424,10 +9847,10 @@
                   "name": null,
                   "title": null,
                   "url": null,
-                  "media": "32a3e679-ee1e-4e73-b2be-8dd07bb86534",
-                  "product": "5431f711-84a0-49ca-a05c-07125f507389",
-                  "created_at": 1758903963,
-                  "updated_at": 1758903963
+                  "media": "70a42bef-48bb-4ca0-99c2-aa3f7ff6e422",
+                  "product": "1cfe05eb-631f-4141-a95a-4d7f5b64a8a8",
+                  "created_at": 1760366849,
+                  "updated_at": 1760366849
                 },
                 "schema": {
                   "$ref": "#/components/schemas/download_response"
@@ -9452,8 +9875,8 @@
                 },
                 "example": {
                   "download": {
-                    "media": "32a3e679-ee1e-4e73-b2be-8dd07bb86534",
-                    "product": "5431f711-84a0-49ca-a05c-07125f507389"
+                    "media": "70a42bef-48bb-4ca0-99c2-aa3f7ff6e422",
+                    "product": "1cfe05eb-631f-4141-a95a-4d7f5b64a8a8"
                   }
                 }
               }
@@ -9486,7 +9909,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8de4ed06-39a8-46c5-955d-adf7ec493330",
+                  "id": "75c838f1-11e8-4842-94c1-c95c948f43c2",
                   "object": "download",
                   "alt": null,
                   "archived": false,
@@ -9494,10 +9917,10 @@
                   "name": null,
                   "title": null,
                   "url": null,
-                  "media": "c3dd1a3b-71ba-4281-9b7c-9504b1909287",
-                  "product": "6613aa8c-0004-4720-9af8-0403cdaa0d27",
-                  "created_at": 1758903963,
-                  "updated_at": 1758903963
+                  "media": "81531eb4-9a4e-45b1-8233-a9e50056b26c",
+                  "product": "f5b93037-80e6-4714-a1bc-cdcfc06cb00f",
+                  "created_at": 1760366849,
+                  "updated_at": 1760366849
                 },
                 "schema": {
                   "$ref": "#/components/schemas/download_response"
@@ -9530,7 +9953,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7a53cd4c-bd80-42a1-b402-d571f5d71a8f",
+                  "id": "f8657fbf-6e58-408e-b9f4-bc2d42db561a",
                   "object": "download",
                   "alt": null,
                   "archived": false,
@@ -9538,10 +9961,10 @@
                   "name": null,
                   "title": null,
                   "url": null,
-                  "media": "98b2ad97-eb7b-4743-b1f7-1e5666a80e18",
-                  "product": "53fcd143-26a4-4d56-acb1-432a8906866a",
-                  "created_at": 1758903963,
-                  "updated_at": 1758903963
+                  "media": "804f0040-266a-44b5-b106-6c1443d938a1",
+                  "product": "93336f17-0bd8-4c58-a718-20a6bef371aa",
+                  "created_at": 1760366849,
+                  "updated_at": 1760366849
                 },
                 "schema": {
                   "$ref": "#/components/schemas/download_response"
@@ -9597,7 +10020,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0cb1ff59-768a-4060-a8f1-b18158f6764d",
+                  "id": "17f94ad7-58df-414f-9ea7-31c34f3f42e9",
                   "object": "download",
                   "deleted": true
                 },
@@ -9704,7 +10127,7 @@
                   },
                   "data": [
                     {
-                      "id": "67610adb-cdb1-422e-8a66-20e710fe4957",
+                      "id": "10eb6ee1-0dc6-4c6a-bfec-221b07767c56",
                       "object": "price",
                       "ad_hoc": false,
                       "ad_hoc_max_amount": null,
@@ -9733,11 +10156,11 @@
                       "setup_fee_name": null,
                       "trial_duration_days": null,
                       "current_swap": null,
-                      "product": "cecc54d8-023d-41da-ab14-48a0e46c4211",
+                      "product": "a893edfc-b09a-4638-917b-6d723e7a60d9",
                       "renewal_price": null,
                       "discarded_at": null,
-                      "created_at": 1758903983,
-                      "updated_at": 1758903983
+                      "created_at": 1760366870,
+                      "updated_at": 1760366870
                     }
                   ]
                 },
@@ -9763,7 +10186,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ffdb912d-b392-4447-88cb-630135460574",
+                  "id": "e3ccd1e6-a72f-4fa7-b00e-72eaa80aa366",
                   "object": "price",
                   "ad_hoc": false,
                   "ad_hoc_max_amount": null,
@@ -9792,11 +10215,11 @@
                   "setup_fee_name": null,
                   "trial_duration_days": null,
                   "current_swap": null,
-                  "product": "bf715f0c-0bff-4205-9996-93e8440c98f7",
+                  "product": "4f5a1e26-27ff-4de7-9f24-9943dfcee14e",
                   "renewal_price": null,
                   "discarded_at": null,
-                  "created_at": 1758903983,
-                  "updated_at": 1758903983
+                  "created_at": 1760366870,
+                  "updated_at": 1760366870
                 },
                 "schema": {
                   "$ref": "#/components/schemas/price_response"
@@ -9823,7 +10246,7 @@
                   "price": {
                     "name": "Test Price",
                     "amount": 2900,
-                    "product_id": "bf715f0c-0bff-4205-9996-93e8440c98f7"
+                    "product_id": "4f5a1e26-27ff-4de7-9f24-9943dfcee14e"
                   }
                 }
               }
@@ -9856,7 +10279,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2d4c74d7-3d4e-450e-a911-7d8cf1a8d152",
+                  "id": "3217b678-0fee-4e33-b584-4b064fe66d6d",
                   "object": "price",
                   "ad_hoc": false,
                   "ad_hoc_max_amount": null,
@@ -9885,11 +10308,11 @@
                   "setup_fee_name": null,
                   "trial_duration_days": null,
                   "current_swap": null,
-                  "product": "26289250-9689-4171-a1ae-351d949e3bea",
+                  "product": "23a5cc73-3b8b-4158-a450-2bb20b3ad346",
                   "renewal_price": null,
                   "discarded_at": null,
-                  "created_at": 1758903983,
-                  "updated_at": 1758903983
+                  "created_at": 1760366871,
+                  "updated_at": 1760366871
                 },
                 "schema": {
                   "$ref": "#/components/schemas/price_response"
@@ -9913,7 +10336,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d4324a4c-003f-4131-aec6-78744637d69b",
+                  "id": "8799b643-8640-42f1-91ab-e1c66ab68f10",
                   "object": "price",
                   "ad_hoc": false,
                   "ad_hoc_max_amount": null,
@@ -9942,11 +10365,11 @@
                   "setup_fee_name": null,
                   "trial_duration_days": null,
                   "current_swap": null,
-                  "product": "5c99d9f6-f453-48f7-8ec1-f8ebfbc807dd",
+                  "product": "d2cba7a5-9294-4524-9a90-e2526e27bd3c",
                   "renewal_price": null,
                   "discarded_at": null,
-                  "created_at": 1758903983,
-                  "updated_at": 1758903983
+                  "created_at": 1760366871,
+                  "updated_at": 1760366871
                 },
                 "schema": {
                   "$ref": "#/components/schemas/price_response"
@@ -9992,7 +10415,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bcb0d26e-12f3-4ef7-8851-b56f1ca98054",
+                  "id": "5704634d-0a19-464a-93c0-36f9109bba93",
                   "object": "price",
                   "deleted": true
                 },
@@ -10029,7 +10452,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1cbfbc42-6393-4bd7-9c85-f080400e3c3d",
+                  "id": "615669b1-44fe-4770-b61f-9bd3d92d66e5",
                   "object": "price",
                   "ad_hoc": false,
                   "ad_hoc_max_amount": null,
@@ -10058,11 +10481,11 @@
                   "setup_fee_name": null,
                   "trial_duration_days": null,
                   "current_swap": null,
-                  "product": "76b7cd5e-578d-427a-8e28-12a07d968fad",
+                  "product": "df41978e-7d84-4afa-9422-7a6db2eb3568",
                   "renewal_price": null,
                   "discarded_at": null,
-                  "created_at": 1758903984,
-                  "updated_at": 1758903984
+                  "created_at": 1760366871,
+                  "updated_at": 1760366871
                 },
                 "schema": {
                   "$ref": "#/components/schemas/price_response"
@@ -10158,7 +10581,7 @@
                   },
                   "data": [
                     {
-                      "id": "255f50e8-385b-4ed8-9c3a-01c2f26dd494",
+                      "id": "d9ff6c8c-168a-4ed5-9621-bf61f69e0070",
                       "object": "product_collection",
                       "name": "Test Product Collection 1",
                       "description": null,
@@ -10167,8 +10590,8 @@
                       "products_count": 0,
                       "slug": "test-product-collection-1",
                       "image": null,
-                      "created_at": 1758903984,
-                      "updated_at": 1758903984
+                      "created_at": 1760366871,
+                      "updated_at": 1760366871
                     }
                   ]
                 },
@@ -10194,7 +10617,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f9db8b43-46b4-4df1-af71-e3d2ff55afce",
+                  "id": "8c9e5265-5f44-424b-a5c1-657de031366e",
                   "object": "product_collection",
                   "name": "Shoes",
                   "description": null,
@@ -10203,8 +10626,8 @@
                   "products_count": 0,
                   "slug": "shoes",
                   "image": null,
-                  "created_at": 1758903984,
-                  "updated_at": 1758903984
+                  "created_at": 1760366871,
+                  "updated_at": 1760366871
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_collection_response"
@@ -10262,7 +10685,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a5c1ecb1-7b48-44c9-98f7-a9e402755d5d",
+                  "id": "5d8bf163-f6d5-4eba-ae72-592af3a78cac",
                   "object": "product_collection",
                   "name": "Test Product Collection 3",
                   "description": null,
@@ -10271,8 +10694,8 @@
                   "products_count": 0,
                   "slug": "test-product-collection-3",
                   "image": null,
-                  "created_at": 1758903984,
-                  "updated_at": 1758903984
+                  "created_at": 1760366871,
+                  "updated_at": 1760366871
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_collection_response"
@@ -10296,7 +10719,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b08a69dd-56a2-41c8-837c-13867f657189",
+                  "id": "a019668f-e782-4f00-b083-552b7e97b685",
                   "object": "product_collection",
                   "name": "T-Shirts",
                   "description": null,
@@ -10305,8 +10728,8 @@
                   "products_count": 0,
                   "slug": "test-product-collection-4",
                   "image": null,
-                  "created_at": 1758903984,
-                  "updated_at": 1758903984
+                  "created_at": 1760366871,
+                  "updated_at": 1760366871
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_collection_response"
@@ -10352,7 +10775,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "99e87af3-a4be-4649-a889-702a19d17c20",
+                  "id": "3f6e4801-182d-4270-9c92-295fab632d1b",
                   "object": "product_collection",
                   "deleted": true
                 },
@@ -10438,15 +10861,15 @@
                   },
                   "data": [
                     {
-                      "id": "a1b66194-9cc3-4152-b6a5-ed844391b963",
+                      "id": "35ce3da5-7b38-49af-8620-94454b9307e0",
                       "object": "product_group",
                       "archived": false,
                       "archived_at": null,
                       "metadata": {},
                       "name": "Membership - V1",
                       "purchase_limit": null,
-                      "created_at": 1758903984,
-                      "updated_at": 1758903984
+                      "created_at": 1760366872,
+                      "updated_at": 1760366872
                     }
                   ]
                 },
@@ -10472,15 +10895,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "75e6f3cd-dd66-451c-8f5d-e84003a20392",
+                  "id": "c8b46bb7-4251-498f-9a12-c06e9a218025",
                   "object": "product_group",
                   "archived": false,
                   "archived_at": null,
                   "metadata": {},
                   "name": "Membership – V2",
                   "purchase_limit": null,
-                  "created_at": 1758903984,
-                  "updated_at": 1758903984
+                  "created_at": 1760366872,
+                  "updated_at": 1760366872
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_group_response"
@@ -10538,15 +10961,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4f289d68-dabe-4cc5-a22f-c32a6d67b10b",
+                  "id": "e1696512-eae1-4559-9f11-0a4bedfd462a",
                   "object": "product_group",
                   "archived": false,
                   "archived_at": null,
                   "metadata": {},
                   "name": "Membership - V1",
                   "purchase_limit": null,
-                  "created_at": 1758903984,
-                  "updated_at": 1758903984
+                  "created_at": 1760366872,
+                  "updated_at": 1760366872
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_group_response"
@@ -10570,15 +10993,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ba2c9347-d655-4161-bdc2-f2fc5449e7b6",
+                  "id": "7741f6b4-27fc-4200-98d2-64f9440020ac",
                   "object": "product_group",
                   "archived": false,
                   "archived_at": null,
                   "metadata": {},
                   "name": "Membership – V1 (Legacy)",
                   "purchase_limit": null,
-                  "created_at": 1758903984,
-                  "updated_at": 1758903984
+                  "created_at": 1760366872,
+                  "updated_at": 1760366872
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_group_response"
@@ -10624,7 +11047,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "dae17668-19c1-4cf2-84de-8c0ba68f3a81",
+                  "id": "e3024a76-a1e8-4362-93fc-d3608497f9f4",
                   "object": "product_group",
                   "deleted": true
                 },
@@ -10704,16 +11127,16 @@
                   },
                   "data": [
                     {
-                      "id": "cba8a14d-1c59-46b7-bf21-508d24600182",
+                      "id": "0471d73a-322f-40c5-9563-0803d2ced2fd",
                       "object": "product_media",
                       "alt": null,
                       "position": 0,
                       "title": null,
                       "url": null,
-                      "media": "08b51f35-851b-4611-b92f-772e49c2d0b4",
-                      "product": "ae5ad957-6253-4f1d-b0b9-93f62a727614",
-                      "created_at": 1758903985,
-                      "updated_at": 1758903985
+                      "media": "db6964d8-084f-472f-82db-f265cbab0a2b",
+                      "product": "435c1c74-fd9d-484f-822e-389771408ac0",
+                      "created_at": 1760366872,
+                      "updated_at": 1760366872
                     }
                   ]
                 },
@@ -10739,16 +11162,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2d06287b-7b80-44c1-a2fb-767387d6fa9c",
+                  "id": "03570f73-acd9-47f4-8f1c-8eb6653c82f6",
                   "object": "product_media",
                   "alt": null,
                   "position": 0,
                   "title": null,
                   "url": null,
-                  "media": "8739d51c-1a81-40ba-a5fd-4e5119e08809",
-                  "product": "1bb6396e-f256-417b-9003-a1b1fe17deaf",
-                  "created_at": 1758903985,
-                  "updated_at": 1758903985
+                  "media": "f67a81eb-a743-41b5-9a98-c5bcd2add55b",
+                  "product": "58c8b8d4-128c-44f6-902f-33675711fa83",
+                  "created_at": 1760366872,
+                  "updated_at": 1760366872
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_media_response"
@@ -10773,8 +11196,8 @@
                 },
                 "example": {
                   "product_media": {
-                    "product_id": "1bb6396e-f256-417b-9003-a1b1fe17deaf",
-                    "media_id": "8739d51c-1a81-40ba-a5fd-4e5119e08809"
+                    "product_id": "58c8b8d4-128c-44f6-902f-33675711fa83",
+                    "media_id": "f67a81eb-a743-41b5-9a98-c5bcd2add55b"
                   }
                 }
               }
@@ -10807,16 +11230,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0e7cca25-56f3-47f2-8ffc-621cb08aad9b",
+                  "id": "0fc97f53-f28f-45c4-bdb6-91894656e785",
                   "object": "product_media",
                   "alt": null,
                   "position": 0,
                   "title": null,
                   "url": null,
-                  "media": "2256aeb1-7a48-4077-84b7-f88995397b31",
-                  "product": "54ddc8b5-df2f-42a7-abba-2ea4ea8c7c7d",
-                  "created_at": 1758903985,
-                  "updated_at": 1758903985
+                  "media": "5983c3a2-5583-4171-b113-eda1565b4688",
+                  "product": "0b364f35-2c4d-45fe-adde-0bbf38aec7b4",
+                  "created_at": 1760366872,
+                  "updated_at": 1760366872
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_media_response"
@@ -10840,16 +11263,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fbc14e33-afa7-4802-9d89-3e66c2746d95",
+                  "id": "1dfa416d-61e7-4f8a-8498-d64558332083",
                   "object": "product_media",
                   "alt": null,
                   "position": 1,
                   "title": null,
                   "url": null,
-                  "media": "2f2bf14c-67bf-49cb-b477-02e5cf6cb4a6",
-                  "product": "0cb63ae9-a181-4878-a0f0-9fea71c56da6",
-                  "created_at": 1758903985,
-                  "updated_at": 1758903985
+                  "media": "248728e0-b814-406a-93e1-c7a00257aeae",
+                  "product": "93488118-23bd-4247-8738-f8e5d59fd433",
+                  "created_at": 1760366872,
+                  "updated_at": 1760366872
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_media_response"
@@ -10895,7 +11318,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0f844961-2204-441e-bd3e-022481686f1a",
+                  "id": "1fb221f8-5268-4be5-822f-f6bf4b60fbaa",
                   "object": "product_media",
                   "deleted": true
                 },
@@ -11083,7 +11506,7 @@
                   },
                   "data": [
                     {
-                      "id": "ff3e572a-0aff-4efa-92c9-80fa43fcdd40",
+                      "id": "2897aa21-b497-48fd-8926-8a485fd2f938",
                       "object": "product",
                       "allow_out_of_stock_purchases": false,
                       "archived": false,
@@ -11124,10 +11547,10 @@
                       "product_group": null,
                       "current_release_download": null,
                       "shipping_profile": null,
-                      "cataloged_at": 1758903985,
+                      "cataloged_at": 1760366872,
                       "discarded_at": null,
-                      "created_at": 1758903985,
-                      "updated_at": 1758903985
+                      "created_at": 1760366873,
+                      "updated_at": 1760366873
                     }
                   ]
                 },
@@ -11153,7 +11576,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bbf4b077-85a2-486f-92d4-afa182ac1a4a",
+                  "id": "bb706a08-605d-4b3f-9abd-e021091e40f2",
                   "object": "product",
                   "allow_out_of_stock_purchases": false,
                   "archived": false,
@@ -11194,10 +11617,10 @@
                   "product_group": null,
                   "current_release_download": null,
                   "shipping_profile": null,
-                  "cataloged_at": 1758903985,
+                  "cataloged_at": 1760366873,
                   "discarded_at": null,
-                  "created_at": 1758903985,
-                  "updated_at": 1758903985
+                  "created_at": 1760366873,
+                  "updated_at": 1760366873
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_response"
@@ -11255,7 +11678,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "feaebbf4-866b-4210-9968-ec50e909a2d5",
+                  "id": "2c3d94d5-d3ed-4aad-a8dd-b0a6e73c0146",
                   "object": "product",
                   "allow_out_of_stock_purchases": false,
                   "archived": false,
@@ -11296,10 +11719,10 @@
                   "product_group": null,
                   "current_release_download": null,
                   "shipping_profile": null,
-                  "cataloged_at": 1758903985,
+                  "cataloged_at": 1760366873,
                   "discarded_at": null,
-                  "created_at": 1758903985,
-                  "updated_at": 1758903985
+                  "created_at": 1760366873,
+                  "updated_at": 1760366873
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_response"
@@ -11323,7 +11746,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "602e4ced-ae64-4acb-baef-9423c98738ea",
+                  "id": "454a193b-f9ee-4112-937f-e35c5da3cb98",
                   "object": "product",
                   "allow_out_of_stock_purchases": false,
                   "archived": false,
@@ -11364,10 +11787,10 @@
                   "product_group": null,
                   "current_release_download": null,
                   "shipping_profile": null,
-                  "cataloged_at": 1758903985,
+                  "cataloged_at": 1760366873,
                   "discarded_at": null,
-                  "created_at": 1758903986,
-                  "updated_at": 1758903986
+                  "created_at": 1760366873,
+                  "updated_at": 1760366873
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_response"
@@ -11413,7 +11836,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b133c6ba-527d-44b1-9091-44105852a2e6",
+                  "id": "27f60f13-2e30-4d42-8190-c7540b465f88",
                   "object": "product",
                   "deleted": true
                 },
@@ -11450,7 +11873,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "04463a05-3e21-4590-9304-4e41eb3f4e1d",
+                  "id": "3161a65f-f1eb-42cb-8cad-ae8a3c5754ba",
                   "object": "product",
                   "allow_out_of_stock_purchases": false,
                   "archived": false,
@@ -11477,7 +11900,7 @@
                   "reviews_enabled": true,
                   "shipping_enabled": false,
                   "sku": null,
-                  "slug": "test-product-duplicate",
+                  "slug": "test-product-duplicate-19af6893",
                   "solicit_reviews": true,
                   "status": "draft",
                   "stock": 0,
@@ -11491,10 +11914,10 @@
                   "product_group": null,
                   "current_release_download": null,
                   "shipping_profile": null,
-                  "cataloged_at": 1758903986,
+                  "cataloged_at": 1760366873,
                   "discarded_at": null,
-                  "created_at": 1758903986,
-                  "updated_at": 1758903986
+                  "created_at": 1760366873,
+                  "updated_at": 1760366873
                 },
                 "schema": {
                   "$ref": "#/components/schemas/product_response"
@@ -11614,7 +12037,7 @@
                   },
                   "data": [
                     {
-                      "id": "8e80d723-1842-4276-8b0e-e54274a08784",
+                      "id": "50e02abd-5a4f-404d-b32a-1a6ab93e0bdd",
                       "object": "promotion",
                       "archived": false,
                       "archived_at": null,
@@ -11625,11 +12048,11 @@
                       "redeem_by": null,
                       "times_redeemed": 0,
                       "affiliation": null,
-                      "coupon": "e0ed2b9d-acd8-4d28-99af-9eb513708ae5",
+                      "coupon": "0f45327a-2842-4ed6-87ea-4a10110bb038",
                       "customer": null,
                       "discarded_at": null,
-                      "created_at": 1758903986,
-                      "updated_at": 1758903986
+                      "created_at": 1760366873,
+                      "updated_at": 1760366873
                     }
                   ]
                 },
@@ -11655,7 +12078,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9fff9a81-e9be-43b2-812d-b056560d768a",
+                  "id": "8bea83cb-4705-47e3-8b4a-421efff8c46c",
                   "object": "promotion",
                   "archived": false,
                   "archived_at": null,
@@ -11666,11 +12089,11 @@
                   "redeem_by": null,
                   "times_redeemed": 0,
                   "affiliation": null,
-                  "coupon": "21ca197b-19e1-4d1f-8e78-ce0bdf366e0c",
+                  "coupon": "b2bf119b-b2ec-4222-910d-36da439bb4b6",
                   "customer": null,
                   "discarded_at": null,
-                  "created_at": 1758903986,
-                  "updated_at": 1758903986
+                  "created_at": 1760366873,
+                  "updated_at": 1760366873
                 },
                 "schema": {
                   "$ref": "#/components/schemas/promotion_response"
@@ -11696,7 +12119,7 @@
                 "example": {
                   "promotion": {
                     "code": "TESTCODE",
-                    "coupon_id": "21ca197b-19e1-4d1f-8e78-ce0bdf366e0c"
+                    "coupon_id": "b2bf119b-b2ec-4222-910d-36da439bb4b6"
                   }
                 }
               }
@@ -11729,7 +12152,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "171efe32-2962-4001-8aa7-2a01c7c4a8dd",
+                  "id": "256a1467-545f-46c9-9a8e-ee9d6ad385ff",
                   "object": "promotion",
                   "archived": false,
                   "archived_at": null,
@@ -11740,11 +12163,11 @@
                   "redeem_by": null,
                   "times_redeemed": 0,
                   "affiliation": null,
-                  "coupon": "62fcac88-a89d-4390-aa2f-2783f774b540",
+                  "coupon": "bcf1d848-8e9c-455f-a6cc-06bbdff6ba28",
                   "customer": null,
                   "discarded_at": null,
-                  "created_at": 1758903986,
-                  "updated_at": 1758903986
+                  "created_at": 1760366873,
+                  "updated_at": 1760366873
                 },
                 "schema": {
                   "$ref": "#/components/schemas/promotion_response"
@@ -11768,7 +12191,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e348a5fc-b89f-464e-b193-d722e86da337",
+                  "id": "271c44c3-816e-4d8e-9c28-9fcb4be03326",
                   "object": "promotion",
                   "archived": false,
                   "archived_at": null,
@@ -11779,11 +12202,11 @@
                   "redeem_by": null,
                   "times_redeemed": 0,
                   "affiliation": null,
-                  "coupon": "bcb97fab-30a7-4967-a4e9-7681ef009452",
+                  "coupon": "20b2e64b-3260-4535-aa86-c9524c6cd1ae",
                   "customer": null,
                   "discarded_at": null,
-                  "created_at": 1758903986,
-                  "updated_at": 1758903986
+                  "created_at": 1760366874,
+                  "updated_at": 1760366874
                 },
                 "schema": {
                   "$ref": "#/components/schemas/promotion_response"
@@ -11829,7 +12252,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "927dd310-6cbf-4172-a814-1827568ff6db",
+                  "id": "fd855935-6b10-453a-9199-758925e7dddb",
                   "object": "promotion",
                   "deleted": true
                 },
@@ -11909,15 +12332,15 @@
                   },
                   "data": [
                     {
-                      "id": "7957a28e-aa24-47ac-a43b-ec12de058426",
+                      "id": "47340dc3-2c95-40bf-8e86-59d070f7bb4f",
                       "object": "review_media",
                       "alt": null,
                       "title": null,
                       "url": null,
-                      "media": "35743e58-e79b-4d77-9451-49bd5d02e466",
-                      "review": "8f2f1e6c-e5b2-4353-8f82-a593fc8b2fe2",
-                      "created_at": 1758904005,
-                      "updated_at": 1758904005
+                      "media": "0ac1ef98-1f0f-4110-a393-b273a6172f3b",
+                      "review": "5dc44c74-ce67-4353-a7e8-78ef108eac49",
+                      "created_at": 1760366893,
+                      "updated_at": 1760366893
                     }
                   ]
                 },
@@ -11943,15 +12366,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2a17afd4-692c-437a-aa1b-b5f3af5fe02b",
+                  "id": "8e4a0234-371b-4ef0-862a-878c764d41a5",
                   "object": "review_media",
                   "alt": null,
                   "title": null,
                   "url": null,
-                  "media": "b8319962-1af7-41ae-b39d-34f054893e97",
-                  "review": "90117fff-311f-4894-a21b-b681315ac924",
-                  "created_at": 1758904005,
-                  "updated_at": 1758904005
+                  "media": "00669ce7-c16c-4432-ad43-91fdd3e4f41d",
+                  "review": "11fda85e-d01f-416c-a597-7598189b6e7a",
+                  "created_at": 1760366893,
+                  "updated_at": 1760366893
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_media_response"
@@ -11976,8 +12399,8 @@
                 },
                 "example": {
                   "review_media": {
-                    "review_id": "90117fff-311f-4894-a21b-b681315ac924",
-                    "media_id": "b8319962-1af7-41ae-b39d-34f054893e97"
+                    "review_id": "11fda85e-d01f-416c-a597-7598189b6e7a",
+                    "media_id": "00669ce7-c16c-4432-ad43-91fdd3e4f41d"
                   }
                 }
               }
@@ -12010,15 +12433,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "33ef46ce-83f3-4b77-bf36-e8f1bcb560dd",
+                  "id": "e5c0fbb0-7dad-462b-a365-2b3c088d2ef0",
                   "object": "review_media",
                   "alt": null,
                   "title": null,
                   "url": null,
-                  "media": "622e16df-a933-447a-bcec-c673e25da503",
-                  "review": "1491941d-b996-4fa9-9e6c-3c70f02d5cb2",
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "media": "b262a236-98a7-4b0b-badb-e76247f6e736",
+                  "review": "1ec2cf49-b4f6-4343-8fbc-87c28eeed12c",
+                  "created_at": 1760366893,
+                  "updated_at": 1760366893
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_media_response"
@@ -12041,7 +12464,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3ba431f0-caf2-4bf1-b991-907f2f6d12c1",
+                  "id": "c26a46b1-e454-4d12-a638-da27e67cd2d3",
                   "object": "review_media",
                   "deleted": true
                 },
@@ -12068,13 +12491,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a33d54dd-907e-4213-8485-769f3741e98b",
+                  "id": "65af76ab-ab20-4425-858c-9717941aa183",
                   "object": "review_protocol",
                   "reviews_enabled": false,
                   "solicit_reviews": false,
                   "solicit_reviews_after_days": 7,
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "created_at": 1760366893,
+                  "updated_at": 1760366893
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_protocol_response"
@@ -12098,13 +12521,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "16920806-a2ce-4670-ad62-31a5d1985c7f",
+                  "id": "16248fbf-46e2-4dac-8736-9e6a1ba88702",
                   "object": "review_protocol",
                   "reviews_enabled": true,
                   "solicit_reviews": true,
                   "solicit_reviews_after_days": 7,
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "created_at": 1760366894,
+                  "updated_at": 1760366894
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_protocol_response"
@@ -12179,6 +12602,15 @@
             "required": false,
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "live_mode",
+            "in": "query",
+            "description": "Only return objects that are live mode or test mode.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
             }
           },
           {
@@ -12270,18 +12702,18 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "73ecb123-8d66-4add-aa64-72c7d87766fb",
+                  "id": "7a52dd4f-3e32-4cbf-a9c3-a272fefcc7b8",
                   "object": "review",
                   "body": "Easy to use",
                   "status": "in_review",
                   "title": "Useful Product",
                   "stars": 4.5,
                   "verified": false,
-                  "customer": "b3045866-5e22-4f94-a1f7-79468f30af6d",
-                  "product": "bc92a611-14d9-4e76-a44e-ee9ffc64b76a",
+                  "customer": "8e3b0a61-3f65-41c1-ae0b-cf1f1207e5f5",
+                  "product": "a4682967-3dad-4c6e-95d6-8efea909caee",
                   "purchase": null,
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "created_at": 1760366894,
+                  "updated_at": 1760366894
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_response"
@@ -12309,8 +12741,8 @@
                     "title": "Useful Product",
                     "body": "Easy to use",
                     "stars": 4.5,
-                    "product": "bc92a611-14d9-4e76-a44e-ee9ffc64b76a",
-                    "customer": "b3045866-5e22-4f94-a1f7-79468f30af6d"
+                    "product": "a4682967-3dad-4c6e-95d6-8efea909caee",
+                    "customer": "8e3b0a61-3f65-41c1-ae0b-cf1f1207e5f5"
                   }
                 }
               }
@@ -12343,18 +12775,18 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a15dda77-efd3-4356-a564-ec70433e71d7",
+                  "id": "9c890425-edf7-4e63-b572-de78ee3bf8b0",
                   "object": "review",
                   "body": "Really enjoyed using this.",
                   "status": "in_review",
                   "title": "Great Product",
                   "stars": 4.5,
                   "verified": false,
-                  "customer": "4fadf892-38a5-4c02-b9b4-6c3b8189c06d",
-                  "product": "be9f02f2-1c48-4b3b-bd19-61bb69adbfa7",
+                  "customer": "6cad73a9-ebd9-406c-8647-d7208e2ce7ce",
+                  "product": "7c7f6104-b267-4102-8fd6-b55fba7f473d",
                   "purchase": null,
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "created_at": 1760366894,
+                  "updated_at": 1760366894
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_response"
@@ -12378,18 +12810,18 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "305bf449-dd21-4875-a5b8-8f810ae6050e",
+                  "id": "35ccf970-a261-4522-8cab-c61ad8b0ece3",
                   "object": "review",
                   "body": "Really enjoyed using this.",
                   "status": "in_review",
                   "title": "Updated title",
                   "stars": 4.5,
                   "verified": false,
-                  "customer": "89d2e7d5-6899-49a5-a273-768f79f366b1",
-                  "product": "745e4b64-d3c7-4c10-baec-33c312b9c33b",
+                  "customer": "2a8c46e7-4bb9-4d32-a2f4-257062ee13d1",
+                  "product": "61287024-8d8d-458e-973b-4912925b4e55",
                   "purchase": null,
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "created_at": 1760366894,
+                  "updated_at": 1760366894
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_response"
@@ -12435,7 +12867,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b308534b-4d9e-4d2b-812e-892a2b23060c",
+                  "id": "7a7fa356-4c5c-4062-9669-3f61dc5c2597",
                   "object": "review",
                   "deleted": true
                 },
@@ -12472,18 +12904,18 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d415829d-f272-4d62-9832-b6d46bed421b",
+                  "id": "00da808f-e378-4d83-96e6-49faba831df4",
                   "object": "review",
                   "body": "Really enjoyed using this.",
                   "status": "published",
                   "title": "Great Product",
                   "stars": 4.5,
                   "verified": false,
-                  "customer": "4441452f-e985-431c-b1e0-3370ff5bc72c",
-                  "product": "6fb3b910-7e96-4588-a759-f42460817024",
+                  "customer": "af1e0c25-6afe-4f34-91b5-1a9d1d2ce2e3",
+                  "product": "b345b961-25cf-4f9b-ac93-1e12ed409a28",
                   "purchase": null,
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "created_at": 1760366894,
+                  "updated_at": 1760366894
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_response"
@@ -12518,18 +12950,18 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7f5e2b0d-5cf6-4339-9934-64b2048aacf0",
+                  "id": "45368671-b801-4a18-a547-2520b8a0cff4",
                   "object": "review",
                   "body": "Really enjoyed using this.",
                   "status": "unpublished",
                   "title": "Great Product",
                   "stars": 4.5,
                   "verified": false,
-                  "customer": "2ac60fa8-3d34-4d65-8902-dcf06a15c887",
-                  "product": "3424c08a-5088-4e72-ac63-fa17df3ecbd7",
+                  "customer": "34b474a7-fa7b-48f7-b224-36ad3f8c2e43",
+                  "product": "e67a4fb5-eae1-4e5e-84e2-2f8157acd850",
                   "purchase": null,
-                  "created_at": 1758904006,
-                  "updated_at": 1758904006
+                  "created_at": 1760366894,
+                  "updated_at": 1760366894
                 },
                 "schema": {
                   "$ref": "#/components/schemas/review_response"
@@ -12616,17 +13048,17 @@
                   },
                   "data": [
                     {
-                      "id": "caf81fb1-f204-42cb-8808-677e737a330d",
+                      "id": "48d1f29f-59e5-4d3f-8e9a-89245a7176db",
                       "object": "swap",
                       "archived": false,
                       "archived_at": null,
                       "description": "Swap this price for another",
                       "metadata": {},
-                      "price": "a467b968-ef97-4948-abe1-e32115c39f86",
-                      "swap_price": "a2cc8ebe-a688-4c41-b8ac-431a76881075",
+                      "price": "a6ac9066-d7f2-4995-998d-59fb6f26b58f",
+                      "swap_price": "2536f7d6-7fef-4e78-b619-44f12700337d",
                       "discarded_at": null,
-                      "created_at": 1758904013,
-                      "updated_at": 1758904013
+                      "created_at": 1760366901,
+                      "updated_at": 1760366901
                     }
                   ]
                 },
@@ -12652,17 +13084,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f027f43e-b7fe-4cc6-8081-141b640777c2",
+                  "id": "8a0f9621-1480-4293-9a10-d9d1d313d343",
                   "object": "swap",
                   "archived": false,
                   "archived_at": null,
                   "description": "Swap and save 20%!",
                   "metadata": {},
-                  "price": "5ff27a20-5dff-4ad2-94a6-9ec028981e17",
-                  "swap_price": "6d6a5569-6080-40c2-a453-e2a74419776e",
+                  "price": "0dc5e213-4c19-4d01-ac8a-2820d74c1db0",
+                  "swap_price": "6ee084f4-29d7-415e-bf4f-dbe6081dcf74",
                   "discarded_at": null,
-                  "created_at": 1758904013,
-                  "updated_at": 1758904013
+                  "created_at": 1760366901,
+                  "updated_at": 1760366901
                 },
                 "schema": {
                   "$ref": "#/components/schemas/swap_response"
@@ -12688,8 +13120,8 @@
                 "example": {
                   "swap": {
                     "description": "Swap and save 20%!",
-                    "price": "5ff27a20-5dff-4ad2-94a6-9ec028981e17",
-                    "swap_price": "6d6a5569-6080-40c2-a453-e2a74419776e"
+                    "price": "0dc5e213-4c19-4d01-ac8a-2820d74c1db0",
+                    "swap_price": "6ee084f4-29d7-415e-bf4f-dbe6081dcf74"
                   }
                 }
               }
@@ -12722,17 +13154,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3ccb4a9e-a0b0-4165-a1dd-b591eb9d3aad",
+                  "id": "b91c7224-75e5-4b81-bbdd-e3de4178c316",
                   "object": "swap",
                   "archived": false,
                   "archived_at": null,
                   "description": "Swap this price for another",
                   "metadata": {},
-                  "price": "2ee7092f-32bc-436a-aa3f-2200a227c4e0",
-                  "swap_price": "8b61b7fe-3c83-4cc3-b11f-d49cf938a9b9",
+                  "price": "5b307c27-b81b-41eb-9ede-bf01f4e5fb05",
+                  "swap_price": "b4a37593-7334-4283-b218-257bb2f99077",
                   "discarded_at": null,
-                  "created_at": 1758904014,
-                  "updated_at": 1758904014
+                  "created_at": 1760366902,
+                  "updated_at": 1760366902
                 },
                 "schema": {
                   "$ref": "#/components/schemas/swap_response"
@@ -12765,17 +13197,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f7fd9f70-56b6-47e9-9b7b-78a482d2d9de",
+                  "id": "83d2ebae-851e-4137-8ee9-b7d05825db18",
                   "object": "swap",
                   "archived": false,
                   "archived_at": null,
                   "description": "Swap and save 40%!",
                   "metadata": {},
-                  "price": "2b0c7dfa-ef47-49da-a7e4-06df1886fa53",
-                  "swap_price": "5cad7b76-83d3-44bf-bda3-acc8becbdfda",
+                  "price": "77d53f02-6664-40c2-9d41-560eb811d7ed",
+                  "swap_price": "433a2bb8-0b9b-4948-bdb6-416208f8318d",
                   "discarded_at": null,
-                  "created_at": 1758904014,
-                  "updated_at": 1758904014
+                  "created_at": 1760366902,
+                  "updated_at": 1760366902
                 },
                 "schema": {
                   "$ref": "#/components/schemas/swap_response"
@@ -12831,7 +13263,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4fb22163-f919-4ffc-987c-2c697eaea11b",
+                  "id": "2f258d89-4dc6-4aac-b869-c9a58492355f",
                   "object": "swap",
                   "deleted": true
                 },
@@ -12908,7 +13340,7 @@
                   },
                   "data": [
                     {
-                      "id": "0ac1667c-235e-4c91-9fb8-89fb67aa1284",
+                      "id": "c8f25b87-5870-4aca-80ae-87c933e0d7d7",
                       "object": "upsell_funnel",
                       "archived": false,
                       "archived_at": null,
@@ -12920,8 +13352,8 @@
                       "name": "Super Upsell Funnel",
                       "priority": 5,
                       "discarded_at": null,
-                      "created_at": 1758904016,
-                      "updated_at": 1758904016
+                      "created_at": 1760366904,
+                      "updated_at": 1760366904
                     }
                   ]
                 },
@@ -12947,7 +13379,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2b5b8cde-9e33-4299-8766-a54acd14ee5f",
+                  "id": "d10a8281-49a8-4adf-bb4b-12e977c76512",
                   "object": "upsell_funnel",
                   "archived": false,
                   "archived_at": null,
@@ -12959,8 +13391,8 @@
                   "name": "Awesome Upsell",
                   "priority": 5,
                   "discarded_at": null,
-                  "created_at": 1758904016,
-                  "updated_at": 1758904016
+                  "created_at": 1760366904,
+                  "updated_at": 1760366904
                 },
                 "schema": {
                   "$ref": "#/components/schemas/upsell_funnel_response"
@@ -13018,7 +13450,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "40721486-9d26-4fda-8578-fd0c95086ace",
+                  "id": "e3355915-31e0-4837-ad2c-f59e531fad71",
                   "object": "upsell_funnel",
                   "archived": false,
                   "archived_at": null,
@@ -13030,8 +13462,8 @@
                   "name": "Super Upsell Funnel",
                   "priority": 5,
                   "discarded_at": null,
-                  "created_at": 1758904016,
-                  "updated_at": 1758904016
+                  "created_at": 1760366904,
+                  "updated_at": 1760366904
                 },
                 "schema": {
                   "$ref": "#/components/schemas/upsell_funnel_response"
@@ -13064,7 +13496,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d86bfdcb-4366-49b4-892b-5e68373984b4",
+                  "id": "5f036ec7-f9a2-4192-8760-59352b84c119",
                   "object": "upsell_funnel",
                   "archived": false,
                   "archived_at": null,
@@ -13076,8 +13508,8 @@
                   "name": "Super Upsell Funnel",
                   "priority": 2,
                   "discarded_at": null,
-                  "created_at": 1758904016,
-                  "updated_at": 1758904016
+                  "created_at": 1760366904,
+                  "updated_at": 1760366904
                 },
                 "schema": {
                   "$ref": "#/components/schemas/upsell_funnel_response"
@@ -13133,7 +13565,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6e63f70f-69be-4510-9494-1bf901919d41",
+                  "id": "d9a70396-645b-4bf0-94d2-767b58bfbd62",
                   "object": "upsell_funnel",
                   "deleted": true
                 },
@@ -13170,7 +13602,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "77ebac71-4b64-4133-881a-6184f2ce4818",
+                  "id": "f59ed456-8068-4891-809d-f8df52933d7a",
                   "object": "upsell_funnel",
                   "archived": false,
                   "archived_at": null,
@@ -13182,8 +13614,8 @@
                   "name": "Super Upsell Funnel (Duplicate)",
                   "priority": 5,
                   "discarded_at": null,
-                  "created_at": 1758904016,
-                  "updated_at": 1758904016
+                  "created_at": 1760366904,
+                  "updated_at": 1760366904
                 },
                 "schema": {
                   "$ref": "#/components/schemas/upsell_funnel_response"
@@ -13273,7 +13705,7 @@
                   },
                   "data": [
                     {
-                      "id": "39f8161f-82f3-42b4-8fb1-13aaa8d404f7",
+                      "id": "1af1b538-4c77-475d-9549-11bb0154de17",
                       "object": "upsell",
                       "amount_off": 500,
                       "duplicate_purchase_behavior": "allow",
@@ -13282,11 +13714,11 @@
                       "percent_off": null,
                       "replacement_behavior": "none",
                       "step": "initial",
-                      "price": "5868debc-3c68-4792-9210-d721b48fbf90",
-                      "upsell_funnel": "23b526f2-a584-4a7e-bb19-cada6042bce6",
+                      "price": "5fb23674-41ea-4aac-be77-542d96b2dedc",
+                      "upsell_funnel": "464b8426-a3d2-4852-841d-60d00534f8e2",
                       "discarded_at": null,
-                      "created_at": 1758904016,
-                      "updated_at": 1758904016
+                      "created_at": 1760366904,
+                      "updated_at": 1760366904
                     }
                   ]
                 },
@@ -13312,7 +13744,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1bce1081-304c-4b19-9106-183827a68004",
+                  "id": "7a0c44c8-001d-4abb-93b3-b56cc162587f",
                   "object": "upsell",
                   "amount_off": 500,
                   "duplicate_purchase_behavior": "allow",
@@ -13321,11 +13753,11 @@
                   "percent_off": null,
                   "replacement_behavior": "none",
                   "step": "declined",
-                  "price": "338b5447-05ea-4d0a-8c9b-6a53fec0df26",
-                  "upsell_funnel": "3c5bb212-d865-41bb-a69f-cbd247bf74d9",
+                  "price": "8c84c5a0-0683-489d-ae5f-a15636d84ea1",
+                  "upsell_funnel": "f52bbc8b-e721-4299-9f62-22fa0de3cb7f",
                   "discarded_at": null,
-                  "created_at": 1758904016,
-                  "updated_at": 1758904016
+                  "created_at": 1760366904,
+                  "updated_at": 1760366904
                 },
                 "schema": {
                   "$ref": "#/components/schemas/upsell_response"
@@ -13353,8 +13785,8 @@
                     "fee_description": "Awesome Upsell",
                     "step": "declined",
                     "amount_off": 500,
-                    "price": "338b5447-05ea-4d0a-8c9b-6a53fec0df26",
-                    "upsell_funnel": "3c5bb212-d865-41bb-a69f-cbd247bf74d9"
+                    "price": "8c84c5a0-0683-489d-ae5f-a15636d84ea1",
+                    "upsell_funnel": "f52bbc8b-e721-4299-9f62-22fa0de3cb7f"
                   }
                 }
               }
@@ -13387,7 +13819,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "64ce06ec-99bd-4d41-81c0-8aa215631525",
+                  "id": "2ea5695d-b2ad-4389-a227-4b5be6c0dfae",
                   "object": "upsell",
                   "amount_off": 500,
                   "duplicate_purchase_behavior": "allow",
@@ -13396,11 +13828,11 @@
                   "percent_off": null,
                   "replacement_behavior": "none",
                   "step": "initial",
-                  "price": "ccea0e3f-f99b-4eb9-b686-533ab2953fd3",
-                  "upsell_funnel": "17b64156-59c1-4888-a791-275bb8303d01",
+                  "price": "151d1c1e-8908-4f44-a88b-f6086fc40dbd",
+                  "upsell_funnel": "7fb135e8-2fda-4bfb-b855-ad753fd33102",
                   "discarded_at": null,
-                  "created_at": 1758904016,
-                  "updated_at": 1758904016
+                  "created_at": 1760366904,
+                  "updated_at": 1760366904
                 },
                 "schema": {
                   "$ref": "#/components/schemas/upsell_response"
@@ -13433,7 +13865,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "aed49493-73cf-4276-9f4f-04c80118326c",
+                  "id": "da3b0193-579d-4cfe-add8-fff95ba7206b",
                   "object": "upsell",
                   "amount_off": 750,
                   "duplicate_purchase_behavior": "allow",
@@ -13442,11 +13874,11 @@
                   "percent_off": null,
                   "replacement_behavior": "none",
                   "step": "initial",
-                  "price": "b0901869-9166-474e-b47e-b43b86651374",
-                  "upsell_funnel": "df337edd-e67f-4365-b8c1-aa0ceeecabb3",
+                  "price": "d899860d-cfd1-4754-9105-4a050efa707e",
+                  "upsell_funnel": "7a7dc813-a875-43a0-ba02-1a556743c220",
                   "discarded_at": null,
-                  "created_at": 1758904016,
-                  "updated_at": 1758904016
+                  "created_at": 1760366904,
+                  "updated_at": 1760366904
                 },
                 "schema": {
                   "$ref": "#/components/schemas/upsell_response"
@@ -13502,7 +13934,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e05227aa-5f62-474b-b0d5-04932081bb13",
+                  "id": "967925c6-ef8a-4b94-b859-7406c4451c35",
                   "object": "upsell",
                   "deleted": true
                 },
@@ -13582,16 +14014,16 @@
                   },
                   "data": [
                     {
-                      "id": "dd16606c-4ad1-4b78-9480-76ccb4a9f4bc",
+                      "id": "953cbbe1-8635-4c0b-8bf1-0bacd74f067e",
                       "object": "variant_option",
                       "display_type": "radio",
                       "metadata": {},
                       "name": "Color",
                       "position": 0,
                       "values": [],
-                      "product": "fa07cdc3-a9ff-4bed-a5fb-927bddf66c52",
-                      "created_at": 1758904017,
-                      "updated_at": 1758904017
+                      "product": "cb9cca45-0e5f-411e-a2b4-0e5d113d5f34",
+                      "created_at": 1760366905,
+                      "updated_at": 1760366905
                     }
                   ]
                 },
@@ -13628,16 +14060,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3a37e06d-f52e-48e3-9588-2a24074e5776",
+                  "id": "eaa63907-5cf0-4ff7-86a0-681fed470658",
                   "object": "variant_option",
                   "display_type": "radio",
                   "metadata": {},
                   "name": "Color",
                   "position": 0,
                   "values": [],
-                  "product": "23b53b4b-193f-49e5-b81a-50d319d41adf",
-                  "created_at": 1758904017,
-                  "updated_at": 1758904017
+                  "product": "72ae0d0d-12cc-4b5b-9a8a-99a7f618cd5d",
+                  "created_at": 1760366905,
+                  "updated_at": 1760366905
                 },
                 "schema": {
                   "$ref": "#/components/schemas/variant_option_response"
@@ -13715,7 +14147,7 @@
                   },
                   "data": [
                     {
-                      "id": "8c5e9035-f71f-4c96-b391-df02f982063e",
+                      "id": "43b4accc-dfe8-4d28-b614-ed4d0fcc2b33",
                       "object": "variant",
                       "amount": null,
                       "available_stock": 0,
@@ -13733,9 +14165,9 @@
                       "sku": null,
                       "stock": 0,
                       "image": null,
-                      "product": "3185b536-5766-44dd-bf6c-7dcc366ea845",
-                      "created_at": 1758904017,
-                      "updated_at": 1758904017
+                      "product": "8a5a98cb-53b5-4a71-8e6d-c83699d31ab0",
+                      "created_at": 1760366905,
+                      "updated_at": 1760366905
                     }
                   ]
                 },
@@ -13761,7 +14193,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7a42c2bb-48d6-46bb-a4a0-ff3d2e71cff0",
+                  "id": "283db5ee-4d69-44a2-b924-58a84097bd7e",
                   "object": "variant",
                   "amount": null,
                   "available_stock": 0,
@@ -13779,9 +14211,9 @@
                   "sku": null,
                   "stock": 0,
                   "image": null,
-                  "product": "5c1cbaf6-bb62-40f5-be68-8815308bfc77",
-                  "created_at": 1758904017,
-                  "updated_at": 1758904017
+                  "product": "8fdb900b-7f39-4e8c-88b6-187ec95a14c6",
+                  "created_at": 1760366905,
+                  "updated_at": 1760366905
                 },
                 "schema": {
                   "$ref": "#/components/schemas/variant_response"
@@ -13806,7 +14238,7 @@
                 },
                 "example": {
                   "variant": {
-                    "product": "5c1cbaf6-bb62-40f5-be68-8815308bfc77",
+                    "product": "8fdb900b-7f39-4e8c-88b6-187ec95a14c6",
                     "option_1": "Red"
                   }
                 }
@@ -13840,7 +14272,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "826bf3dc-ae54-47ca-a0ee-4da63c8cc2df",
+                  "id": "752a949b-4db8-4768-9276-6beaa95180a4",
                   "object": "variant",
                   "amount": null,
                   "available_stock": 0,
@@ -13858,9 +14290,9 @@
                   "sku": null,
                   "stock": 0,
                   "image": null,
-                  "product": "fc7e151d-8ae3-49b5-9cd4-33c093a2de5e",
-                  "created_at": 1758904017,
-                  "updated_at": 1758904017
+                  "product": "a890cdae-aac0-4747-bdb2-e23e1a7f3d31",
+                  "created_at": 1760366905,
+                  "updated_at": 1760366905
                 },
                 "schema": {
                   "$ref": "#/components/schemas/variant_response"
@@ -13884,7 +14316,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "11994e97-c88d-47b2-a182-d50a037d8409",
+                  "id": "7cc68cdf-85f6-4d83-a69e-e84bda0c1f7d",
                   "object": "variant",
                   "amount": null,
                   "available_stock": 0,
@@ -13902,9 +14334,9 @@
                   "sku": "abc-123-xyz",
                   "stock": 0,
                   "image": null,
-                  "product": "6ba9aa7b-ab36-45c5-94e2-23310f3c65f3",
-                  "created_at": 1758904017,
-                  "updated_at": 1758904017
+                  "product": "84be3649-80c8-41ac-883d-4eb7a0dcc8bd",
+                  "created_at": 1760366905,
+                  "updated_at": 1760366905
                 },
                 "schema": {
                   "$ref": "#/components/schemas/variant_response"
@@ -13950,7 +14382,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8c2ad79b-5a9c-4d4b-91cb-109c8c1dd036",
+                  "id": "16657321-1b1e-4da7-939e-56e6b6de463f",
                   "object": "variant",
                   "deleted": true
                 },
