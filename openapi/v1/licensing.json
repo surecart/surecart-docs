@@ -350,7 +350,7 @@
           },
           "country": {
             "type": "string",
-            "description": "Two-letter country code (ISO 3166-1 alpha-2)."
+            "description": "The two-letter code of the country - ISO 3166-1. (Reference the Atlas API for all available codes.)"
           },
           "line_1": {
             "type": "string",
@@ -371,7 +371,7 @@
           },
           "state": {
             "type": "string",
-            "description": "State, county, province, or region."
+            "description": "The code of the state - ISO 3166-2. (Reference the Atlas API for all available codes.)"
           }
         }
       },
@@ -382,6 +382,14 @@
           },
           {
             "$ref": "#/components/schemas/address_body"
+          },
+          {
+            "properties": {
+              "formatted_string": {
+                "type": "string",
+                "description": "A formatted string representation of the address."
+              }
+            }
           },
           {
             "$ref": "#/components/schemas/model_timestamps"
@@ -5117,25 +5125,38 @@
                   "type": "boolean",
                   "description": "Whether the city is required for the country."
                 },
-                "full_name": {
+                "code": {
+                  "type": "string",
+                  "description": "The two-letter code of the country - ISO 3166-1."
+                },
+                "name": {
                   "type": "string",
                   "description": "The full name of the country."
-                },
-                "iso_code": {
-                  "type": "string",
-                  "description": "The ISO code of the country."
                 },
                 "postal_code_required": {
                   "type": "boolean",
                   "description": "Whether the postal code is required for the country."
                 },
-                "states": {
-                  "type": "array",
-                  "description": "The states of the country."
-                },
                 "state_required": {
                   "type": "boolean",
                   "description": "Whether the state is required for the country."
+                },
+                "states": {
+                  "type": "array",
+                  "description": "The states of the country.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "description": "The code of the state - ISO 3166-2."
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The full name of the state."
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -6396,6 +6417,13 @@
                 "type": "string",
                 "description": "A name for this shipping zone that will be visible to customers."
               },
+              "postal_codes": {
+                "type": "array",
+                "description": "Optional array of postal code patterns to further filter addresses within the specified territories. Postal code filtering is applied in addition to territory filtering - an address must match both a territory and a postal code pattern (if provided) to be included in this shipping zone.\nSupports three matching modes:\n1. **Exact match**: Provide the complete postal code as a string (e.g., \"90210\", \"SW1A 1AA\").\n2. **Range match**: Use three dots (\"...\") to specify a numeric range (e.g., \"90210...99000\" matches all postal codes from 90210 to 99000). Only numeric postal codes are supported for ranges.\n3. **Wildcard match**: Use asterisk (\"*\") for prefix matching (e.g., \"902*\" matches \"90210\", \"90211\", \"902AB\", etc.).\nAll postal codes are normalized (uppercased and trimmed) before matching. If the array is empty, no postal code filtering is applied and all addresses within the territories will match.",
+                "items": {
+                  "type": "string"
+                }
+              },
               "territories": {
                 "type": "array",
                 "description": "The specific territories that this shipping zone covers.",
@@ -7143,7 +7171,7 @@
             "properties": {
               "country": {
                 "type": "string",
-                "description": "The country code."
+                "description": "The two-letter code of the country - ISO 3166-1. (Reference the Atlas API for all available codes.)"
               },
               "country_name": {
                 "type": "string",
@@ -7167,7 +7195,7 @@
               },
               "state": {
                 "type": "string",
-                "description": "The state/province code."
+                "description": "The code of the state - ISO 3166-2. (Reference the Atlas API for all available codes.)"
               },
               "state_name": {
                 "type": "string",
@@ -8143,14 +8171,14 @@
                   },
                   "data": [
                     {
-                      "id": "c3f399f0-b030-48f0-931f-cf18bff73113",
+                      "id": "983c7f6b-999f-4d52-adad-58461aad320a",
                       "object": "activation",
                       "counted": true,
                       "name": null,
                       "fingerprint": "example.com",
-                      "license": "f2594c35-9ee1-4ac7-9140-c126073ba04b",
-                      "created_at": 1761733296,
-                      "updated_at": 1761733296
+                      "license": "f32035c6-5362-49c6-a0a5-d3f9ea58bfdb",
+                      "created_at": 1761747878,
+                      "updated_at": 1761747878
                     }
                   ]
                 },
@@ -8176,14 +8204,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d26e910d-d25a-4078-bb11-39fb735cf87a",
+                  "id": "7edb7e6f-1fa7-43c7-b232-dee7fb08a6d6",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "35bd5a4b-6e84-480c-92be-898e9772d725",
-                  "created_at": 1761733298,
-                  "updated_at": 1761733298
+                  "license": "d03295ff-bf1a-4fe0-b4e8-e9891939e6d2",
+                  "created_at": 1761747878,
+                  "updated_at": 1761747878
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -8210,7 +8238,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "35bd5a4b-6e84-480c-92be-898e9772d725"
+                    "license_id": "d03295ff-bf1a-4fe0-b4e8-e9891939e6d2"
                   }
                 }
               }
@@ -8243,14 +8271,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5286f6bb-ca52-4da3-90e6-a09b51734052",
+                  "id": "3d72ae60-dedc-4ccc-8ca3-0d180b3f3778",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "9d54552c-e906-442e-a360-751f78a82715",
-                  "created_at": 1761733300,
-                  "updated_at": 1761733300
+                  "license": "75dd2eec-0a00-44b7-a85a-5fd455f16666",
+                  "created_at": 1761747879,
+                  "updated_at": 1761747879
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -8283,14 +8311,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a67062a0-1397-42cb-a21c-160983920d13",
+                  "id": "a9718cae-4ac5-44e9-a034-d294775d7087",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "a3de910c-7a7e-48ce-aa0a-6e66cd1356d8",
-                  "created_at": 1761733301,
-                  "updated_at": 1761733301
+                  "license": "e93720d0-91e2-4612-89cb-b218a556f653",
+                  "created_at": 1761747880,
+                  "updated_at": 1761747880
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -8346,7 +8374,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6e679ff6-f825-463c-bf7a-d56fb246f6d4",
+                  "id": "5120807e-6613-436d-8671-3e61eb855504",
                   "object": "activation",
                   "deleted": true
                 },
@@ -8477,17 +8505,17 @@
                   },
                   "data": [
                     {
-                      "id": "f3e3dae0-6e43-43a1-8873-25c4a116c4f3",
+                      "id": "717170a8-b4e7-4e74-adc8-2ec4d9a252d0",
                       "object": "license",
                       "activations_count": 0,
                       "activation_limit": null,
-                      "key": "aa4ece96-0613-4fa3-a34b-8951310ea533",
+                      "key": "1d894243-ea3d-4b68-928b-87f731e1f14a",
                       "revokes_at": null,
                       "status": "inactive",
-                      "customer": "eaf5f53b-a8c7-4556-b51f-de4195048b15",
-                      "purchase": "c23b8468-da7a-42fb-997d-193a1f0813d5",
-                      "created_at": 1761733353,
-                      "updated_at": 1761733353
+                      "customer": "9ebd3a3e-2855-4173-862a-3732e4eb55f9",
+                      "purchase": "87c62492-8a09-4d53-bd8b-949f92c4bca8",
+                      "created_at": 1761747908,
+                      "updated_at": 1761747908
                     }
                   ]
                 },
@@ -8513,17 +8541,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "485ccf7b-4e2a-4d42-b86b-e664207d676f",
+                  "id": "ccc5d184-d467-4623-8094-30cf7d9c80ed",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
                   "key": "abc-123-def-456",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "965b472d-a943-4d8d-aa9c-b597df4435be",
-                  "purchase": "d01c85a2-eee8-48ff-b4a3-06f3260c8730",
-                  "created_at": 1761733355,
-                  "updated_at": 1761733355
+                  "customer": "63f82692-b26b-4de4-a01b-382f1112f694",
+                  "purchase": "7acb81fd-8d49-4707-b545-895f61ff3460",
+                  "created_at": 1761747909,
+                  "updated_at": 1761747909
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -8549,7 +8577,7 @@
                 "example": {
                   "license": {
                     "key": "abc-123-def-456",
-                    "purchase": "d01c85a2-eee8-48ff-b4a3-06f3260c8730"
+                    "purchase": "7acb81fd-8d49-4707-b545-895f61ff3460"
                   }
                 }
               }
@@ -8582,17 +8610,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "720a1e68-94c0-4c4d-8ead-3018025f3802",
+                  "id": "cbfe2291-64c6-49fe-9903-3e0b52169020",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "b2578716-563d-404f-b85a-cba448b0fb3d",
+                  "key": "1e0a9361-c7c0-424e-a559-1d0603ea1db3",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "17808efa-8111-4b1a-a32b-36129a323970",
-                  "purchase": "9d0fa580-ee31-4c68-8873-6cd950d7b2d9",
-                  "created_at": 1761733357,
-                  "updated_at": 1761733357
+                  "customer": "2c07fa74-8bc4-41db-a0f3-e652d455720d",
+                  "purchase": "8380a9af-8e3e-4162-a143-ac452f50a8e3",
+                  "created_at": 1761747909,
+                  "updated_at": 1761747909
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -8625,17 +8653,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c1d22539-8ebf-498c-bab4-76e3e7be49ff",
+                  "id": "08f554ee-1af4-4feb-8304-66105f2b65dd",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": 10,
-                  "key": "60ae8f67-bbe3-4808-b31c-d80a31600e78",
+                  "key": "87cb5fe4-b399-4882-8d71-502e722b5fc6",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "69fe8a1b-a663-495b-b331-746b442288a0",
-                  "purchase": "07eec65b-58c5-4094-add0-0c3f2d237c0c",
-                  "created_at": 1761733358,
-                  "updated_at": 1761733358
+                  "customer": "e5bc108a-78c3-4606-a12c-fdca73c83026",
+                  "purchase": "5bebb83f-5e54-4eb2-b0ff-7af3b18ab952",
+                  "created_at": 1761747910,
+                  "updated_at": 1761747910
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -8691,7 +8719,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "94464fa0-ef06-4936-8af4-c6ffe9133fc7",
+                  "id": "63ff3602-256e-468a-a4c7-0142a207c363",
                   "object": "license",
                   "deleted": true
                 },

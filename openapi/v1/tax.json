@@ -350,7 +350,7 @@
           },
           "country": {
             "type": "string",
-            "description": "Two-letter country code (ISO 3166-1 alpha-2)."
+            "description": "The two-letter code of the country - ISO 3166-1. (Reference the Atlas API for all available codes.)"
           },
           "line_1": {
             "type": "string",
@@ -371,7 +371,7 @@
           },
           "state": {
             "type": "string",
-            "description": "State, county, province, or region."
+            "description": "The code of the state - ISO 3166-2. (Reference the Atlas API for all available codes.)"
           }
         }
       },
@@ -382,6 +382,14 @@
           },
           {
             "$ref": "#/components/schemas/address_body"
+          },
+          {
+            "properties": {
+              "formatted_string": {
+                "type": "string",
+                "description": "A formatted string representation of the address."
+              }
+            }
           },
           {
             "$ref": "#/components/schemas/model_timestamps"
@@ -5117,25 +5125,38 @@
                   "type": "boolean",
                   "description": "Whether the city is required for the country."
                 },
-                "full_name": {
+                "code": {
+                  "type": "string",
+                  "description": "The two-letter code of the country - ISO 3166-1."
+                },
+                "name": {
                   "type": "string",
                   "description": "The full name of the country."
-                },
-                "iso_code": {
-                  "type": "string",
-                  "description": "The ISO code of the country."
                 },
                 "postal_code_required": {
                   "type": "boolean",
                   "description": "Whether the postal code is required for the country."
                 },
-                "states": {
-                  "type": "array",
-                  "description": "The states of the country."
-                },
                 "state_required": {
                   "type": "boolean",
                   "description": "Whether the state is required for the country."
+                },
+                "states": {
+                  "type": "array",
+                  "description": "The states of the country.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "description": "The code of the state - ISO 3166-2."
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The full name of the state."
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -6396,6 +6417,13 @@
                 "type": "string",
                 "description": "A name for this shipping zone that will be visible to customers."
               },
+              "postal_codes": {
+                "type": "array",
+                "description": "Optional array of postal code patterns to further filter addresses within the specified territories. Postal code filtering is applied in addition to territory filtering - an address must match both a territory and a postal code pattern (if provided) to be included in this shipping zone.\nSupports three matching modes:\n1. **Exact match**: Provide the complete postal code as a string (e.g., \"90210\", \"SW1A 1AA\").\n2. **Range match**: Use three dots (\"...\") to specify a numeric range (e.g., \"90210...99000\" matches all postal codes from 90210 to 99000). Only numeric postal codes are supported for ranges.\n3. **Wildcard match**: Use asterisk (\"*\") for prefix matching (e.g., \"902*\" matches \"90210\", \"90211\", \"902AB\", etc.).\nAll postal codes are normalized (uppercased and trimmed) before matching. If the array is empty, no postal code filtering is applied and all addresses within the territories will match.",
+                "items": {
+                  "type": "string"
+                }
+              },
               "territories": {
                 "type": "array",
                 "description": "The specific territories that this shipping zone covers.",
@@ -7143,7 +7171,7 @@
             "properties": {
               "country": {
                 "type": "string",
-                "description": "The country code."
+                "description": "The two-letter code of the country - ISO 3166-1. (Reference the Atlas API for all available codes.)"
               },
               "country_name": {
                 "type": "string",
@@ -7167,7 +7195,7 @@
               },
               "state": {
                 "type": "string",
-                "description": "The state/province code."
+                "description": "The code of the state - ISO 3166-2. (Reference the Atlas API for all available codes.)"
               },
               "state_name": {
                 "type": "string",
@@ -8140,14 +8168,14 @@
                   },
                   "data": [
                     {
-                      "id": "9038d4e3-d115-4a20-8c73-a41bebb77007",
+                      "id": "a8f1f822-8d8d-4559-a6ab-62ed00c63e42",
                       "object": "tax_override",
                       "shipping": false,
                       "rate": 7.5,
-                      "product_collection": "a6a27c64-ab0b-457c-a11a-63e7517ccf5a",
-                      "tax_zone": "6d327dbf-c13d-4988-ab0e-b490783dcea7",
-                      "created_at": 1761733445,
-                      "updated_at": 1761733445
+                      "product_collection": "418db2bc-4329-4a4c-ac36-8a4abdc2252f",
+                      "tax_zone": "4d253785-39a2-4570-917d-b65eda0d1c7e",
+                      "created_at": 1761747956,
+                      "updated_at": 1761747956
                     }
                   ]
                 },
@@ -8173,14 +8201,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "be1629ab-b5a2-4650-bb67-f6254be8f22b",
+                  "id": "7ff3e099-844f-45b5-98aa-1b0c58187eba",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 10.0,
-                  "product_collection": "275f23df-42c0-4bd1-96fc-58d55a12f551",
-                  "tax_zone": "9f969e29-3bd1-404d-9a55-eb56ded23d27",
-                  "created_at": 1761733446,
-                  "updated_at": 1761733446
+                  "product_collection": "5a5392f1-14c3-4443-92b4-2bf21ad2a75a",
+                  "tax_zone": "3bf4e183-1ee7-42c9-b03d-03d8e0d79af2",
+                  "created_at": 1761747956,
+                  "updated_at": 1761747956
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -8205,8 +8233,8 @@
                 },
                 "example": {
                   "tax_override": {
-                    "tax_zone": "9f969e29-3bd1-404d-9a55-eb56ded23d27",
-                    "product_collection": "275f23df-42c0-4bd1-96fc-58d55a12f551",
+                    "tax_zone": "3bf4e183-1ee7-42c9-b03d-03d8e0d79af2",
+                    "product_collection": "5a5392f1-14c3-4443-92b4-2bf21ad2a75a",
                     "rate": 10
                   }
                 }
@@ -8240,14 +8268,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "86b66a34-6dff-4fb6-a008-1f0b75e5da62",
+                  "id": "b3e3d07b-48b2-481c-8a5f-f20f405f61c3",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 7.5,
-                  "product_collection": "2649faca-ffad-4266-a595-2aef39253b48",
-                  "tax_zone": "9efb1c16-a01d-4e30-9059-233ff9d5343f",
-                  "created_at": 1761733446,
-                  "updated_at": 1761733446
+                  "product_collection": "139473f7-6e83-4316-91f7-3f548898dcc0",
+                  "tax_zone": "3d32d4ab-8af6-4736-b27b-2499119f6d7b",
+                  "created_at": 1761747957,
+                  "updated_at": 1761747957
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -8271,14 +8299,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0643af44-bb97-4bce-a49e-d1e5224f1994",
+                  "id": "7c552868-d6b9-459e-a3bd-58ab91eb0551",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 5.0,
-                  "product_collection": "a038fe80-7939-4081-94aa-b1e4b76c71ea",
-                  "tax_zone": "7e04b7ed-b39d-4337-9dbf-717c3fa4cc43",
-                  "created_at": 1761733446,
-                  "updated_at": 1761733446
+                  "product_collection": "71910f36-c2dd-428f-86c6-06e43daf710c",
+                  "tax_zone": "fe616536-a924-4d77-8108-fe7340aafd77",
+                  "created_at": 1761747957,
+                  "updated_at": 1761747957
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -8324,7 +8352,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3518fafe-4426-4ca6-8720-7ac278eb7775",
+                  "id": "c00caabe-c058-4bec-9865-8c1790ccc900",
                   "object": "tax_override",
                   "deleted": true
                 },
@@ -8351,7 +8379,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f422795c-cd91-4c9f-b967-c48bb4e46661",
+                  "id": "2d7cee03-c68d-43c2-8238-04ef45e0ed6f",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -8363,11 +8391,11 @@
                   "tax_enabled": false,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "e17de530-22f8-4a19-b498-1bf6924ac4ac",
+                  "address": "d33bf5d5-2701-45ca-8538-64214a0ba9fa",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1761733447,
-                  "updated_at": 1761733447
+                  "created_at": 1761747957,
+                  "updated_at": 1761747957
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -8391,7 +8419,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "73eac1e1-b888-48a3-8157-37179a0eeb11",
+                  "id": "0320edb9-238c-46ac-8c83-8ce31830e67f",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -8403,11 +8431,11 @@
                   "tax_enabled": true,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "73b5895e-6498-4f1b-9bec-10d8b2bb7f11",
+                  "address": "c9cefe44-66fc-4be0-b307-863acfb221d4",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1761733447,
-                  "updated_at": 1761733447
+                  "created_at": 1761747957,
+                  "updated_at": 1761747957
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -8496,14 +8524,14 @@
                   },
                   "data": [
                     {
-                      "id": "245e9223-f335-4075-b4c9-d45b80867eea",
+                      "id": "24209978-6104-4539-83a2-b68177193ef6",
                       "object": "tax_registration",
                       "label": null,
                       "manual_rate": 5.5,
                       "tax_identifier": null,
-                      "tax_zone": "aa45d7ad-a8eb-4f4a-8f9a-d06ff5af7784",
-                      "created_at": 1761733447,
-                      "updated_at": 1761733447
+                      "tax_zone": "12ddbda1-2ebb-4ca1-ad4c-f7f5623bba8e",
+                      "created_at": 1761747957,
+                      "updated_at": 1761747957
                     }
                   ]
                 },
@@ -8529,14 +8557,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f8c4b534-06dd-48e1-9a59-07b198c8f585",
+                  "id": "229e88bf-2b2b-42e7-a01b-83275b16d158",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 10.0,
                   "tax_identifier": null,
-                  "tax_zone": "20d270e4-2feb-4d4d-8432-16ff52d5cc54",
-                  "created_at": 1761733447,
-                  "updated_at": 1761733447
+                  "tax_zone": "13dd1650-6679-43d4-9baf-148d2d8c36d3",
+                  "created_at": 1761747957,
+                  "updated_at": 1761747957
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -8561,7 +8589,7 @@
                 },
                 "example": {
                   "tax_registration": {
-                    "tax_zone": "20d270e4-2feb-4d4d-8432-16ff52d5cc54",
+                    "tax_zone": "13dd1650-6679-43d4-9baf-148d2d8c36d3",
                     "manual_rate": 10
                   }
                 }
@@ -8595,14 +8623,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "60157992-f4ad-4a62-b73a-3d0c8673e322",
+                  "id": "7e63b847-9e0c-4eed-ac68-9acc0e5e5cc7",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_identifier": null,
-                  "tax_zone": "ddfaca96-c830-497e-8ca2-e5a33e9e4ac3",
-                  "created_at": 1761733447,
-                  "updated_at": 1761733447
+                  "tax_zone": "ca946307-c69c-4edf-8c59-de1b6aed6841",
+                  "created_at": 1761747957,
+                  "updated_at": 1761747957
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -8626,14 +8654,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "efbdadce-32bc-4f17-9f3a-5b41969dae4f",
+                  "id": "f4c97231-e1ad-46d0-a17a-ca51f33f4015",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
-                  "tax_identifier": "b451a0eb-0616-4a75-b3ff-7656caef8baa",
-                  "tax_zone": "695074ce-932e-4e2f-9154-06dbe166e840",
-                  "created_at": 1761733447,
-                  "updated_at": 1761733447
+                  "tax_identifier": "f34aac35-0759-4402-8f53-6c8ee2471eb2",
+                  "tax_zone": "118038fe-f4f1-4142-b9f1-6928693f287a",
+                  "created_at": 1761747957,
+                  "updated_at": 1761747957
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -8682,7 +8710,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5f5d9481-4e97-4abc-a775-ae349e144731",
+                  "id": "5b757292-3e01-4942-8b84-47ffccd4a54a",
                   "object": "tax_registration",
                   "deleted": true
                 },
