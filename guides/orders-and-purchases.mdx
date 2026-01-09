@@ -210,172 +210,9 @@ public function getItem( $id ) {
 }
 ```
 </Step>
-</Steps>
 
-### 1. Extend IntegrationService and implement the interfaces
-
-We'll start by extending the IntegrationService class and implementing the required interfaces.
-
-```php
-<?php
-
-namespace MyPlugin\Integrations;
-
-use SureCart\Integrations\Contracts\IntegrationInterface;
-use SureCart\Integrations\Contracts\PurchaseSyncInterface;
-use SureCart\Integrations\IntegrationService;
-
-class UserRoleChangeIntegration extends IntegrationService implements IntegrationInterface, PurchaseSyncInterface {
-}
-
-````
-
-As shown above, we extend the IntegrationService class and also implement two interfaces for the class. Your class must extend the IntegrationService class and implement these two interfaces to work with purchase syncing. These interfaces are helpful for your IDE to let you know which methods you need to implement.
-
-In this case, we are implementing an Integration and one that will sync purchases, so we need both of these interfaces.
-
-### 2. Set our integration details
-
-To ensure our integration is listed with other integrations, we need to provide essential information that informs our merchant about it. We'll accomplish this by using the required `IntegrationInterface` methods. Let's include these methods inside our PHP class.
-
-```php
-...
-	/**
-	 * The name for the integration.
-	 * Names have to be structured as namespace/integration-name, where namespace is the name of your plugin or theme.
-	 *
-	 * @return string
-	 */
-	public function getName() {
-		return 'my-plugin/user-role-change';
-	}
-
-	/**
-	 * Get the SureCart model used for the integration.
-	 * Only 'product' is supported at this time.
-	 *
-	 * @return string
-	 */
-	public function getModel() {
-		return 'product';
-	}
-
-	/**
-	 * Get the integration logo url.
-	 * This url needs to be an absolute url to png, jpg, webp or svg.
-	 *
-	 * @return string
-	 */
-	public function getLogo() {
-		return esc_url_raw( trailingslashit( plugin_dir_url( __FILE__ ) ) . 'icon.svg' );
-	}
-
-	/**
-	 * The display name for the integration in the dropdown.
-	 * This is displayed in a dropdown menu when a merchant selects an integration.
-	 *
-	 * @return string
-	 */
-	public function getLabel() {
-		return __( 'Change WordPress User Role', 'surecart' );
-	}
-
-	/**
-	 * The label for the integration item that will be chosen.
-	 * This is displayed in the second dropdown after a person selects your integration.
-	 *
-	 * @return string
-	 */
-	public function getItemLabel() {
-		return __( 'Change User Role', 'surecart' );
-	}
-
-	/**
-	 * Help text for the integration item chooser.
-	 * Additional help text for the integration item chooser.
-	 *
-	 * @return string
-	 */
-	public function getItemHelp() {
-		return __( 'Change the user role of the user who purchased the product.', 'surecart' );
-	}
-...
-```
-
-As demonstrated above, these required functions return string values. For more details on where and how each method is used, please consult the comments provided for each method.
-
-### 3. Populate the integration item chooser
-
-To ensure that the integration is displayed in the integration chooser, two functions must be provided: `getItems` and `getItem`. These functions are essential for populating the integration item chooser and enabling SureCart to retrieve individual items.
-
-Items can be thought of as individual records. In this example, an item represents a role. If you were to build an integration with a specific post type, for example, the item would be a list of your post type posts.
-
-Individual items are expected to be in this format:
-
-```php
- [
-	 'id' => 'item_id', // this is stored as the integration model's integration_id property.
-	 'label' => 'Item Label', // this is shown as a display name for the user for the item.
- ]
-```
-
-The ID is used as a storage value. Most of the time, this will be a post ID or model ID. In this case, we are using a role slug. Let's implement this logic now.
-
-#### GetItems
-
-Let's create a `getItems` method and map all user roles to an array of item choices. As with the above, we want the savable `id` to be the role name, and the label to be the role display name.
-
-The search term is also passed, so you can make sure you are querying relevant results. Since we return all roles, we do not need this term, but it would be helpful for querying posts, for example.
-
-```php
-	...
-	/**
-	 * Get item listing for the integration.
-	 * These are a list of item the merchant can choose from when adding an integration.
-	 *
-	 * @param array $items The integration items.
-	 * @param string $search The search term.
-	 *
-	 * @return array The items for the integration.
-	 */
-	public function getItems( $items = [], $search = '' ) {
-		$roles          = [];
-		$editable_roles = wp_roles()->roles;
-		foreach ( $editable_roles as $role => $details ) {
-			$sub['id']      = esc_attr( $role );
-			$sub['label']   = translate_user_role( $details['name'] );
-			$roles[ $role ] = $sub;
-		}
-		return $roles;
-	}
-	...
-```
-
-#### GetItem
-
-The IntegrationInterface requires a `getItem` function. This function should return a single item choice, which is a single array in the item format noted above. In our case, we expect the `id` to be the role name, as that is what we defined in the `getItems` method.
-
-```php
-...
-	/**
-	 * Get the individual item.
-	 *
-	 * @param string $id The item role.
-	 *
-	 * @return array The item for the integration.
-	 */
-	public function getItem( $id ) {
-		return [
-			'id'    => $id,
-			'label' => wp_roles()->get_names()[ $id ],
-		];
-	}
-...
-```
-
-### 4. Changing the role on Purchase lifecycle events.
-
-Next, we'll implement the required functions for the PurchaseSyncInterface. These functions are run when a purchase lifecycle event takes place and will allow us to modify the user's role.
+<Step title="Change the role on Purchase lifecycle events">
+Next, we'll implement the required functions for the `PurchaseSyncInterface`. These functions are run when a purchase lifecycle event takes place and will allow us to modify the user's role.
 
 The parameter `$integration` contains an `integration_id` attribute. This is the same `id` that you've set above in the `getItem` and `getItems` methods.
 
@@ -494,14 +331,16 @@ If you want to perform specific actions when a purchase's product changes, such 
 		// if you do not add this, it will default to onPurchaseRevoked
 	}
 ```
+</Step>
 
-### 5. Bootstrap the integration
-
+<Step title="Bootstrap the integration">
 The final step in integrating your custom purchase syncing logic is to bootstrap your integration. This involves creating a new instance of your integration class and calling the bootstrap function to initialize it.
 
 ```php
 (new \MyPlugin\Integrations\UserRoleChangeIntegration())->bootstrap();
 ```
+</Step>
+</Steps>
 
 ## Full Example
 
@@ -669,3 +508,4 @@ class UserRoleChangeIntegration extends IntegrationService implements Integratio
 // bootstrap the integration.
 (new \MyPlugin\Integrations\UserRoleChangeIntegration())->bootstrap();
 ```
+````
