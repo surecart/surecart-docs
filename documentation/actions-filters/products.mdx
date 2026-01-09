@@ -211,82 +211,6 @@ add_filter( 'surecart/product/replace_content_with_product_info_part', function(
 add_filter( 'surecart/product/replace_content_with_product_info_part', '__return_false' );
 ```
 
-### SEO
-
-#### `sc_display_product_json_ld_schema`
-
-Control whether JSON-LD schema markup is output for products.
-
-<Warning>
-If you're using a third-party SEO plugin (like Yoast SEO, Rank Math, or All in One SEO) that generates product schema, you should disable SureCart's schema output to avoid duplicate structured data. Duplicate schema can confuse search engines and negatively impact your SEO.
-</Warning>
-
-<ResponseField name="Parameters" type="Filter Parameters">
-  <Expandable title="properties">
-    <ResponseField name="$display" type="bool">
-      Whether to display the schema markup.
-    </ResponseField>
-    <ResponseField name="$product" type="\SureCart\Models\Product">
-      The product model object.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
-
-**Disable when using Yoast SEO:**
-
-```php
-add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
-    // Disable SureCart schema when Yoast SEO is active
-    if ( class_exists( 'WPSEO_Frontend' ) || defined( 'WPSEO_VERSION' ) ) {
-        return false;
-    }
-    return $display;
-}, 10, 2 );
-```
-
-**Disable when using Rank Math:**
-
-```php
-add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
-    // Disable SureCart schema when Rank Math is active
-    if ( class_exists( 'RankMath' ) ) {
-        return false;
-    }
-    return $display;
-}, 10, 2 );
-```
-
-**Disable for any SEO plugin:**
-
-```php
-// Completely disable SureCart's product schema output
-add_filter( 'sc_display_product_json_ld_schema', '__return_false' );
-```
-
-#### `sc_display_product_seo_meta`
-
-Control whether SEO meta tags are output for products.
-
-```php
-add_filter( 'sc_display_product_seo_meta', function( $display, $product ) {
-    // Use your own SEO plugin instead
-    if ( class_exists( 'WPSEO_Frontend' ) ) {
-        return false;
-    }
-    return $display;
-}, 10, 2 );
-```
-
-#### `surecart/og:image/size`
-
-Filter the image size used for Open Graph meta tags.
-
-```php
-add_filter( 'surecart/og:image/size', function( $size ) {
-    return 'large'; // or 'medium', 'thumbnail', 'full', etc.
-} );
-```
-
 ### Permalinks
 
 #### `sc_product_post_type_link_sc_collection`
@@ -536,25 +460,6 @@ add_filter( 'surecart/product-line-item-image/fallback_src', function( $src, $pr
     }
     
     return get_template_directory_uri() . '/images/default-product.png';
-}, 10, 2 );
-```
-
-### Disable Schema for Free Products
-
-```php
-add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
-    // Fetch product with prices relation loaded.
-    $product = \SureCart\Models\Product::with(['prices'])->find( $product->id );
-    
-    // Don't output schema for free products
-    if ( ! empty( $product->prices->data ) ) {
-        foreach ( $product->prices->data as $price ) {
-            if ( $price->amount === 0 ) {
-                return false;
-            }
-        }
-    }
-    return $display;
 }, 10, 2 );
 ```
 

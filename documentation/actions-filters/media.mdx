@@ -1,0 +1,126 @@
+---
+title: "Media"
+description: "Customize video playback, image galleries, and media display"
+---
+
+These filters allow you to customize how media elements like videos and image galleries are displayed throughout SureCart.
+
+## Video Filters
+
+### `surecart/product-video-poster/size`
+
+Filter the video poster image size.
+
+```php
+add_filter( 'surecart/product-video-poster/size', function( $size ) {
+    return 'full';
+} );
+```
+
+### `surecart/product-video-poster/fallback_src`
+
+Filter the fallback video poster image.
+
+```php
+add_filter( 'surecart/product-video-poster/fallback_src', function( $src ) {
+    return get_template_directory_uri() . '/images/video-placeholder.jpg';
+} );
+```
+
+### `surecart_video_html`
+
+Filter the video HTML output for complete customization.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$html" type="string">
+      The video HTML markup.
+    </ResponseField>
+    <ResponseField name="$video" type="array">
+      Video attributes including src, poster, dimensions.
+    </ResponseField>
+    <ResponseField name="$media" type="object">
+      The media object from the gallery.
+    </ResponseField>
+    <ResponseField name="$metadata" type="array">
+      Video metadata including duration, codec, etc.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart_video_html', function( $html, $video, $media, $metadata ) {
+    // Use custom video player
+    return sprintf(
+        '<div class="custom-video-player" data-src="%s" data-poster="%s"></div>',
+        esc_url( $video['src'] ),
+        esc_url( $video['poster'] ?? '' )
+    );
+}, 10, 4 );
+```
+
+## Image Gallery Filters
+
+### `surecart/image-slider/active-breakpoint`
+
+Filter the breakpoint for gallery slider activation.
+
+```php
+add_filter( 'surecart/image-slider/active-breakpoint', function( $breakpoint ) {
+    return 768; // Change breakpoint pixel value
+} );
+
+// Or disable slider on desktop
+add_filter( 'surecart/image-slider/active-breakpoint', function( $breakpoint ) {
+    return 1024; // Only activate slider below 1024px
+} );
+```
+
+## Use Cases
+
+### Custom Video Player Integration
+
+```php
+add_filter( 'surecart_video_html', function( $html, $video, $media, $metadata ) {
+    // Use Plyr video player
+    wp_enqueue_script( 'plyr' );
+    wp_enqueue_style( 'plyr' );
+    
+    return sprintf(
+        '<video class="plyr" playsinline controls data-poster="%s">
+            <source src="%s" type="video/mp4" />
+        </video>',
+        esc_url( $video['poster'] ?? '' ),
+        esc_url( $video['src'] )
+    );
+}, 10, 4 );
+```
+
+### Add Video Analytics Tracking
+
+```php
+add_filter( 'surecart_video_html', function( $html, $video, $media, $metadata ) {
+    $processor = new WP_HTML_Tag_Processor( $html );
+    
+    if ( $processor->next_tag( 'video' ) ) {
+        // Add tracking attributes for analytics
+        $processor->set_attribute( 'data-track', 'product-video' );
+        $processor->set_attribute( 'data-video-id', esc_attr( $media->id ?? '' ) );
+        $processor->set_attribute( 'data-duration', esc_attr( $metadata['duration'] ?? '' ) );
+    }
+    
+    return $processor->get_updated_html();
+}, 10, 4 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Products" icon="box" href="/guides/actions-filters/products">
+    Customize product display and images.
+  </Card>
+  <Card title="Templates" icon="code" href="/guides/actions-filters/templates">
+    Modify block output and inject content.
+  </Card>
+</CardGroup>
+

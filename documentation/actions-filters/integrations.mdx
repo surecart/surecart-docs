@@ -1,0 +1,78 @@
+---
+title: "Integrations"
+description: "Hook into integration lifecycle events"
+---
+
+<Note>
+  **These are low-level actions for integration configuration changes.** <br /><br />
+  If you are wanting to create a full purchase integration that handles granting access, refunds, upgrades, downgrades and more, please follow the [Purchase Integration Guide](/guides/orders-and-purchases).
+</Note>
+
+These actions fire when a merchant configures or removes product integrations in the SureCart admin. Product integrations are the automated actions that occur when a product is purchased—such as changing a user's WordPress role, enrolling them in a course, or adding them to a membership group.
+
+## `surecart/integrations/create`
+
+Fired when a merchant **adds** an integration to a product. For example, adding a "Change User Role" integration on the Edit Product page.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$params" type="array">
+      The integration parameters including provider, model, and configuration.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/integrations/create', function( $params ) {
+    // Log when integrations are added
+    error_log( 'Integration created: ' . print_r( $params, true ) );
+    
+    // Notify admin when a new integration is configured
+    if ( ! empty( $params['provider'] ) ) {
+        wp_mail(
+            get_option( 'admin_email' ),
+            'New Product Integration Added',
+            sprintf( 'A %s integration was added to a product.', $params['provider'] )
+        );
+    }
+} );
+```
+
+## `surecart/integrations/delete`
+
+Fired when a merchant **removes** an integration from a product.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$params" type="array">
+      The integration parameters that were removed.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/integrations/delete', function( $params ) {
+    // Clean up any custom data when integration is removed
+    error_log( 'Integration deleted: ' . print_r( $params, true ) );
+} );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Orders & Purchases Guide"
+    icon="puzzle-piece"
+    href="/guides/orders-and-purchases"
+  >
+    Build full integrations using the Integration class that handles purchases, refunds, upgrades, and more.
+  </Card>
+  <Card
+    title="Purchases"
+    icon="bag-shopping"
+    href="/guides/actions-filters/purchases"
+  >
+    Hook into purchase lifecycle events like created, invoked, and revoked.
+  </Card>
+</CardGroup>
+

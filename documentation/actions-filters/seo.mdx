@@ -1,0 +1,149 @@
+---
+title: "SEO"
+description: "Customize SEO behavior and meta tags"
+---
+
+These filters allow you to customize SEO-related behavior in SureCart.
+
+## Meta Tags
+
+### `surecart/noindex_query_vars`
+
+Filter query vars that trigger noindex meta tag.
+
+```php
+add_filter( 'surecart/noindex_query_vars', function( $vars ) {
+    // Add custom query vars to noindex
+    $vars[] = 'my_var';
+    return $vars;
+} );
+```
+
+### `sc_display_product_seo_meta`
+
+Control whether SEO meta tags are output for products.
+
+```php
+add_filter( 'sc_display_product_seo_meta', function( $display, $product ) {
+    // Use your own SEO plugin instead
+    if ( class_exists( 'WPSEO_Frontend' ) ) {
+        return false;
+    }
+    return $display;
+}, 10, 2 );
+```
+
+### `surecart/og:image/size`
+
+Filter the image size used for Open Graph meta tags.
+
+```php
+add_filter( 'surecart/og:image/size', function( $size ) {
+    return 'large'; // or 'medium', 'thumbnail', 'full', etc.
+} );
+```
+
+## Product Schema
+
+### `sc_display_product_json_ld_schema`
+
+Control whether JSON-LD schema markup is output for products.
+
+<Warning>
+If you're using a third-party SEO plugin (like Yoast SEO, Rank Math, or All in One SEO) that generates product schema, you should disable SureCart's schema output to avoid duplicate structured data. Duplicate schema can confuse search engines and negatively impact your SEO.
+</Warning>
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$display" type="bool">
+      Whether to display the schema markup.
+    </ResponseField>
+    <ResponseField name="$product" type="\SureCart\Models\Product">
+      The product model object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+**Disable when using Yoast SEO:**
+
+```php
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    // Disable SureCart schema when Yoast SEO is active
+    if ( class_exists( 'WPSEO_Frontend' ) || defined( 'WPSEO_VERSION' ) ) {
+        return false;
+    }
+    return $display;
+}, 10, 2 );
+```
+
+**Disable when using Rank Math:**
+
+```php
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    // Disable SureCart schema when Rank Math is active
+    if ( class_exists( 'RankMath' ) ) {
+        return false;
+    }
+    return $display;
+}, 10, 2 );
+```
+
+**Disable for any SEO plugin:**
+
+```php
+// Completely disable SureCart's product schema output
+add_filter( 'sc_display_product_json_ld_schema', '__return_false' );
+```
+
+## Yoast SEO Integration
+
+### `sc_wpseo_frontend_presenters`
+
+Filter Yoast SEO presenters for SureCart pages.
+
+```php
+add_filter( 'sc_wpseo_frontend_presenters', function( $title_presenters, $presenters ) {
+    // Modify SEO presenters
+    return $title_presenters;
+}, 10, 2 );
+```
+
+## Use Cases
+
+### Disable Schema for Free Products
+
+```php
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    // Fetch product with prices relation loaded.
+    $product = \SureCart\Models\Product::with(['prices'])->find( $product->id );
+    
+    // Don't output schema for free products
+    if ( ! empty( $product->prices->data ) ) {
+        foreach ( $product->prices->data as $price ) {
+            if ( $price->amount === 0 ) {
+                return false;
+            }
+        }
+    }
+    return $display;
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Products"
+    icon="box"
+    href="/guides/actions-filters/products"
+  >
+    Hook into product lifecycle events.
+  </Card>
+  <Card
+    title="Templates"
+    icon="code"
+    href="/guides/actions-filters/templates"
+  >
+    Hook into admin and template actions.
+  </Card>
+</CardGroup>

@@ -1,0 +1,444 @@
+---
+title: "Templates"
+description: "Modify blocks, shortcodes, reviews, and inject content into templates"
+---
+
+## Modifying Block and Front-End HTML
+
+You can modify the HTML output of any SureCart block using WordPress's [`render_block`](https://developer.wordpress.org/reference/hooks/render_block/) filter combined with the [HTML Tag Processor](https://developer.wordpress.org/reference/classes/wp_html_tag_processor/)—a safe, performant way to manipulate HTML without regex or string replacement.
+
+### Finding a Block's Name
+
+To target a specific block, you need its name. SureCart blocks use the `surecart/` namespace (e.g., `surecart/product-title`). Here are ways to find a block's name:
+
+#### Browser Inspector
+Inspect the block on the frontend. The wrapper element's class follows the pattern `wp-block-{namespace}-{block-name}`. For example, `wp-block-surecart-product-title` means the block name is `surecart/product-title`.
+
+#### Code editor
+In the block editor, switch to the Code Editor view (⇧⌘⌥M or via Options menu). Block names appear in HTML comments like `<!-- wp:surecart/product-title -->`.
+
+#### PHP
+Use [`get_dynamic_block_names()`](https://developer.wordpress.org/reference/functions/get_dynamic_block_names/) to list all registered dynamic blocks:
+
+```php
+// Log all registered dynamic block names
+add_action( 'init', function() {
+    error_log( print_r( get_dynamic_block_names(), true ) );
+}, 99 );
+```
+
+<Tip>
+Common SureCart blocks include `surecart/product-title`, `surecart/product-price`, `surecart/buy-button`, `surecart/product-image`, `surecart/product-description`, and `surecart/product-collection`.
+</Tip>
+
+### Using `render_block`
+
+The [`render_block`](https://developer.wordpress.org/reference/hooks/render_block/) filter runs after a block is rendered, giving you access to the final HTML output. You can target specific blocks by checking `$block['blockName']`.
+
+```php
+add_filter( 'render_block', function( $block_content, $block ) {
+    // Only modify SureCart product title blocks
+    if ( 'surecart/product-title' !== $block['blockName'] ) {
+        return $block_content;
+    }
+
+    // Modify the block content
+    return $block_content;
+}, 10, 2 );
+```
+
+#### Block-Specific Shorthand
+
+For cleaner code, use the [`render_block_{$this->name}`](https://developer.wordpress.org/reference/hooks/render_block_this-name/) filter which only fires for a specific block type—no conditional check needed:
+
+```php
+// This filter ONLY runs for the product-title block
+add_filter( 'render_block_surecart/product-title', function( $block_content, $block, $instance ) {
+    // Modify the block content directly
+    return $block_content;
+}, 10, 3 );
+```
+
+### Using the HTML Tag Processor
+
+The [`WP_HTML_Tag_Processor`](https://developer.wordpress.org/reference/classes/wp_html_tag_processor/) class provides a safe way to traverse and modify HTML. It's the recommended approach over regex or string manipulation.
+
+```php
+add_filter( 'render_block_surecart/product-title', function( $block_content, $block, $instance ) {
+    // Create a new processor instance
+    $processor = new WP_HTML_Tag_Processor( $block_content );
+
+    // Find the first heading tag and add a custom class
+    if ( $processor->next_tag( 'h2' ) ) {
+        $processor->add_class( 'my-custom-title-class' );
+        $processor->set_attribute( 'data-custom', 'value' );
+    }
+
+    return $processor->get_updated_html();
+}, 10, 3 );
+```
+
+### Block Examples
+
+#### Add Custom Data Attributes to Buy Buttons
+
+```php
+add_filter( 'render_block_surecart/buy-button', function( $block_content, $block, $instance ) {
+    $processor = new WP_HTML_Tag_Processor( $block_content );
+
+    if ( $processor->next_tag( 'a' ) ) {
+        // Add tracking attributes
+        $processor->set_attribute( 'data-track', 'buy-button-click' );
+        $processor->set_attribute( 'data-product-id', $block['attrs']['id'] ?? '' );
+    }
+
+    return $processor->get_updated_html();
+}, 10, 3 );
+```
+
+#### Wrap Product Prices with Custom Markup
+
+```php
+add_filter( 'render_block_surecart/product-price', function( $block_content, $block, $instance ) {
+    // Wrap the entire block output
+    return '<div class="price-wrapper">' . $block_content . '</div>';
+}, 10, 3 );
+```
+
+#### Add Low Stock Warning Badge
+
+Append a warning badge next to the product title when stock is low. This uses SureCart's built-in `.sc-tag` component classes for consistent styling.
+
+```php
+add_filter( 'render_block_surecart/product-title', function( $block_content, $block, $instance ) {
+    $product = sc_get_product();
+
+    // this product does not use stock.
+    if ( empty( $product->stock_enabled ) ) {
+      return $block_content;
+    }
+    
+    // Check if stock is low (e.g., less than 5 remaining)
+    if ( $product->available_stock >= 5 ) {
+        return $block_content;
+    }
+
+    // Create the warning badge using SureCart's tag component classes
+    $badge = sprintf(
+        '<span class="sc-tag sc-tag--warning sc-tag--small sc-tag--pill">Only %d left!</span>',
+        $product->available_stock
+    );
+
+    // Append the badge after the title content
+    return $block_content . $badge;
+}, 10, 3 );
+```
+
+<Tip>
+SureCart's `.sc-tag` component supports variants like `--warning`, `--success`, `--danger`, `--info`, and `--primary`, plus sizes `--small`, `--medium`, `--large`, and a `--pill` modifier for rounded corners.
+</Tip>
+
+<Note>
+The HTML Tag Processor is available in WordPress 6.2+. For older versions, consider using [DOMDocument](https://www.php.net/manual/en/class.domdocument.php) or carefully crafted string replacements.
+</Note>
+
+## Block Pattern Filters
+
+### `surecart/blocks/pattern_categories`
+
+Filter the available block pattern categories.
+
+```php
+add_filter( 'surecart/blocks/pattern_categories', function( $categories ) {
+    $categories['my-category'] = [
+        'label' => 'My Custom Category',
+    ];
+    return $categories;
+} );
+```
+
+### `surecart/blocks/patterns`
+
+Filter the registered block patterns.
+
+```php
+add_filter( 'surecart/blocks/patterns', function( $patterns ) {
+    // Add custom pattern
+    $patterns[] = 'my-custom-pattern';
+    
+    // Or remove a pattern
+    $patterns = array_diff( $patterns, [ 'pattern-to-remove' ] );
+    
+    return $patterns;
+} );
+```
+
+### `surecart_block_output`
+
+Filter the rendered output of SureCart blocks.
+
+```php
+add_filter( 'surecart_block_output', function( $output ) {
+    // Wrap all blocks in a custom container
+    return '<div class="my-block-wrapper">' . $output . '</div>';
+} );
+```
+
+## Page Builder Filters
+
+### `sc_elementor_templates`
+
+Filter available Elementor templates.
+
+```php
+add_filter( 'sc_elementor_templates', function( $templates ) {
+    // Add or remove templates
+    return $templates;
+} );
+```
+
+## Shortcode Filters
+
+### `surecart/shortcode/render`
+
+Filter the rendered shortcode output.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$content" type="string">
+      The rendered shortcode HTML content.
+    </ResponseField>
+    <ResponseField name="$atts" type="array">
+      Shortcode attributes passed by the user.
+    </ResponseField>
+    <ResponseField name="$name" type="string">
+      The shortcode name.
+    </ResponseField>
+    <ResponseField name="$form" type="\WP_Post">
+      The form post object being rendered.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/shortcode/render', function( $content, $atts, $name, $form ) {
+    // Wrap output in custom container
+    return '<div class="my-wrapper">' . $content . '</div>';
+}, 10, 4 );
+```
+
+## Review Filters
+
+### `surecart/review_count/enabled`
+
+Control whether review counts are displayed.
+
+```php
+add_filter( 'surecart/review_count/enabled', function( $enabled ) {
+    // Disable review counts
+    return false;
+} );
+```
+
+### `surecart/review_form/enabled`
+
+Control whether the review form is displayed.
+
+```php
+add_filter( 'surecart/review_form/enabled', function( $enabled ) {
+    // Disable reviews for guests
+    return is_user_logged_in();
+} );
+
+// Or require purchase to leave review
+add_filter( 'surecart/review_form/enabled', function( $enabled ) {
+    if ( ! is_user_logged_in() ) {
+        return false;
+    }
+    
+    // Check if user has purchased this product
+    // Add your purchase check logic here
+    return $enabled;
+} );
+```
+
+### `surecart/review_average/enabled`
+
+Control whether average rating is displayed.
+
+```php
+add_filter( 'surecart/review_average/enabled', function( $enabled ) {
+    return $enabled;
+} );
+```
+
+### `surecart/review_stars/enabled`
+
+Control whether star ratings are displayed.
+
+```php
+add_filter( 'surecart/review_stars/enabled', function( $enabled ) {
+    // Use numbers instead of stars
+    return false;
+} );
+```
+
+### `sc_anonymous_reviewer_name`
+
+Filter the display name for anonymous reviewers.
+
+```php
+add_filter( 'sc_anonymous_reviewer_name', function( $name ) {
+    return 'Verified Buyer';
+} );
+
+// Or with localization
+add_filter( 'sc_anonymous_reviewer_name', function( $name ) {
+    return __( 'Verified Customer', 'my-theme' );
+} );
+```
+
+### Require Purchase for Reviews
+
+```php
+add_filter( 'surecart/review_form/enabled', function( $enabled ) {
+    if ( ! is_user_logged_in() ) {
+        return false;
+    }
+    
+    global $post;
+    $user_id = get_current_user_id();
+    $customer_id = get_user_meta( $user_id, 'sc_customer_id', true );
+    
+    if ( ! $customer_id ) {
+        return false;
+    }
+    
+    // Check if user has purchased this product
+    $purchases = \SureCart\Models\Purchase::where([
+        'customer_ids' => [ $customer_id ],
+        'product_ids' => [ get_post_meta( $post->ID, 'sc_id', true ) ],
+    ])->get();
+    
+    return ! empty( $purchases );
+} );
+```
+
+## Template Actions
+
+These actions allow you to inject content into SureCart templates and pages.
+
+### `surecart_buy_page_body_open`
+
+Fired at the start of the buy page body. Use this to add announcements, banners, or tracking scripts.
+
+```php
+add_action( 'surecart_buy_page_body_open', function() {
+    echo '<div class="announcement-bar">Special offer: 20% off!</div>';
+} );
+```
+
+### `surecart_template_dashboard_body_open`
+
+Fired at the start of the customer dashboard template body.
+
+```php
+add_action( 'surecart_template_dashboard_body_open', function() {
+    if ( is_user_logged_in() ) {
+        $user = wp_get_current_user();
+        echo '<div class="welcome-message">Welcome back, ' . esc_html( $user->display_name ) . '!</div>';
+    }
+} );
+```
+
+### `surecart_template_blank_body_open`
+
+Fired at the start of the blank template body.
+
+```php
+add_action( 'surecart_template_blank_body_open', function() {
+    // Add custom tracking scripts
+    ?>
+    <script>
+        // Your tracking code here
+    </script>
+    <?php
+} );
+```
+
+## Page & Post Actions
+
+### `surecart/post_created`
+
+Fired when SureCart seeds pages (checkout page, shop page, dashboard page, checkout forms) during installation.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$page_id" type="int">
+      The WordPress page ID.
+    </ResponseField>
+    <ResponseField name="$page_data" type="array">
+      The page data used to create the page including title, content, and template.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/post_created', function( $page_id, $page_data ) {
+    // Add custom meta to the page
+    update_post_meta( $page_id, '_custom_template', 'full-width' );
+    
+    // Set page to full-width if using a theme that supports it
+    update_post_meta( $page_id, '_genesis_layout', 'full-width-content' );
+}, 10, 2 );
+```
+
+## Use Cases
+
+### Add Tracking Pixels
+
+```php
+add_action( 'surecart_buy_page_body_open', function() {
+    ?>
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', 'YOUR_PIXEL_ID');
+        fbq('track', 'PageView');
+    </script>
+    <?php
+} );
+```
+
+### Custom Dashboard Header
+
+```php
+add_action( 'surecart_template_dashboard_body_open', function() {
+    $user = wp_get_current_user();
+    $purchases_count = count( \SureCart::purchases()->where( 'customer_ids' => [ get_user_meta( $user->ID, 'sc_customer_id', true ) ] )->get() );
+    
+    ?>
+    <div class="dashboard-stats">
+        <p>You have <?php echo esc_html( $purchases_count ); ?> active purchases.</p>
+    </div>
+    <?php
+} );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Media" icon="photo-film" href="/guides/actions-filters/media">
+    Customize video and image display.
+  </Card>
+  <Card title="Admin" icon="gear" href="/guides/actions-filters/admin">
+    Customize admin menus and toolbars.
+  </Card>
+</CardGroup>

@@ -48,7 +48,7 @@ add_filter( 'surecart/currency/locale', function( $locale ) {
 
 ## `surecart/currency/max_cents`
 
-Filter the maximum number of decimal places shown. Useful for currencies that don't use cents or when you want to always show/hide decimals.
+Filter the maximum number of decimal places shown. By default we do not show for whole amounts ().00 cents), but you could modify so it always shows 2 cents.
 
 <ResponseField name="Parameters" type="Filter Parameters">
   <Expandable title="properties">
@@ -70,7 +70,7 @@ add_filter( 'surecart/currency/max_cents', function( $decimals, $amount, $conver
     return 2;
 }, 10, 3 );
 
-// Or hide decimals for whole amounts
+// This is our default functionality.
 add_filter( 'surecart/currency/max_cents', function( $decimals, $amount, $converted ) {
     // If the amount is a whole number, show no decimals
     return ( $converted == floor( $converted ) ) ? 0 : 2;
@@ -79,13 +79,11 @@ add_filter( 'surecart/currency/max_cents', function( $decimals, $amount, $conver
 
 ## `surecart/currency/filter_url`
 
-Control whether currency conversion parameters are added to URLs. Useful when you want to disable URL-based currency switching.
+To be able to run multi-currency while still maintaining full-page caching, we use a URL parameter to keep track of 
+the user's chosen currency. To disable URL-based currency switching, you can use this filter.
 
 ```php
-add_filter( 'surecart/currency/filter_url', function( $filter, $permalink ) {
-    // Disable currency URL parameters
-    return false;
-}, 10, 2 );
+add_filter( 'surecart/currency/filter_url', '__return_false' );
 
 // Or disable only for specific pages
 add_filter( 'surecart/currency/filter_url', function( $filter, $permalink ) {
@@ -99,7 +97,7 @@ add_filter( 'surecart/currency/filter_url', function( $filter, $permalink ) {
 
 ## `surecart/display_amount/free`
 
-Filter the text displayed for free products (when amount is 0).
+Filter the text displayed for $0 prices.
 
 ```php
 add_filter( 'surecart/display_amount/free', function( $text ) {
@@ -132,30 +130,6 @@ add_filter( 'surecart/currency_switcher/label', function( $label ) {
     
     return $currencies[ $label ] ?? $label;
 } );
-```
-
-## Use Cases
-
-### Always Show Currency Symbol
-
-```php
-add_filter( 'surecart/currency/format', function( $formatted, $amount, $currency_code ) {
-    // Ensure currency code is always visible
-    if ( strpos( $formatted, $currency_code ) === false ) {
-        $formatted .= ' ' . $currency_code;
-    }
-    return $formatted;
-}, 10, 3 );
-```
-
-### Round to Nearest Dollar
-
-```php
-add_filter( 'surecart/currency/format', function( $formatted, $amount, $currency_code ) {
-    // Round to nearest whole number for display
-    $rounded = round( $amount / 100 );
-    return '$' . number_format( $rounded );
-}, 10, 3 );
 ```
 
 ## Related

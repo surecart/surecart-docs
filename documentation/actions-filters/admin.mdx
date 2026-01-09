@@ -1,0 +1,154 @@
+---
+title: "Admin"
+description: "Customize admin menus, toolbars, and list tables"
+---
+
+These filters allow you to customize the WordPress admin experience for SureCart.
+
+## Menu Filters
+
+### `surecart_menu_priority`
+
+Filter the admin menu position. Lower numbers appear higher in the menu.
+
+```php
+add_filter( 'surecart_menu_priority', function( $priority ) {
+    return 5; // Move menu higher (closer to Dashboard)
+} );
+
+// Or move it lower
+add_filter( 'surecart_menu_priority', function( $priority ) {
+    return 80; // Move below Settings
+} );
+```
+
+## Admin Bar Filters
+
+### `surecart_show_admin_bar_visit_store`
+
+Control whether "Visit Store" appears in the admin bar.
+
+```php
+add_filter( 'surecart_show_admin_bar_visit_store', '__return_false' );
+
+// Or show only for specific roles
+add_filter( 'surecart_show_admin_bar_visit_store', function( $show ) {
+    return current_user_can( 'manage_options' );
+} );
+```
+
+### `surecart_show_admin_bar_new_content`
+
+Control whether "New" content menu appears in admin bar.
+
+```php
+add_filter( 'surecart_show_admin_bar_new_content', '__return_false' );
+```
+
+### `surecart/help_widget/show`
+
+Control when the help widget is shown.
+
+```php
+add_filter( 'surecart/help_widget/show', function( $show ) {
+    // Hide for non-admins
+    return current_user_can( 'manage_options' );
+} );
+
+// Or always hide
+add_filter( 'surecart/help_widget/show', '__return_false' );
+```
+
+### `surecart/help_widget/loaded`
+
+Fired when the help widget is loaded in the admin. Use this to inject custom scripts or modify widget behavior.
+
+```php
+add_action( 'surecart/help_widget/loaded', function() {
+    // Add custom help resources or modify widget behavior
+    ?>
+    <script>
+        // Customize help widget
+    </script>
+    <?php
+} );
+```
+
+## Sync Filters
+
+### `surecart_get_{post_type}_post`
+
+Filter the synced post lookup result. Replace `{post_type}` with the actual post type (e.g., `sc_product`).
+
+```php
+add_filter( 'surecart_get_sc_product_post', function( $post, $model_id, $service ) {
+    // Custom post lookup logic
+    return $post;
+}, 10, 3 );
+```
+
+### `surecart_excluded_post_meta_keys`
+
+Filter meta keys excluded from sync.
+
+```php
+add_filter( 'surecart_excluded_post_meta_keys', function( $keys ) {
+    $keys[] = 'my_excluded_key';
+    $keys[] = '_custom_meta';
+    return $keys;
+} );
+```
+
+## Use Cases
+
+### Hide Admin Features for Shop Managers
+
+```php
+// Hide help widget for non-admins
+add_filter( 'surecart/help_widget/show', function( $show ) {
+    return current_user_can( 'manage_options' );
+} );
+
+// Hide admin bar links for shop managers
+add_filter( 'surecart_show_admin_bar_new_content', function( $show ) {
+    return current_user_can( 'manage_options' );
+} );
+```
+
+### Simplify Admin Interface
+
+```php
+// Hide all dropdowns for a cleaner interface
+add_filter( 'surecart/disable_product_collection_dropdown', '__return_true' );
+add_filter( 'surecart/disable_fulfillment_dropdown', '__return_true' );
+add_filter( 'surecart/disable_shipment_dropdown', '__return_true' );
+```
+
+### Customize Menu Position
+
+```php
+// Move SureCart menu right after Dashboard
+add_filter( 'surecart_menu_priority', function( $priority ) {
+    return 3;
+} );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Templates"
+    icon="code"
+    href="/guides/actions-filters/templates"
+  >
+    Hook into admin and template actions.
+  </Card>
+  <Card
+    title="Requests"
+    icon="arrow-right-arrow-left"
+    href="/guides/actions-filters/requests"
+  >
+    Modify API requests and responses.
+  </Card>
+</CardGroup>
+
