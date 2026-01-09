@@ -1,0 +1,202 @@
+---
+title: "Orders"
+description: "Hook into order, charge, refund, and invoice events"
+---
+
+These actions fire during order processing, payments, refunds, and invoicing.
+
+## Order Actions
+
+### `surecart/order_created`
+
+Fires when a new order is created.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$order" type="\SureCart\Models\Order">
+      The order model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/order_created', function( $order, $data ) {
+    // Log new order
+    error_log( sprintf( 'New order created: %s', $order ) );
+}, 10, 2 );
+```
+
+### `surecart/order_updated`
+
+Fires when an order is updated.
+
+```php
+add_action( 'surecart/order_updated', function( $order, $data ) {
+    // Sync order status changes
+    if ( $order->status === 'paid' ) {
+        mark_order_complete_in_erp( $order->id );
+    }
+}, 10, 2 );
+```
+
+## Charge Actions
+
+### `surecart/charge_created`
+
+Fires when a payment charge is created.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$charge" type="\SureCart\Models\Charge">
+      The charge model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/charge_created', function( $charge, $data ) {
+    // Log successful payment
+    error_log( sprintf( 
+        'Payment received: %s for %d cents', 
+        $charge->id, 
+        $charge->amount 
+    ) );
+    
+    // Track revenue
+    track_revenue( $charge->amount, $charge->currency );
+}, 10, 2 );
+```
+
+## Refund Actions
+
+### `surecart/refund_created`
+
+Fires when a refund is processed.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$refund" type="\SureCart\Models\Refund">
+      The refund model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/refund_created', function( $refund, $data ) {
+    // Send refund notification
+    wp_mail(
+        get_option( 'admin_email' ),
+        'Refund Processed',
+        sprintf( 'A refund of %d cents has been processed.', $refund->amount )
+    );
+}, 10, 2 );
+```
+
+## Invoice Actions
+
+### `surecart/invoice_created`
+
+Fires when an invoice is manually created by a user in the admin. This does not fire for automatic subscription invoices or checkout orders—only for invoices explicitly created through the SureCart dashboard.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$invoice" type="\SureCart\Models\Invoice">
+      The invoice model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/invoice_created', function( $invoice, $data ) {
+    // Send invoice to accounting system
+    send_to_quickbooks( $invoice );
+}, 10, 2 );
+```
+
+## Use Cases
+
+### Track Revenue
+
+```php
+add_action( 'surecart/charge_created', function( $charge, $data ) {
+    global $wpdb;
+    
+    // Store in custom revenue table
+    $wpdb->insert(
+        $wpdb->prefix . 'revenue_tracking',
+        [
+            'charge_id' => $charge->id,
+            'amount' => $charge->amount,
+            'currency' => $charge->currency,
+            'created_at' => current_time( 'mysql' ),
+        ]
+    );
+}, 10, 2 );
+```
+
+### Handle Refunds
+
+```php
+add_action( 'surecart/refund_created', function( $refund, $data ) {
+    // Update accounting
+    record_refund_in_books( $refund->amount, $refund->currency );
+    
+    // Notify admin
+    wp_mail(
+        get_option( 'admin_email' ),
+        'Refund Processed',
+        sprintf(
+            'A refund of $%s has been processed for refund ID: %s',
+             $refund->display_amount,
+            $refund->id
+        )
+    );
+}, 10, 2 );
+```
+
+### Sync Manual Invoices to Accounting
+
+```php
+add_action( 'surecart/invoice_created', function( $invoice, $data ) {
+    // Note: This only fires for manually created invoices.
+    // For syncing all revenue, use surecart/charge_created instead.
+    
+    // Fetch the invoice with checkout and customer relations loaded.
+    $invoice = \SureCart\Models\Invoice::with(['checkout', 'checkout.customer'])->find( $invoice->id );
+    
+    $checkout = $invoice->checkout ?? null;
+    if ( empty( $checkout ) ) {
+        return;
+    }
+    
+    // Send to QuickBooks, Xero, FreshBooks, etc.
+    wp_remote_post( 'https://api.quickbooks.com/v3/invoice', [
+        'body' => json_encode([
+            'Line' => [[
+                'Amount' => ( $checkout->total_amount ?? 0 ) / 100,
+                'Description' => 'SureCart Invoice ' . $invoice->id,
+            ]],
+            'CustomerRef' => [
+                'value' => $checkout->customer->id ?? '',
+            ],
+        ]),
+        'headers' => [
+            'Authorization' => 'Bearer ' . QUICKBOOKS_TOKEN,
+            'Content-Type' => 'application/json',
+        ],
+    ]);
+}, 10, 2 );
+```
+

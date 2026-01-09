@@ -1,0 +1,141 @@
+---
+title: "Models"
+description: "Hook into model hydration events"
+---
+
+SureCart fires filters and actions when models are hydrated with data. These hooks allow you to modify model properties, add dynamic computed properties, or transform data as it's being populated into the model.
+
+## `surecart/{object_name}/attributes_set`
+
+Fired after all attributes are set on a model. Useful for adding computed properties or modifying model data after it's been fully populated.
+
+```php
+add_action( 'surecart/checkout/attributes_set', function( $checkout ) {
+    // Add computed properties after checkout is hydrated
+    $checkout->custom_total = $checkout->amount_due + $checkout->tax_amount;
+} );
+
+add_action( 'surecart/product/attributes_set', function( $product ) {
+    // Add custom computed attributes
+    $product->is_featured = in_array( $product->id, get_option( 'featured_products', [] ) );
+} );
+
+add_action( 'surecart/subscription/attributes_set', function( $subscription ) {
+    // Add dynamic properties based on subscription state
+    $subscription->days_until_renewal = $subscription->current_period_end 
+        ? ceil( ( $subscription->current_period_end - time() ) / DAY_IN_SECONDS )
+        : null;
+} );
+```
+
+## `surecart/{object_name}/attributes/{key}`
+
+Filter individual attribute values as they are being set on a model during hydration. This allows you to transform, validate, or modify any attribute before it's stored on the model.
+
+**Parameters:**
+- `$value` *(mixed)* – The value being set for the attribute
+- `$model` *(Model)* – The model instance
+
+**Returns:** The filtered value to be stored
+
+```php
+// Transform subscription status for display
+add_filter( 'surecart/subscription/attributes/status', function( $value, $subscription ) {
+    // Store original and add formatted version
+    $subscription->status_label = ucfirst( str_replace( '_', ' ', $value ) );
+    return $value;
+}, 10, 2 );
+
+// Modify product name during hydration
+add_filter( 'surecart/product/attributes/name', function( $value, $product ) {
+    // Append badge for certain products
+    if ( ! empty( $product->metadata->is_new ) ) {
+        return $value . ' (New!)';
+    }
+    return $value;
+}, 10, 2 );
+
+// Convert timestamps to Carbon instances
+add_filter( 'surecart/order/attributes/created_at', function( $value, $order ) {
+    $order->created_date = wp_date( 'F j, Y', $value );
+    return $value;
+}, 10, 2 );
+```
+
+<Tip>
+Use this filter to create dynamic computed properties, normalize data formats, or add display-ready versions of raw values.
+</Tip>
+
+## `surecart/{object_name}/set_meta_data`
+
+Filter metadata before it's set on a model during hydration. Useful for ensuring metadata structure, adding defaults, or transforming metadata values.
+
+**Parameters:**
+- `$meta_data` *(array|object)* – The metadata being set
+
+**Returns:** The filtered metadata
+
+```php
+// Ensure subscription metadata has defaults
+add_filter( 'surecart/subscription/set_meta_data', function( $meta_data ) {
+    $meta_data = (array) $meta_data;
+    
+    // Add default values if not present
+    $meta_data['notification_preferences'] = $meta_data['notification_preferences'] ?? [
+        'renewal_reminder' => true,
+        'payment_failed'   => true,
+    ];
+    
+    return (object) $meta_data;
+} );
+
+// Parse and expand product metadata
+add_filter( 'surecart/product/set_meta_data', function( $meta_data ) {
+    $meta_data = (array) $meta_data;
+    
+    // Parse JSON stored in a metadata field
+    if ( ! empty( $meta_data['specifications'] ) && is_string( $meta_data['specifications'] ) ) {
+        $meta_data['specifications'] = json_decode( $meta_data['specifications'], true );
+    }
+    
+    return (object) $meta_data;
+} );
+
+// Add computed metadata properties
+add_filter( 'surecart/customer/set_meta_data', function( $meta_data ) {
+    $meta_data = (array) $meta_data;
+    
+    // Check if customer has completed onboarding
+    $meta_data['onboarding_complete'] = ! empty( $meta_data['onboarding_step'] ) 
+        && $meta_data['onboarding_step'] === 'complete';
+    
+    return (object) $meta_data;
+} );
+```
+
+## Available Models
+
+You can hook into hydration events for these models:
+
+- `subscription` - Subscription data
+- `purchase` - Purchase data
+- `product` - Product data
+- `price` - Price data
+- `customer` - Customer data
+- `order` - Order data
+- `checkout` - Checkout data
+- `charge` - Payment charge data
+- `refund` - Refund data
+- `invoice` - Invoice data
+- `coupon` - Coupon data
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Products" icon="box" href="/guides/actions-filters/products">
+    Hook into product creation, updates, and deletion events.
+  </Card>
+  <Card title="Purchases" icon="bag-shopping" href="/guides/actions-filters/purchases">
+    Higher-level purchase events built on model actions.
+  </Card>
+</CardGroup>

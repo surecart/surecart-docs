@@ -1,0 +1,533 @@
+---
+title: "PHP Models"
+icon: "cube"
+---
+
+<Info>
+  **PHP Models = API Interface** — The PHP models provide a fluent, Laravel-like interface to the [SureCart REST API](/api-reference/introduction). Each model corresponds directly to an API resource.
+  
+  For complete details on available properties, query parameters, and expandable relations, refer to the [API Reference](/api-reference/introduction).
+</Info>
+
+The PHP models provide a fluent syntax for querying the database through the API. In this document, we will demonstrate various methods for retrieving models.
+<br /> 
+<Note>
+  **Blocking HTTP requests** — Each model query makes a synchronous HTTP request to the SureCart API. This means PHP execution will wait for the response before continuing.
+
+  Use these methods in contexts where blocking is acceptable:
+  - AJAX/REST handlers.
+  - Admin dashboard pages and requests.
+  - WP-CLI commands.
+  - Cron jobs and background tasks.
+
+  **Avoid** using model queries directly in front-end page rendering, as they will slow down page load times and negatively impact user experience.
+</Note>
+
+# Retrieving
+
+SureCart's PHP models allow you to fetch data from the SureCart API using a familiar, Laravel-like syntax. You can retrieve single records by ID, query collections with filters, paginate results, and refresh stale data — all with clean, expressive methods.
+
+### Retrieving a model by id
+
+The model's `all` method will retrieve a record with a specific ID.
+
+```php
+use SureCart\Models\Product;
+$product = Product::find('8ba8d60f-5277-4e6b-807c-dee8166446d5');
+```
+
+### Retrieving several models.
+
+The model's `all` method will retrieve the first 10 records from the model's associated database table:
+
+```php
+use SureCart\Models\Product;
+
+$products = Product::get();
+foreach ($products as $product) {
+    echo $product->name;
+}
+```
+
+### Building queries
+
+To query by specific parameters, you can use the `where` method. This method sends query parameters over the API and returns the matching records.
+
+<Tip>
+  The query parameters available in the `where()` method match the API endpoint's query parameters. See each model's API Reference (e.g., [Products API](/api-reference/products/list-all-products)) for all available filters.
+</Tip>
+
+```php
+use SureCart\Models\Product;
+$archived_products = Product::where([
+	'archived' => false
+])->get();
+```
+
+### Pagination
+
+You can paginate and get subsquent pages of results by using the `paginate` method. This method takes 2 parameters, `page` and `per_page`. The default pagination `per_page` limit is `100`.
+
+```php
+use SureCart\Models\Product;
+
+$archived_products = Product::where([
+	'archived' => false
+])->paginate([
+	'per_page' => 20,
+	'page' => 2
+]);
+```
+
+Result:
+
+```php
+[
+	'object' => 'product',
+	'pagination' => [
+		'count' => 100,
+		'limit' => 20,
+		'page' => 2
+	],
+	'data' => [
+		// 20 products
+		[
+			'id' => '8ba8d60f-5277-4e6b-807c-dee8166446d5',
+			...
+		]
+		...
+	]
+]
+```
+
+### Refreshing Models
+
+If you already have an instance of a model that was retrieved, you can "refresh" the model using the `fresh` method. The `fresh` method will re-retrieve the model from the database. The existing model instance will not be affected:
+
+```php
+$product = Product::where([
+	'ids' => [
+		'8ba8d60f-5277-4e6b-807c-dee8166446d5',
+		'07fd28e0-e735-4acf-86d8-4d7855055e0b'
+	]
+])->first();
+
+$freshProduct = $product->fresh();
+```
+
+The `refresh` method will re-hydrate the existing model using fresh data from the database:
+
+```php
+$product = Product::create([
+	'name' => 'New Product',
+]);
+$product->name = 'Updated Product';
+$product->refresh();
+$flight->name; // "New Product"
+```
+
+# Expanding Relations
+
+Many models allow you to request additional information from relational models by using the `with` method. This parameter is available on all models and applies to the response of that model only. Model relations can be expanded in two ways.
+
+<Tip>
+  Each model's expandable fields are documented in the [API Reference](/api-reference/introduction). Look for properties marked as "expandable" in the response schemas.
+</Tip>
+
+### Expanding a single relation
+
+In many cases, an object contains the ID of a related object in its response properties. For example, a price has an associated product ID. Those models can be queried together in one call. ID fields that can be expanded into models are noted in this documentation with the "expandable" label. Here's an example:
+
+```php
+$prices = \SureCart\Models\Price::with([
+	'product'
+])->paginate(['page'=> 1]);
+```
+
+```php
+$promo = \SureCart\Models\Promotion::with([
+	'coupon'
+])->find('8ba8d60f-5277-4e6b-807c-dee8166446d5');
+```
+
+### Expanding list relations
+
+In some cases, such as a list of all prices for a product, there are available fields that are not included in responses by default. You can request these fields as an expanded response by using the `with` method. Fields that can be included in an expanded response are noted in this documentation with the "expandable" label.
+
+```php
+$products = \SureCart\Models\Product::with([
+	'prices'
+])->paginate(['page'=> 1]);
+```
+
+### Recursively expanding relations
+
+You can expand recursively by specifying nested fields after a dot (.). For example, requesting `customer` and `customer.billing_address` on an order will expand the customer and the customer's billing address.
+
+```php
+$orders = \SureCart\Models\Order::with([
+    'customer',
+	'customer.billing_address'
+])->paginate(['page'=> 1]);
+```
+
+You can use the `with` method on any endpoint that returns expandable fields, including list, create, and update endpoints.
+
+Expanding list requests are plural, but expanding objects within a list is singular. For example, if you wanted to retrieve an order's line items and each line item's price, you would pass `checkout`, `checkout.line_items` and `line_item.price` as expand parameters.
+
+Example:
+
+```php
+$orders = \SureCart\Models\Order::with( [
+   'checkout',
+   'checkout.line_items',
+   'line_item.price',
+   'price.product'
+] )->paginate( [ 'page' => 1 ] );
+```
+
+Then you can access expanded relations:
+
+```php
+foreach ( $orders['data'] as $order ) {
+    $checkout = $order->checkout;
+    $line_items = $checkout->line_items->data;
+    
+    foreach ( $line_items as $line_item ) {
+        $price = $line_item->price;
+        $product = $price->product;
+        
+        echo $product->name . ' - ' . $price->amount;
+    }
+}
+```
+
+You can expand multiple objects at once by identifying multiple items in the `with` array. Expansions have a maximum depth of two levels, and you can expand up to 10 objects.
+
+This is not only limited to `get` or `paginate`. You can use this on `create` or `update` requests as well. This will allow you to create or update a model and fetch its relations all in one request.
+
+```php
+$price = \SureCart\Models\Price::create([
+	'name' => 'New Price',
+	'amount' => 5000, // $50.00
+	'currency' => 'usd',
+	'product' => '8ba8d60f-5277-4e6b-807c-dee8166446d5',
+])->with([
+	'product'
+])->save();
+
+$product_name = $price->product->nname;
+```
+
+# Inserting, Updating, and Deleting
+
+### Creating a Model
+
+To create a new model, instantiate it with attributes and call the `save` method:
+
+<Tip>
+  For the full list of required and optional attributes when creating a model, see the corresponding "Create" endpoint in the [API Reference](/api-reference/introduction).
+</Tip>
+
+```php
+use SureCart\Models\Product;
+
+$product = Product::create([
+    'name' => 'iPhone',
+	'description' => 'iPhone is a smartphone'
+]);
+```
+
+Or set individual attributes and call `save`:
+
+```php
+use SureCart\Models\Product;
+
+// create ths instance.
+$product = new Product([
+	'name' => 'iPhone',
+	'description' => 'iPhone is a smartphone'
+]);
+
+// do some other logic with product.
+
+// save the product.
+$product->save();
+```
+
+### Updating a Model
+
+Use the static `update` method directly by passing an `id` in the attributes:
+
+```php
+use SureCart\Models\Product;
+
+Product::update([
+    'id' => $product_id,
+    'name' => 'iPhone Pro',
+    'description' => 'The latest iPhone'
+]);
+```
+
+Or retrieve the model first, then call `update` with the new attributes:
+
+```php
+use SureCart\Models\Product;
+
+$product = Product::find( $product_id );
+$product->update([
+    'name' => 'iPhone Pro',
+    'description' => 'The latest iPhone'
+]);
+```
+
+Or modify individual attributes and call `save`:
+
+```php
+use SureCart\Models\Product;
+
+$product = Product::find( $product_id );
+$product->name = 'iPhone Pro';
+$product->description = 'The latest iPhone';
+$product->save();
+```
+
+### Deleting a Model
+
+Use the `delete` method to remove a model:
+
+```php
+use SureCart\Models\Product;
+
+$product = Product::find( $product_id );
+$product->delete();
+```
+
+You can also delete directly by passing an ID:
+
+```php
+use SureCart\Models\Product;
+
+Product::delete( $product_id );
+```
+
+# Error Handling
+
+All model methods can return a `\WP_Error` object if the API request fails. Always check for errors when working with models:
+
+```php
+use SureCart\Models\Product;
+
+$product = Product::find('invalid-id');
+
+if (is_wp_error($product)) {
+	// Handle the error
+	$error_message = $product->get_error_message();
+	$error_code = $product->get_error_code();
+	error_log("Failed to find product: $error_message");
+	return;
+}
+
+// Safe to use $product here
+echo $product->name;
+```
+
+This applies to all model operations including `find`, `get`, `save`, and `delete`:
+
+```php
+$product = new Product(['name' => 'Test']);
+$result = $product->save();
+
+if (is_wp_error($result)) {
+	// Handle validation or API errors
+	foreach ($result->get_error_messages() as $message) {
+		echo $message;
+	}
+}
+```
+
+# Utility Methods
+
+### Getting the First Result
+
+Use the `first` method to retrieve a single record from a query:
+
+```php
+$product = Product::where(['archived' => false])->first();
+```
+
+### Converting to Array or Object
+
+Models can be converted to arrays or standard objects:
+
+```php
+$product = Product::find($id);
+
+// Convert to array
+$array = $product->toArray();
+
+// Convert to stdClass object
+$object = $product->toObject();
+```
+
+### Array Access
+
+Models implement `ArrayAccess`, so you can access attributes using array syntax:
+
+```php
+$product = Product::find($id);
+
+// These are equivalent
+echo $product->name;
+echo $product['name'];
+```
+
+### Dirty Checking
+
+You can check if a model's attributes have been modified since it was retrieved:
+
+```php
+$product = Product::find($id);
+
+$product->isDirty();        // false - no changes yet
+
+$product->name = 'New Name';
+$product->isDirty();        // true - has unsaved changes
+$product->isDirty('name');  // true - specific attribute changed
+
+$dirty = $product->getDirty(); // ['name' => 'New Name']
+```
+
+# Available Models
+
+SureCart provides PHP models for interacting with the following resources. Each model maps directly to an API resource — see the [API Reference](/api-reference/introduction) for full property details, query parameters, and expandable fields.
+
+### Products
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Product` | [Products](/api-reference/products/list) | Physical or digital products |
+| `Price` | [Prices](/api-reference/prices/list) | Pricing options for products |
+| `ProductCollection` | [Product Collections](/api-reference/product-collections/list) | Product collections/categories |
+| `ProductGroup` | [Product Groups](/api-reference/product-groups/list) | Product groupings |
+| `ProductMedia` | [Product Medias](/api-reference/product-medias/list) | Media attached to products |
+| `Variant` | [Variants](/api-reference/variants/list) | Product variants |
+| `VariantOption` | [Variant Options](/api-reference/variant-options/list) | Variant option definitions |
+| `Bump` | [Bumps](/api-reference/bumps/list) | Order bumps |
+| `Upsell` | [Upsells](/api-reference/upsells/list) | Upsell offers |
+| `UpsellFunnel` | [Upsell Funnels](/api-reference/upsell-funnels/list) | Upsell funnel configurations |
+| `Swap` | [Swaps](/api-reference/swaps/list) | Product swap configurations |
+| `Download` | [Downloads](/api-reference/downloads/list) | Downloadable files |
+| `Coupon` | [Coupons](/api-reference/coupons/list) | Discount coupons |
+| `Promotion` | [Promotions](/api-reference/promotions/list) | Applied promotions |
+
+### Customers
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Customer` | [Customers](/api-reference/customers/list) | Customer records |
+| `BalanceTransaction` | [Balance Transactions](/api-reference/balance-transactions/list) | Balance transaction records |
+
+### Orders & Payments
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Order` | [Orders](/api-reference/orders/list) | Completed orders |
+| `Checkout` | [Checkouts](/api-reference/checkouts/list) | Checkout sessions |
+| `AbandonedCheckout` | [Abandoned Checkouts](/api-reference/abandoned-checkouts/list) | Abandoned checkout recovery |
+| `LineItem` | [Line Items](/api-reference/line-items/list) | Order line items |
+| `Purchase` | [Purchases](/api-reference/purchases/list) | Individual purchase records |
+| `Charge` | [Charges](/api-reference/charges/list) | Payment charges |
+| `Invoice` | [Invoices](/api-reference/invoices/list) | Invoices for orders |
+| `Refund` | [Refunds](/api-reference/refunds/list) | Refund records |
+| `PaymentIntent` | [Payment Intents](/api-reference/payment-intents/list) | Payment intent records |
+| `PaymentMethod` | [Payment Methods](/api-reference/payment-methods/list) | Stored payment methods |
+| `ManualPaymentMethod` | [Manual Payment Methods](/api-reference/manual-payment-methods/list) | Manual payment method configs |
+| `Processor` | [Processors](/api-reference/processors/list) | Payment processors |
+| `Fee` | [Fees](/api-reference/fees/list) | Order fees |
+| `Dispute` | [Disputes](/api-reference/disputes/list) | Payment disputes |
+
+### Subscriptions
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Subscription` | [Subscriptions](/api-reference/subscriptions/list) | Recurring subscriptions |
+| `Period` | [Periods](/api-reference/periods/list) | Subscription billing periods |
+| `CancellationAct` | [Cancellation Acts](/api-reference/cancellation-acts/list) | Subscription cancellations |
+| `CancellationReason` | [Cancellation Reasons](/api-reference/cancellation-reasons/list) | Cancellation reason options |
+
+### Shipping & Fulfillment
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Fulfillment` | [Fulfillments](/api-reference/fulfillments/list) | Order fulfillments |
+| `FulfillmentItem` | [Fulfillment Items](/api-reference/fulfillment-items/list) | Fulfillment line items |
+| `ShippingMethod` | [Shipping Methods](/api-reference/shipping-methods/list) | Shipping method configurations |
+| `ShippingProfile` | [Shipping Profiles](/api-reference/shipping-profiles/list) | Shipping profile settings |
+| `ShippingRate` | [Shipping Rates](/api-reference/shipping-rates/list) | Shipping rate definitions |
+| `ShippingZone` | [Shipping Zones](/api-reference/shipping-zones/list) | Shipping zone configurations |
+| `ReturnRequest` | [Return Requests](/api-reference/return-requests/list) | Return request records |
+| `ReturnItem` | [Return Items](/api-reference/return-items/list) | Return request items |
+
+### Tax
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `TaxRegistration` | [Tax Registrations](/api-reference/tax-registrations/list) | Tax registration records |
+| `TaxZone` | [Tax Zones](/api-reference/tax-zones/list) | Tax zone configurations |
+
+### Licensing
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `License` | [Licenses](/api-reference/licenses/list) | Software licenses |
+| `Activation` | [Activations](/api-reference/activations/list) | License activations |
+
+### Affiliates
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Affiliation` | [Affiliations](/api-reference/affiliations/list) | Affiliate accounts |
+| `AffiliationRequest` | [Affiliation Requests](/api-reference/affiliation-requests/list) | Affiliate application requests |
+| `AffiliationProduct` | [Affiliation Products](/api-reference/affiliation-products/list) | Affiliate product associations |
+| `Referral` | [Referrals](/api-reference/referrals/list) | Affiliate referral records |
+| `ReferralItem` | [Referral Items](/api-reference/referral-items/list) | Referral line items |
+| `Payout` | [Payouts](/api-reference/payouts/list) | Affiliate payouts |
+| `PayoutGroup` | [Payout Groups](/api-reference/payout-groups/list) | Grouped payout batches |
+| `Click` | [Clicks](/api-reference/clicks/list) | Affiliate click tracking |
+
+### Media
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Media` | [Medias](/api-reference/medias/list) | Media files |
+
+### Account & Settings
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Account` | [Account](/api-reference/account/retrieve) | Store account settings |
+| `Brand` | [Brand](/api-reference/brands/retrieve) | Branding configurations |
+| `Webhook` | [Webhook Endpoints](/api-reference/webhook-endpoints/list) | Webhook endpoint configurations |
+
+### Reviews
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Review` | [Reviews](/api-reference/reviews/list) | Product reviews |
+
+### Other
+
+| Model | API Reference | Description |
+|-------|---------------|-------------|
+| `Event` | [Events](/api-reference/events/list) | Event log records |
+| `Export` | [Exports](/api-reference/exports/list) | Data exports |
+
+All models are located in the `SureCart\Models` namespace:
+
+```php
+use SureCart\Models\Product;
+use SureCart\Models\Customer;
+use SureCart\Models\Order;
+// etc.
+```

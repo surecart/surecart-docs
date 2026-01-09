@@ -1,0 +1,89 @@
+---
+title: "Cart"
+description: "Customize cart icon, visibility, and behavior"
+---
+
+These filters allow you to customize the cart experience.
+
+## `sc_cart_menu_icon`
+
+Filter the cart menu icon.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$icon" type="string">
+      The icon name/identifier.
+    </ResponseField>
+    <ResponseField name="$type" type="string">
+      The icon type or position context.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'sc_cart_menu_icon', function( $icon, $type ) {
+    return 'shopping-bag'; // Use a different icon
+}, 10, 2 );
+```
+
+## `sc_cart_disabled`
+
+Disable the cart functionality entirely on specific pages or conditions.
+
+```php
+add_filter( 'sc_cart_disabled', function( $disabled ) {
+    // Disable cart on specific pages
+    if ( is_page( 'landing-page' ) ) {
+        return true;
+    }
+    return $disabled;
+} );
+
+// Or disable during maintenance
+add_filter( 'sc_cart_disabled', function( $disabled ) {
+    if ( get_option( 'maintenance_mode' ) ) {
+        return true;
+    }
+    return $disabled;
+} );
+```
+
+## Use Cases
+
+### Hide Cart on Landing Pages
+
+```php
+add_filter( 'sc_cart_disabled', function( $disabled ) {
+    // Hide cart on specific landing pages
+    $landing_pages = [ 'promo', 'special-offer', 'webinar' ];
+    
+    foreach ( $landing_pages as $slug ) {
+        if ( is_page( $slug ) ) {
+            return true;
+        }
+    }
+    
+    return $disabled;
+} );
+```
+
+### Disable Cart for Logged-Out Users
+
+```php
+add_filter( 'sc_cart_disabled', function( $disabled ) {
+    // Only show cart to logged-in users
+    return ! is_user_logged_in();
+} );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Checkout" icon="credit-card" href="/guides/actions-filters/checkout">
+    Customize checkout validation and behavior.
+  </Card>
+  <Card title="Display" icon="eye" href="/guides/actions-filters/display">
+    Modify how content is displayed.
+  </Card>
+</CardGroup>
+

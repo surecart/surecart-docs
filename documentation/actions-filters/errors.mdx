@@ -1,0 +1,145 @@
+---
+title: "Errors"
+description: "Customize error messages and validation feedback"
+---
+
+These filters allow you to customize how error messages are displayed to customers throughout SureCart.
+
+## Error Message Filters
+
+### `surecart/translated_error`
+
+Filter individual translated error messages. The `$response` object contains the error details including `code`, `attribute`, `type`, and `options`.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$translated" type="string">
+      The translated error message.
+    </ResponseField>
+    <ResponseField name="$response" type="array">
+      The original error response with `code`, `attribute`, `type`, and `options` keys.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/translated_error', function( $translated, $response ) {
+    // Customize specific error messages by code
+    if ( ( $response['code'] ?? '' ) === 'checkout.discount.promotion_code.invalid_code' ) {
+        return 'Sorry, that promo code is not valid. Please check and try again.';
+    }
+    return $translated;
+}, 10, 2 );
+```
+
+### `surecart/translated_errors`
+
+Filter the WP_Error object containing all translated error messages.
+
+```php
+add_filter( 'surecart/translated_errors', function( $wp_error ) {
+    // Add a generic help message to all errors
+    foreach ( $wp_error->get_error_codes() as $code ) {
+        $message = $wp_error->get_error_message( $code );
+        $wp_error->remove( $code );
+        $wp_error->add( $code, $message . ' Need help? Contact support.' );
+    }
+    return $wp_error;
+} );
+```
+
+## Common Error Codes
+
+Here are some frequently customized error codes:
+
+| Code | Default Message |
+|------|-----------------|
+| `checkout.discount.promotion_code.invalid_code` | Invalid promotion code. |
+| `checkout.discount.coupon.expired` | This coupon has expired. |
+| `checkout.line_items.not_purchasable` | Some items in your cart have reached their purchase limit. |
+| `checkout.product.out_of_stock` | This product is out of stock. |
+| `checkout.price.exceeds_purchase_limit` | You have exceeded the purchase limit for this product. |
+| `checkout.shipping_address.postal_code.invalid` | Your postal code is not valid. |
+
+<Tip>
+To find error codes for specific scenarios, open your browser's Developer Tools (F12), go to the **Network** tab, and trigger the error on your checkout. Look at the XHR/Fetch request response—the `code` field in the JSON response is what you'll use in your filter.
+</Tip>
+
+## Use Cases
+
+### Custom Promotion Code Messages
+
+```php
+add_filter( 'surecart/translated_error', function( $translated, $response ) {
+    $code = $response['code'] ?? '';
+    
+    $custom_messages = [
+        'checkout.discount.promotion_code.invalid_code' => 'That code didn\'t work. Double-check the spelling or try another.',
+        'checkout.discount.coupon.expired'              => 'This promotion has ended. Check our website for current offers!',
+        'checkout.discount.coupon.currency_mismatch'    => 'This code only works with USD purchases.',
+    ];
+    
+    return $custom_messages[ $code ] ?? $translated;
+}, 10, 2 );
+```
+
+### Custom Stock Error Messages
+
+```php
+add_filter( 'surecart/translated_error', function( $translated, $response ) {
+    $code = $response['code'] ?? '';
+    
+    if ( $code === 'checkout.product.out_of_stock' ) {
+        return 'This item just sold out! Join our waitlist to be notified when it\'s back.';
+    }
+    
+    if ( $code === 'checkout.price.exceeds_purchase_limit' ) {
+        return 'This item is limited to one per customer.';
+    }
+    
+    return $translated;
+}, 10, 2 );
+```
+
+### Log Errors for Debugging
+
+```php
+add_filter( 'surecart/translated_error', function( $translated, $response ) {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( sprintf(
+            '[SureCart Error] Code: %s | Type: %s | Message: %s',
+            $response['code'] ?? 'unknown',
+            $response['type'] ?? 'unknown',
+            $translated
+        ) );
+    }
+    return $translated;
+}, 10, 2 );
+```
+
+### Custom Shipping Address Errors
+
+```php
+add_filter( 'surecart/translated_error', function( $translated, $response ) {
+    $code = $response['code'] ?? '';
+    
+    $shipping_messages = [
+        'checkout.shipping_address.postal_code.invalid' => 'Please enter a valid ZIP/postal code for your country.',
+        'checkout.shipping_address.inaccurate'          => 'We need a bit more detail—please add your street address or apartment number.',
+        'checkout.selected_shipping_choice.blank'       => 'Sorry, we can\'t ship to your location yet. Contact us for alternatives.',
+    ];
+    
+    return $shipping_messages[ $code ] ?? $translated;
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Checkout" icon="credit-card" href="/guides/actions-filters/checkout">
+    Customize the checkout process and validation.
+  </Card>
+  <Card title="Requests" icon="satellite-dish" href="/guides/actions-filters/requests">
+    Modify API requests and responses.
+  </Card>
+</CardGroup>

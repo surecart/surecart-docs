@@ -1,0 +1,174 @@
+---
+title: "Purchases"
+description: "Hook into purchase lifecycle events"
+---
+
+<Note>
+  **Important: There are low-level filters for purchase events.** <br /> <br />{" "}
+  If you are wanting to create a full purchase integration that handles refunds,
+  upgrades, downgrades and more, please follow the [Purchase Integration
+  Guide](/guides/orders-and-purchases)
+</Note>
+
+These actions are triggered throughout the purchase lifecycle, including:
+
+- **Checkout** — When a customer completes a purchase
+- **Refunds** — When a purchase is refunded and access is revoked
+- **Upgrades/Downgrades** — When a customer switches to a different product
+- **Quantity changes** — When a customer adjusts the quantity of their purchase
+- **Subscription cancellations** — When a subscription ends and access is revoked
+- **Subscription restorations** — When a canceled subscription is reactivated
+
+## `surecart/purchase_created`
+
+Fired when a new purchase is created after a successful checkout.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The purchase model object containing product, customer, quantity, and
+      other purchase details.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_created', function( $purchase ) {
+    // Get the product from the purchase.
+    $product = sc_get_product( $purchase->product );
+
+    // Get the WordPress user associated with this purchase
+    $user = $purchase->getWPUser();
+
+    if ( empty($user) || empty($product->name) ) {
+        return;
+    }
+
+    // Send a welcome email for this specific product
+    wp_mail(
+        $user->user_email,
+        'Welcome!',
+        sprintf(
+            "Hi %s, thank you for purchasing %s! We're excited to have you on board.",
+            $user->display_name,
+            $product->name
+        )
+    );
+} );
+```
+
+## `surecart/purchase_invoked`
+
+Fired when a purchase is invoked (access is granted). This happens when a subscription is restored, or when manually invoking access.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The purchase model object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_invoked', function( $purchase ) {
+    // Get the product from the purchase.
+    $product = sc_get_product( $purchase->product );
+
+    // Get the WordPress user associated with this purchase
+    $user = $purchase->getWPUser();
+
+    if ( empty($user) || empty($product->name) ) {
+        return;
+    }
+
+    // Send a welcome email for this specific product
+    wp_mail(
+        $user->user_email,
+        'Thanks for coming back!',
+        sprintf(
+            "Hi %s, thank you for restoring your payment for %s!",
+            $user->display_name,
+            $product->name
+        )
+    );
+} );
+```
+
+## `surecart/purchase_revoked`
+
+Fired when a purchase is revoked (access is removed). This happens when a subscription is canceled or when manually revoking access.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The purchase model object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_revoked', function( $purchase ) {
+    $user = $purchase->getWPUser();
+
+    if ( $user ) {
+        // Notify the user
+        wp_mail(
+            $user->user_email,
+            'Access Revoked',
+            'Your subscription has been canceled and access has been removed.'
+        );
+    }
+} );
+```
+
+## `surecart/purchase_updated`
+
+Fired when a purchase is updated, due to upgrade, downgrade, quantity change, or price change.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The updated purchase model.
+    </ResponseField>
+    <ResponseField name="$request" type="object">
+      The webhook request containing `data->object` and
+      `data->previous_attributes`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_updated', function( $purchase, $request ) {
+    $user = $purchase->getWPUser();
+
+    if ( $user ) {
+        // Notify the user
+        wp_mail(
+            $user->user_email,
+            'Purchase Updated',
+            'Your purchase has been successfully modified.'
+        );
+    }
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Orders & Purchases Guide"
+    icon="puzzle-piece"
+    href="/guides/orders-and-purchases"
+  >
+    Build integrations using the Integration class that handles purchases,
+    refunds, upgrades, and more.
+  </Card>
+  <Card
+    title="Checkout"
+    icon="credit-card"
+    href="/guides/actions-filters/checkout"
+  >
+    Learn about checkout-triggered actions for purchases.
+  </Card>
+</CardGroup>
+

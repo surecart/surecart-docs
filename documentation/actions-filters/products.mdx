@@ -1,0 +1,476 @@
+---
+title: "Products"
+description: "Hook into product lifecycle events and customize display"
+---
+
+These hooks allow you to respond to product events and customize how products are displayed.
+
+## Actions
+
+Actions fire when products are created, updated, deleted, or when stock levels change.
+
+### `surecart/product_created`
+
+Fires when a new product is created.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$product" type="\SureCart\Models\Product">
+      The product model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/product_created', function( $product, $data ) {
+    // Send Slack notification about new product
+    wp_remote_post( SLACK_WEBHOOK_URL, [
+        'body' => json_encode([
+            'text' => sprintf( '🆕 New product created: %s', $product->name )
+        ]),
+    ]);
+}, 10, 2 );
+```
+
+### `surecart/product_updated`
+
+Fires when a product is updated.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$product" type="\SureCart\Models\Product">
+      The updated product model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/product_updated', function( $product, $data ) {
+    // Sync updated product info to Google Sheets
+    $sheets_api_url = 'https://sheets.googleapis.com/v4/spreadsheets/' . SHEET_ID . '/values/Products:append';
+    
+    wp_remote_post( $sheets_api_url, [
+        'headers' => [ 'Authorization' => 'Bearer ' . GOOGLE_API_TOKEN ],
+        'body'    => json_encode([
+            'values' => [[ $product->id, $product->name, $product->sku ?? '' ]]
+        ]),
+    ]);
+}, 10, 2 );
+```
+
+### `surecart/product_deleted`
+
+Fires when a product is deleted.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$product" type="\SureCart\Models\Product">
+      The deleted product model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/product_deleted', function( $product, $data ) {
+    // Remove product from external CRM
+    wp_remote_request( 'https://api.crm.example.com/products/' . $product->id, [
+        'method'  => 'DELETE',
+        'headers' => [ 'Authorization' => 'Bearer ' . CRM_API_KEY ],
+    ]);
+}, 10, 2 );
+```
+
+### `surecart/product_stock_adjusted`
+
+Fires when a product's stock level changes (e.g., after a purchase or manual adjustment). Products with variants will have stock tracked at both the product and variant level.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$product" type="\SureCart\Models\Product">
+      The product model object with updated stock. Use `Product::with(['variants'])` to fetch variant stock levels.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+**Stock Properties:**
+
+| Property | Description |
+|----------|-------------|
+| `stock` | Total on-hand inventory count |
+| `held_stock` | Units purchased but not yet fulfilled/shipped |
+| `available_stock` | Units available for purchase (`stock - held_stock`) |
+
+```php
+add_action( 'surecart/product_stock_adjusted', function( $product, $data ) {
+    // Sync all stock levels to warehouse management system
+    wp_remote_post( 'https://wms.example.com/api/inventory', [
+        'headers' => [ 'Authorization' => 'Bearer ' . WMS_API_KEY ],
+        'body'    => [
+            'sku'             => $product->sku ?? $product->id,
+            'on_hand'         => $product->stock,
+            'held'            => $product->held_stock,
+            'available'       => $product->available_stock,
+        ],
+    ]);
+}, 10, 2 );
+```
+
+**Low available stock alert:**
+
+```php
+add_action( 'surecart/product_stock_adjusted', function( $product, $data ) {
+    // Alert when available stock (not held) is low
+    if ( $product->available_stock <= 5 && $product->available_stock > 0 ) {
+        wp_remote_post( SLACK_WEBHOOK_URL, [
+            'body' => json_encode([
+                'text' => sprintf( 
+                    '⚠️ Low stock: %s has %d available (%d on hand, %d held)',
+                    $product->name,
+                    $product->available_stock,
+                    $product->stock,
+                    $product->held_stock
+                )
+            ]),
+        ]);
+    }
+}, 10, 2 );
+```
+
+**Sync product and variant stock levels:**
+
+```php
+add_action( 'surecart/product_stock_adjusted', function( $product, $data ) {
+    // Fetch the product with its variants
+    $product = \SureCart\Models\Product::with(['variants'])->find( $product->id );
+    
+    // Sync product-level stock
+    $stock_data = [
+        [
+            'type'            => 'product',
+            'id'              => $product->id,
+            'sku'             => $product->sku ?? '',
+            'stock'           => $product->stock,
+            'available_stock' => $product->available_stock,
+            'held_stock'      => $product->held_stock,
+        ],
+    ];
+    
+    // Include each variant's stock levels
+    if ( ! empty( $product->variants->data ) ) {
+        foreach ( $product->variants->data as $variant ) {
+            $stock_data[] = [
+                'type'            => 'variant',
+                'id'              => $variant->id,
+                'sku'             => $variant->sku ?? '',
+                'stock'           => $variant->stock,
+                'available_stock' => $variant->available_stock,
+                'held_stock'      => $variant->held_stock,
+            ];
+        }
+    }
+    
+    wp_remote_post( 'https://api.inventory.example.com/stock/bulk', [
+        'headers' => [ 'Authorization' => 'Bearer ' . INVENTORY_API_KEY ],
+        'body'    => json_encode( $stock_data ),
+    ]);
+}, 10, 2 );
+```
+
+## Filters
+
+Filters allow you to customize how products are displayed, including SEO meta tags, images, and related products.
+
+### Content Display
+
+#### `surecart/product/replace_content_with_product_info_part`
+
+Control whether product content is replaced with the product info template part. Return `false` to use custom templates.
+
+```php
+add_filter( 'surecart/product/replace_content_with_product_info_part', function( $replace ) {
+    // Disable replacement for specific conditions
+    if ( is_page_template( 'custom-product-template.php' ) ) {
+        return false;
+    }
+    return $replace;
+} );
+
+// Or disable entirely
+add_filter( 'surecart/product/replace_content_with_product_info_part', '__return_false' );
+```
+
+### Permalinks
+
+#### `sc_product_post_type_link_sc_collection`
+
+Filter which collection appears in product URLs when your permalink structure includes the collection slug.
+
+When your product permalinks are configured to include the collection (e.g., `/products/%sc_collection%/%product%/`), a product URL might look like `/products/clothing/blue-t-shirt/`. But what happens when a product belongs to multiple collections, like both "clothing" and "sale"? This filter lets you control which collection slug is used in the URL.
+
+**Example scenario:**
+- Product "Blue T-Shirt" belongs to collections: `clothing`, `sale`, `featured`
+- Without this filter, WordPress picks one (often unpredictably)
+- With this filter, you can ensure the URL is always `/products/clothing/blue-t-shirt/` instead of `/products/sale/blue-t-shirt/`
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$term" type="\WP_Term">
+      The collection term WordPress selected for the permalink.
+    </ResponseField>
+    <ResponseField name="$terms" type="array">
+      All collection terms assigned to this product.
+    </ResponseField>
+    <ResponseField name="$post" type="\WP_Post">
+      The product post object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+**Always use the first assigned collection:**
+
+```php
+add_filter( 'sc_product_post_type_link_sc_collection', function( $term, $terms, $post ) {
+    // Use the first collection assigned to the product
+    return $terms[0] ?? $term;
+}, 10, 3 );
+```
+
+**Prioritize a specific collection when present:**
+
+```php
+add_filter( 'sc_product_post_type_link_sc_collection', function( $term, $terms, $post ) {
+    // If product is in "clothing", always use that in the URL
+    foreach ( $terms as $t ) {
+        if ( $t->slug === 'clothing' ) {
+            return $t;
+        }
+    }
+    return $term;
+}, 10, 3 );
+```
+
+**Exclude certain collections from URLs:**
+
+```php
+add_filter( 'sc_product_post_type_link_sc_collection', function( $term, $terms, $post ) {
+    // Never use "sale" or "featured" in URLs - these are promotional, not categorical
+    $excluded_slugs = [ 'sale', 'featured', 'new-arrivals' ];
+    
+    // If current term is excluded, find a better one
+    if ( in_array( $term->slug, $excluded_slugs, true ) ) {
+        foreach ( $terms as $t ) {
+            if ( ! in_array( $t->slug, $excluded_slugs, true ) ) {
+                return $t;
+            }
+        }
+    }
+    
+    return $term;
+}, 10, 3 );
+```
+
+### Images
+
+#### `surecart/product-line-item-image/fallback_src`
+
+Filter the fallback image for product line items when no image is set.
+
+```php
+add_filter( 'surecart/product-line-item-image/fallback_src', function( $src, $product ) {
+    return get_template_directory_uri() . '/images/placeholder.png';
+}, 10, 2 );
+```
+
+#### `surecart/product-list/thumbnail-cover-size`
+
+Filter the thumbnail size for product list items.
+
+```php
+add_filter( 'surecart/product-list/thumbnail-cover-size', function( $size, $post_id ) {
+    return 'medium_large';
+}, 10, 2 );
+
+// Or use different sizes based on context
+add_filter( 'surecart/product-list/thumbnail-cover-size', function( $size, $post_id ) {
+    if ( is_archive() ) {
+        return 'medium';
+    }
+    return 'large';
+}, 10, 2 );
+```
+
+### Related Products
+
+#### `surecart_product_related_posts_query_limit`
+
+Filter the limit for related products query.
+
+```php
+add_filter( 'surecart_product_related_posts_query_limit', function( $limit ) {
+    return 20; // Increase related products limit
+} );
+```
+
+#### `surecart_product_related_posts_query`
+
+Filter the related products SQL query for advanced customization.
+
+```php
+add_filter( 'surecart_product_related_posts_query', function( $query, $post_id ) {
+    // Modify query parts
+    // $query is an array with 'select', 'from', 'where', etc.
+    return $query;
+}, 10, 2 );
+```
+
+### Product Page
+
+#### `surecart_product_page_query_args`
+
+Filter the WP_Query arguments used to fetch the product on a product page. By default, this queries a single published product by its post ID.
+
+**Default query args:**
+```php
+[
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 1,
+    'post__in'       => [ $product_post_id ],
+    'post_status'    => [ 'publish' ],
+]
+```
+
+**Allow previewing draft products:**
+
+```php
+add_filter( 'surecart_product_page_query_args', function( $args ) {
+    // Allow admins to preview unpublished products
+    if ( current_user_can( 'manage_options' ) ) {
+        $args['post_status'] = [ 'publish', 'draft', 'private' ];
+    }
+    return $args;
+} );
+```
+
+**Remove post restriction for page builders:**
+
+```php
+add_filter( 'surecart_product_page_query_args', function( $args ) {
+    // In editor context, allow any product to be displayed for previewing
+    if ( is_admin() || defined( 'REST_REQUEST' ) ) {
+        unset( $args['post__in'] );
+    }
+    return $args;
+} );
+```
+
+## Use Cases
+
+### Sync Product Metadata to External System
+
+```php
+add_action( 'surecart/product_created', 'sync_product_to_erp', 10, 2 );
+add_action( 'surecart/product_updated', 'sync_product_to_erp', 10, 2 );
+
+function sync_product_to_erp( $product, $data ) {
+    wp_remote_post( 'https://erp.example.com/api/products', [
+        'body' => [
+            'external_id' => $product->id,
+            'name'        => $product->name,
+            'sku'         => $product->sku ?? '',
+            'description' => $product->description ?? '',
+        ],
+        'headers' => [
+            'Authorization' => 'Bearer ' . ERP_API_KEY,
+        ],
+    ]);
+}
+
+// Sync stock levels separately when they change
+add_action( 'surecart/product_stock_adjusted', function( $product, $data ) {
+    wp_remote_patch( 'https://erp.example.com/api/products/' . $product->id, [
+        'body'    => [
+            'stock'           => $product->stock ?? 0,
+            'available_stock' => $product->available_stock ?? 0,
+            'held_stock'      => $product->held_stock ?? 0,
+        ],
+        'headers' => [ 'Authorization' => 'Bearer ' . ERP_API_KEY ],
+    ]);
+}, 10, 2 );
+```
+
+### Low Stock Notifications
+
+```php
+add_action( 'surecart/product_stock_adjusted', function( $product, $data ) {
+    $low_stock_threshold = get_option( 'sc_low_stock_threshold', 10 );
+    
+    // Use available_stock to check what's actually purchasable
+    if ( $product->available_stock <= $low_stock_threshold && $product->available_stock > 0 ) {
+        // Send Slack notification
+        wp_remote_post( SLACK_WEBHOOK_URL, [
+            'body' => json_encode([
+                'text' => sprintf( 
+                    '⚠️ Low stock: %s has %d available (%d on hand, %d held)',
+                    $product->name,
+                    $product->available_stock,
+                    $product->stock,
+                    $product->held_stock
+                )
+            ]),
+        ]);
+    }
+    
+    if ( $product->available_stock === 0 ) {
+        // Send out of stock alert (no units available for purchase)
+        wp_remote_post( SLACK_WEBHOOK_URL, [
+            'body' => json_encode([
+                'text' => sprintf( '🚨 Out of stock: %s (held: %d)', $product->name, $product->held_stock )
+            ]),
+        ]);
+    }
+}, 10, 2 );
+```
+
+### Use Custom Placeholder Image
+
+```php
+add_filter( 'surecart/product-line-item-image/fallback_src', function( $src, $product ) {
+    // Check if product has a category
+    $terms = get_the_terms( $product->post, 'sc_collection' );
+    
+    if ( $terms && ! is_wp_error( $terms ) ) {
+        $category_slug = $terms[0]->slug;
+        $custom_placeholder = get_template_directory_uri() . '/images/placeholders/' . $category_slug . '.png';
+        
+        if ( file_exists( get_template_directory() . '/images/placeholders/' . $category_slug . '.png' ) ) {
+            return $custom_placeholder;
+        }
+    }
+    
+    return get_template_directory_uri() . '/images/default-product.png';
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Currency" icon="dollar-sign" href="/guides/actions-filters/currency">
+    Customize how prices are formatted.
+  </Card>
+  <Card title="Display" icon="eye" href="/guides/actions-filters/display">
+    Modify reviews, blocks, and media display.
+  </Card>
+</CardGroup>
+

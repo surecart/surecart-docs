@@ -1,0 +1,189 @@
+---
+title: "Requests"
+description: "Modify model data and API requests at a low level"
+---
+
+These filters allow you to intercept and modify data before it's sent to the SureCart API, and transform responses as they come back. This is useful for adding metadata, modifying request parameters, or transforming API responses.
+
+## `surecart/request/model`
+
+Filter the model instance before an API request is made. This is the primary way to modify data being sent to the API for any model (checkouts, orders, customers, etc.).
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$model" type="Model">
+      The model instance being sent to the API.
+    </ResponseField>
+    <ResponseField name="$request" type="WP_REST_Request">
+      The WordPress REST request object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+// Add metadata to every checkout
+add_filter( 'surecart/request/model', function( $model, $request ) {
+    // Only modify checkout models
+    if ( ! $model instanceof \SureCart\Models\Checkout ) {
+        return $model;
+    }
+
+    // Add tracking metadata
+    $model['metadata'] = array_merge(
+        (array) ( $model['metadata'] ?? [] ),
+        [
+            'source'      => 'wordpress',
+            'landing_page' => $_COOKIE['landing_page'] ?? null,
+            'utm_source'  => $_GET['utm_source'] ?? null,
+            'utm_medium'  => $_GET['utm_medium'] ?? null,
+            'utm_campaign' => $_GET['utm_campaign'] ?? null,
+        ]
+    );
+
+    return $model;
+}, 10, 2 );
+```
+
+### Add Affiliate Tracking
+
+```php
+// Pass affiliate data to checkout metadata
+add_filter( 'surecart/request/model', function( $model, $request ) {
+    if ( ! $model instanceof \SureCart\Models\Checkout ) {
+        return $model;
+    }
+
+    // Get affiliate ID from cookie or session
+    $affiliate_id = $_COOKIE['affiliate_id'] ?? null;
+    
+    if ( $affiliate_id ) {
+        $model['metadata'] = array_merge(
+            (array) ( $model['metadata'] ?? [] ),
+            [
+                'affiliate_id'  => sanitize_text_field( $affiliate_id ),
+                'referral_date' => current_time( 'mysql' ),
+            ]
+        );
+    }
+
+    return $model;
+}, 10, 2 );
+```
+
+### Block Checkout Based on Conditions
+
+```php
+// Block checkout from specific countries
+add_filter( 'surecart/request/model', function( $model, $request ) {
+    if ( ! $model instanceof \SureCart\Models\Checkout ) {
+        return $model;
+    }
+
+    // Check if POST/PATCH request (creating or updating)
+    if ( ! in_array( $request->get_method(), [ 'POST', 'PATCH' ], true ) ) {
+        return $model;
+    }
+
+    $blocked_countries = [ 'XX', 'YY' ]; // Your blocked country codes
+    $billing_country = $model['billing_address']['country'] ?? null;
+
+    if ( $billing_country && in_array( $billing_country, $blocked_countries, true ) ) {
+        return new \WP_Error(
+            'country_blocked',
+            __( 'Orders from your country are not currently accepted.', 'your-textdomain' ),
+            [ 'status' => 403 ]
+        );
+    }
+
+    return $model;
+}, 10, 2 );
+```
+
+## `surecart/request/response`
+
+Filter the API response after it's received. Use this to transform, enrich, or modify response data before it's used.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$response" type="mixed">
+      The API response object or array.
+    </ResponseField>
+    <ResponseField name="$args" type="array">
+      The HTTP request arguments that were sent.
+    </ResponseField>
+    <ResponseField name="$endpoint" type="string">
+      The API endpoint that was called.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+// Enrich customer responses with WordPress user data
+add_filter( 'surecart/request/response', function( $response, $args, $endpoint ) {
+    if ( strpos( $endpoint, 'customers' ) === false ) {
+        return $response;
+    }
+
+    if ( is_object( $response ) && ! empty( $response->email ) ) {
+        $wp_user = get_user_by( 'email', $response->email );
+        if ( $wp_user ) {
+            $response->wp_user_id = $wp_user->ID;
+            $response->wp_roles = $wp_user->roles;
+        }
+    }
+
+    return $response;
+}, 10, 3 );
+```
+
+## `surecart/request/args`
+
+Filter the HTTP request arguments before sending. This allows you to modify headers, timeouts, or other HTTP-level settings.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$args" type="array">
+      The HTTP request arguments including headers, body, method, and timeout.
+    </ResponseField>
+    <ResponseField name="$endpoint" type="string">
+      The API endpoint being called.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+// Increase timeout for export endpoints
+add_filter( 'surecart/request/args', function( $args, $endpoint ) {
+    if ( strpos( $endpoint, 'exports' ) !== false ) {
+        $args['timeout'] = 120; // 2 minutes for large exports
+    }
+
+    return $args;
+}, 10, 2 );
+```
+
+## `surecart/request/endpoint`
+
+Filter the API endpoint URL before the request is made.
+
+```php
+add_filter( 'surecart/request/endpoint', function( $endpoint, $args ) {
+    // Log endpoints in development
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( 'SureCart API: ' . $endpoint );
+    }
+
+    return $endpoint;
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Models" icon="cube" href="/guides/actions-filters/models">
+    Hook into model hydration to modify data after it's received.
+  </Card>
+  <Card title="Checkout" icon="cart-shopping" href="/guides/actions-filters/checkout">
+    Higher-level checkout actions and filters.
+  </Card>
+</CardGroup>
