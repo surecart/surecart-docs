@@ -1,5 +1,5 @@
 ---
-title: "Order & Payment Actions"
+title: "Orders"
 description: "Hook into order, charge, refund, and invoice events"
 ---
 
@@ -36,7 +36,7 @@ Fires when an order is updated.
 ```php
 add_action( 'surecart/order_updated', function( $order, $data ) {
     // Sync order status changes
-    if ( $order->status === 'completed' ) {
+    if ( $order->status === 'paid' ) {
         mark_order_complete_in_erp( $order->id );
     }
 }, 10, 2 );
@@ -131,10 +131,17 @@ add_action( 'surecart/invoice_created', function( $invoice, $data ) {
 
 ```php
 add_action( 'surecart/order_created', function( $order, $data ) {
+    // Access the checkout from the order (requires expansion)
+    $checkout = $order->checkout ?? null;
+    if ( empty( $checkout ) ) {
+        return;
+    }
+    
     // Check if order has physical products
     $has_physical = false;
-    foreach ( $order->line_items ?? [] as $item ) {
-        if ( $item->product->shipping ?? false ) {
+    $line_items = $checkout->line_items->data ?? [];
+    foreach ( $line_items as $item ) {
+        if ( ! empty( $item->price->product->shipping_enabled ) ) {
             $has_physical = true;
             break;
         }
@@ -144,8 +151,8 @@ add_action( 'surecart/order_created', function( $order, $data ) {
         wp_remote_post( 'https://fulfillment.example.com/api/orders', [
             'body' => json_encode([
                 'order_id' => $order->id,
-                'shipping_address' => $order->shipping_address,
-                'items' => $order->line_items,
+                'shipping_address' => $checkout->shipping_address,
+                'items' => $line_items,
             ]),
             'headers' => [
                 'Authorization' => 'Bearer ' . FULFILLMENT_API_KEY,
@@ -202,15 +209,21 @@ add_action( 'surecart/refund_created', function( $refund, $data ) {
 
 ```php
 add_action( 'surecart/invoice_created', function( $invoice, $data ) {
+    // Access the checkout from the invoice (requires expansion)
+    $checkout = $invoice->checkout ?? null;
+    if ( empty( $checkout ) ) {
+        return;
+    }
+    
     // Send to QuickBooks, Xero, FreshBooks, etc.
     wp_remote_post( 'https://api.quickbooks.com/v3/invoice', [
         'body' => json_encode([
             'Line' => [[
-                'Amount' => $invoice->total / 100,
+                'Amount' => ( $checkout->total_amount ?? 0 ) / 100,
                 'Description' => 'SureCart Invoice ' . $invoice->id,
             ]],
             'CustomerRef' => [
-                'value' => $invoice->customer->id,
+                'value' => $checkout->customer->id ?? '',
             ],
         ]),
         'headers' => [

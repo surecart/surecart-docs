@@ -1,12 +1,12 @@
 ---
-title: "Subscription Actions"
+title: "Subscriptions"
 description: "Hook into subscription lifecycle events"
 ---
 
 These actions fire during subscription lifecycle events like renewals.
 
 <Note>
-  For handling subscription cancellations and restorations that affect purchase access, see [Purchase Actions](/guides/hooks/purchase-actions). The `surecart/purchase_revoked` and `surecart/purchase_invoked` actions fire when subscriptions are canceled or restored.
+  For handling subscription cancellations and restorations that affect purchase access, see [Purchases](/guides/actions-filters/purchases). The `surecart/purchase_revoked` and `surecart/purchase_invoked` actions fire when subscriptions are canceled or restored.
 </Note>
 
 ## `surecart/subscription_renewed`
@@ -52,7 +52,7 @@ add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
         "Hi %s,\n\nThank you for your continued support! Your subscription to %s has been renewed.\n\nNext renewal date: %s\n\nBest regards,\nThe Team",
         $customer->first_name ?? 'there',
         $product_name,
-        date( 'F j, Y', strtotime( $subscription->current_period_end ) )
+        ! empty( $subscription->current_period_end_at ) ? gmdate( 'F j, Y', $subscription->current_period_end_at ) : 'N/A'
     );
     
     wp_mail( $customer->email, $subject, $message );
@@ -91,7 +91,7 @@ add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
     
     if ( $user ) {
         // Update access expiration
-        $new_expiration = strtotime( $subscription->current_period_end );
+        $new_expiration = $subscription->current_period_end_at;
         update_user_meta( $user->ID, 'access_expires', $new_expiration );
         
         // Reset usage limits
@@ -124,10 +124,10 @@ add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Purchase Actions" href="/guides/hooks/purchase-actions">
+  <Card title="Purchases" href="/guides/actions-filters/purchases">
     Handle subscription cancellations and restorations via purchase events.
   </Card>
-  <Card title="Model Actions" href="/guides/hooks/model-actions">
+  <Card title="Models" href="/guides/actions-filters/models">
     Hook into subscription model events like `canceled` and `restored`.
   </Card>
 </CardGroup>

@@ -1,0 +1,375 @@
+---
+title: "Checkout"
+description: "Hook into checkout events and customize validation"
+---
+
+These hooks allow you to respond to checkout events and customize the checkout experience.
+
+## Actions
+
+Actions are triggered during the checkout process and when orders are confirmed. This is at the end, after payment is successuflly confirmed by the processor.
+
+### `surecart/checkout_confirmed`
+
+Fired after an order is confirmed and all purchases have been processed. Use this for post-checkout operations like analytics tracking, external notifications, or custom logging.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$checkout" type="\SureCart\Models\Checkout">
+      The checkout model object containing order details.
+    </ResponseField>
+    <ResponseField name="$request" type="\WP_REST_Request">
+      The REST API request object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
+    // Access order details
+    $order_id = $checkout->id;
+    $total = $checkout->total_amount;
+    $customer = $checkout->customer;
+
+    // Track conversion
+    if ( function_exists( 'track_conversion' ) ) {
+        track_conversion( $order_id, $total );
+    }
+
+    // Send to external system
+    wp_remote_post( 'https://api.example.com/orders', [
+        'body' => [
+            'order_id' => $order_id,
+            'total' => $total,
+            'customer_email' => $customer->email,
+        ]
+    ]);
+}, 10, 2 );
+```
+
+## Filters
+
+### Form Validation
+
+These filters run during the finalize step of checkout, before the order is submitted. Use them to validate form data and prevent checkout if validation fails.
+
+#### `surecart/checkout/validate`
+
+Add custom server-side validation to checkout forms. This filter runs during the finalize step, after client-side validation passes but before the order is submitted to the payment processor.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$errors" type="\WP_Error">
+      Error object to add validation errors to. Add errors using `$errors->add(
+      $code, $message )`.
+    </ResponseField>
+    <ResponseField name="$args" type="array">
+      All checkout form data including `email`, `name`, `billing_address`,
+      `shipping_address`, `metadata`, `line_items`, and custom fields.
+    </ResponseField>
+    <ResponseField name="$request" type="\WP_REST_Request">
+      The REST API request object. Use `$request->get_param( 'key' )` to access
+      specific parameters.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    // Require a custom field
+    if ( empty( $args['metadata']['company_name'] ) ) {
+        $errors->add( 'company_required', 'Company name is required.' );
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+##### Validate Email Domain
+
+Block specific email domains from purchasing:
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    $blocked_domains = [ 'tempmail.com', 'throwaway.com', 'mailinator.com' ];
+
+    $email = $args['email'] ?? '';
+    $domain = substr( strrchr( $email, '@' ), 1 );
+
+    if ( in_array( $domain, $blocked_domains, true ) ) {
+        $errors->add(
+            'blocked_email',
+            'Please use a valid email address. Temporary email addresses are not allowed.'
+        );
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+##### Validate Custom Fields
+
+Validate custom form fields added to your checkout:
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    // Get custom fields from metadata
+    $metadata = $args['metadata'] ?? [];
+
+    // Validate age requirement
+    if ( isset( $metadata['your_age'] ) ) {
+        if ( $metadata['your_age'] < 18 ) {
+            $errors->add( 'age_restriction', 'You must be 18 or older to purchase.' );
+        }
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+##### Validate Based on Form ID
+
+Apply validation only to specific checkout forms:
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    $form_id = $request->get_param( 'form_id' );
+
+    // Only validate on specific form
+    if ( $form_id !== 123 ) {
+        return $errors;
+    }
+
+    // Form-specific validation
+    if ( empty( $args['metadata']['license_number'] ) ) {
+        $errors->add( 'license_required', 'Professional license number is required.' );
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+### User Creation
+
+#### `surecart/checkout/auto-login-new-user`
+
+Control whether newly created users are automatically logged in after checkout.
+
+```php
+// Disable auto-login for new users
+add_filter( 'surecart/checkout/auto-login-new-user', '__return_false' );
+```
+
+### Display
+
+#### `surecart_checkout_show_converted_total`
+
+Control whether converted currency totals are shown when using currency conversion.
+
+```php
+add_filter( 'surecart_checkout_show_converted_total', function( $show, $checkout ) {
+    // Don't show converted total for small orders
+    if ( $checkout->total_amount < 1000 ) { // Less than $10
+        return false;
+    }
+    return $show;
+}, 10, 2 );
+```
+
+#### `sc_checkout_price_selector_first_price_as_default`
+
+Control whether the first price is selected by default in price selectors.
+
+```php
+add_filter( 'sc_checkout_price_selector_first_price_as_default', '__return_false' );
+```
+
+### Payment Mode
+
+#### `surecart/payments/mode`
+
+Filter the payment mode (live/test). Useful for testing or staging environments.
+
+```php
+add_filter( 'surecart/payments/mode', function( $mode ) {
+    // Force test mode for admins
+    if ( current_user_can( 'manage_options' ) ) {
+        return 'test';
+    }
+    return $mode;
+} );
+
+// Or force test mode on staging
+add_filter( 'surecart/payments/mode', function( $mode ) {
+    if ( wp_get_environment_type() === 'staging' ) {
+        return 'test';
+    }
+    return $mode;
+} );
+```
+
+## Use Cases
+
+### Analytics & Conversion Tracking
+
+```php
+add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
+    // Google Analytics 4 - Server-side tracking
+    $measurement_id = 'G-XXXXXXXXXX';
+    $api_secret = 'your-api-secret';
+
+    wp_remote_post( "https://www.google-analytics.com/mp/collect?measurement_id={$measurement_id}&api_secret={$api_secret}", [
+        'body' => json_encode([
+            'client_id' => $checkout->customer->id,
+            'events' => [[
+                'name' => 'purchase',
+                'params' => [
+                    'transaction_id' => $checkout->id,
+                    'value' => $checkout->total_amount / 100,
+                    'currency' => $checkout->currency,
+                ]
+            ]]
+        ])
+    ]);
+}, 10, 2 );
+```
+
+### Send to Slack
+
+```php
+add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
+    $webhook_url = 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL';
+
+    wp_remote_post( $webhook_url, [
+        'body' => json_encode([
+            'text' => sprintf(
+                '🎉 New order! %s just purchased for %s',
+                $checkout->customer->email,
+                sc_format_amount( $checkout->total_amount, $checkout->currency )
+            )
+        ]),
+        'headers' => [
+            'Content-Type' => 'application/json'
+        ]
+    ]);
+}, 10, 2 );
+```
+
+### Validate Minimum Order Amount
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    $checkout = $request->get_param( 'checkout' );
+
+    if ( isset( $checkout['total_amount'] ) && $checkout['total_amount'] < 500 ) {
+        $errors->add(
+            'minimum_order',
+            'Minimum order amount is $5.00.'
+        );
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+### Restrict Purchases by Country
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    $blocked_countries = [ 'XX', 'YY' ]; // Country codes to block
+
+    $billing_address = $args['billing_address'] ?? [];
+    $country = $billing_address['country'] ?? '';
+
+    if ( in_array( $country, $blocked_countries, true ) ) {
+        $errors->add(
+            'country_blocked',
+            'Sorry, we cannot ship to your country.'
+        );
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+### Require Terms Acceptance
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    $metadata = $args['metadata'] ?? [];
+
+    if ( empty( $metadata['accept_terms'] ) || $metadata['accept_terms'] !== 'yes' ) {
+        $errors->add(
+            'terms_required',
+            'You must accept the terms and conditions to continue.'
+        );
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+### Validate Tax Identifier
+
+Use the built-in `tax_identifier` field to validate VAT/tax ID numbers:
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    $tax_identifier = $args['tax_identifier'] ?? [];
+    $billing_address = $args['billing_address'] ?? [];
+    
+    // Require tax ID for EU business customers
+    $eu_countries = [ 'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE' ];
+    
+    $country = $billing_address['country'] ?? '';
+    
+    if ( in_array( $country, $eu_countries, true ) ) {
+        // Check if tax identifier number is provided
+        if ( empty( $tax_identifier['number'] ) ) {
+            $errors->add( 'tax_id_required', 'A VAT number is required for EU business purchases.' );
+        }
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+### Force Test Mode for Non-Production
+
+```php
+add_filter( 'surecart/payments/mode', function( $mode ) {
+    // Always use test mode unless on production
+    $allowed_hosts = [ 'www.example.com', 'example.com' ];
+
+    if ( ! in_array( $_SERVER['HTTP_HOST'], $allowed_hosts ) ) {
+        return 'test';
+    }
+
+    return $mode;
+} );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Cart" icon="cart-shopping" href="/guides/actions-filters/cart">
+    Customize cart icon and visibility.
+  </Card>
+  <Card
+    title="Login"
+    icon="right-to-bracket"
+    href="/guides/actions-filters/login"
+  >
+    Customize login redirects and authentication.
+  </Card>
+  <Card
+    title="Purchases"
+    icon="bag-shopping"
+    href="/guides/actions-filters/purchases"
+  >
+    Hook into individual purchase events.
+  </Card>
+  <Card title="Orders" icon="receipt" href="/guides/actions-filters/orders">
+    Hook into order and payment events.
+  </Card>
+</CardGroup>

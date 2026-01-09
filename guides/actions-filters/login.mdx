@@ -1,0 +1,135 @@
+---
+title: "Login"
+description: "Customize login redirects and user authentication behavior"
+---
+
+These filters allow you to customize the login and authentication experience.
+
+## `sc_login_redirect_url`
+
+Filter the redirect URL after login.
+
+```php
+add_filter( 'sc_login_redirect_url', function( $url ) {
+    // Redirect to custom dashboard
+    return home_url( '/my-account/' );
+} );
+
+// Or redirect based on user role
+add_filter( 'sc_login_redirect_url', function( $url ) {
+    $user = wp_get_current_user();
+    
+    if ( in_array( 'subscriber', $user->roles ) ) {
+        return home_url( '/member-dashboard/' );
+    }
+    
+    return $url;
+} );
+```
+
+## `surecart/default_password_nag`
+
+Control whether new users see the password change nag after their account is created with a random, temporary password.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$show" type="bool">
+      Whether to show the password nag.
+    </ResponseField>
+    <ResponseField name="$user_id" type="int">
+      The WordPress user ID.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/default_password_nag', function( $show, $user_id ) {
+    return false; // Disable the nag
+}, 10, 2 );
+```
+
+## Use Cases
+
+### Redirect to Download After Purchase
+
+```php
+add_filter( 'sc_login_redirect_url', function( $url ) {
+    // If there's a pending download, redirect to downloads page
+    if ( isset( $_COOKIE['sc_pending_download'] ) ) {
+        return home_url( '/downloads/' );
+    }
+    
+    return $url;
+} );
+```
+
+### Role-Based Redirects
+
+```php
+add_filter( 'sc_login_redirect_url', function( $url ) {
+    $user = wp_get_current_user();
+    
+    // Redirect admins to WordPress dashboard
+    if ( in_array( 'administrator', $user->roles ) ) {
+        return admin_url();
+    }
+    
+    // Redirect members to member area
+    if ( in_array( 'sc_member', $user->roles ) ) {
+        return home_url( '/members/' );
+    }
+    
+    // Redirect customers to their account
+    return home_url( '/my-account/' );
+} );
+```
+
+### Redirect to Original Page
+
+```php
+add_filter( 'sc_login_redirect_url', function( $url ) {
+    // Check for stored redirect URL
+    if ( isset( $_GET['redirect_to'] ) ) {
+        $redirect = wp_validate_redirect( $_GET['redirect_to'], false );
+        if ( $redirect ) {
+          return esc_url( $redirect );
+        }
+    }
+    
+    // Check session/cookie for original page
+    if ( isset( $_COOKIE['sc_original_page'] ) ) {
+        $redirect = esc_url( $_COOKIE['sc_original_page'] );
+        setcookie( 'sc_original_page', '', time() - 3600, '/' );
+        return $redirect;
+    }
+    
+    return $url;
+} );
+```
+
+### Disable Password Nag for Specific Users
+
+```php
+add_filter( 'surecart/default_password_nag', function( $show, $user_id ) {
+    $user = get_user_by( 'id', $user_id );
+    
+    // Don't nag users who signed up via social login
+    if ( get_user_meta( $user_id, 'social_login', true ) ) {
+        return false;
+    }
+    
+    return $show;
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Checkout" icon="credit-card" href="/guides/actions-filters/checkout">
+    Customize checkout user creation and auto-login.
+  </Card>
+  <Card title="Customers" icon="users" href="/guides/actions-filters/customers">
+    Hook into customer lifecycle events.
+  </Card>
+</CardGroup>
+
