@@ -1,0 +1,134 @@
+---
+title: "Subscription Actions"
+description: "Hook into subscription lifecycle events"
+---
+
+These actions fire during subscription lifecycle events like renewals.
+
+<Note>
+  For handling subscription cancellations and restorations that affect purchase access, see [Purchase Actions](/guides/hooks/purchase-actions). The `surecart/purchase_revoked` and `surecart/purchase_invoked` actions fire when subscriptions are canceled or restored.
+</Note>
+
+## `surecart/subscription_renewed`
+
+Fires when a subscription successfully renews.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$subscription" type="\SureCart\Models\Subscription">
+      The subscription model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    $customer = $subscription->customer;
+
+    // Send renewal confirmation
+    wp_mail(
+        $customer->email,
+        'Subscription Renewed',
+        'Thank you! Your subscription has been renewed.'
+    );
+}, 10, 2 );
+```
+
+## Use Cases
+
+### Send Renewal Thank You Email
+
+```php
+add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    $customer = $subscription->customer;
+    $product = $subscription->price->product ?? null;
+    $product_name = is_object( $product ) ? $product->name : 'your subscription';
+    
+    $subject = 'Thank you for renewing!';
+    $message = sprintf(
+        "Hi %s,\n\nThank you for your continued support! Your subscription to %s has been renewed.\n\nNext renewal date: %s\n\nBest regards,\nThe Team",
+        $customer->first_name ?? 'there',
+        $product_name,
+        date( 'F j, Y', strtotime( $subscription->current_period_end ) )
+    );
+    
+    wp_mail( $customer->email, $subject, $message );
+}, 10, 2 );
+```
+
+### Track Renewals for Analytics
+
+```php
+add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    // Track in Google Analytics
+    if ( function_exists( 'gtag' ) ) {
+        // Server-side tracking
+        wp_remote_post( 'https://www.google-analytics.com/mp/collect', [
+            'body' => json_encode([
+                'client_id' => $subscription->customer->id,
+                'events' => [[
+                    'name' => 'subscription_renewal',
+                    'params' => [
+                        'subscription_id' => $subscription->id,
+                        'value' => $subscription->price->amount / 100,
+                        'currency' => $subscription->price->currency,
+                    ]
+                ]]
+            ])
+        ]);
+    }
+}, 10, 2 );
+```
+
+### Extend Access Periods
+
+```php
+add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    $user = $subscription->purchase->getWPUser();
+    
+    if ( $user ) {
+        // Update access expiration
+        $new_expiration = strtotime( $subscription->current_period_end );
+        update_user_meta( $user->ID, 'access_expires', $new_expiration );
+        
+        // Reset usage limits
+        delete_user_meta( $user->ID, 'monthly_downloads_count' );
+    }
+}, 10, 2 );
+```
+
+### Notify Team of High-Value Renewals
+
+```php
+add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    $amount = $subscription->price->amount ?? 0;
+    
+    // Notify for renewals over $500
+    if ( $amount >= 50000 ) {
+        wp_mail(
+            'sales@example.com',
+            'High-Value Renewal',
+            sprintf(
+                'Customer %s just renewed for $%s!',
+                $subscription->customer->email,
+                number_format( $amount / 100, 2 )
+            )
+        );
+    }
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Purchase Actions" href="/guides/hooks/purchase-actions">
+    Handle subscription cancellations and restorations via purchase events.
+  </Card>
+  <Card title="Model Actions" href="/guides/hooks/model-actions">
+    Hook into subscription model events like `canceled` and `restored`.
+  </Card>
+</CardGroup>
+

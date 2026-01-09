@@ -1,0 +1,106 @@
+---
+title: "Customer Actions"
+description: "Hook into customer lifecycle events"
+---
+
+These actions fire when customer records are updated.
+
+## `surecart/customer_updated`
+
+Fires when a customer's information is updated.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$customer" type="\SureCart\Models\Customer">
+      The customer model object.
+    </ResponseField>
+    <ResponseField name="$data" type="object">
+      The raw event data.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/customer_updated', function( $customer, $data ) {
+    // Sync customer to CRM
+    sync_customer_to_crm( $customer );
+}, 10, 2 );
+```
+
+## Use Cases
+
+### Sync to CRM
+
+```php
+add_action( 'surecart/customer_updated', function( $customer, $data ) {
+    // Sync to HubSpot, Salesforce, etc.
+    wp_remote_post( 'https://api.hubspot.com/contacts/v1/contact', [
+        'body' => json_encode([
+            'properties' => [
+                [ 'property' => 'email', 'value' => $customer->email ],
+                [ 'property' => 'firstname', 'value' => $customer->first_name ?? '' ],
+                [ 'property' => 'lastname', 'value' => $customer->last_name ?? '' ],
+                [ 'property' => 'phone', 'value' => $customer->phone ?? '' ],
+            ]
+        ]),
+        'headers' => [
+            'Authorization' => 'Bearer ' . HUBSPOT_API_KEY,
+            'Content-Type' => 'application/json',
+        ],
+    ]);
+}, 10, 2 );
+```
+
+### Sync WordPress User Profile
+
+SureCart automatically syncs customer updates to WordPress users, but you can add additional sync logic:
+
+```php
+add_action( 'surecart/customer_updated', function( $customer, $data ) {
+    // Find the WordPress user
+    $user = get_user_by( 'email', $customer->email );
+    
+    if ( $user ) {
+        // Update additional user meta
+        update_user_meta( $user->ID, 'billing_phone', $customer->phone ?? '' );
+        update_user_meta( $user->ID, 'billing_company', $customer->company ?? '' );
+        
+        // Update display name if changed
+        if ( ! empty( $customer->name ) && $user->display_name !== $customer->name ) {
+            wp_update_user([
+                'ID' => $user->ID,
+                'display_name' => $customer->name,
+            ]);
+        }
+    }
+}, 10, 2 );
+```
+
+### Send to Email Marketing Platform
+
+```php
+add_action( 'surecart/customer_updated', function( $customer, $data ) {
+    // Update subscriber in Mailchimp
+    $list_id = MAILCHIMP_LIST_ID;
+    $subscriber_hash = md5( strtolower( $customer->email ) );
+    
+    wp_remote_request(
+        "https://us1.api.mailchimp.com/3.0/lists/{$list_id}/members/{$subscriber_hash}",
+        [
+            'method' => 'PATCH',
+            'body' => json_encode([
+                'email_address' => $customer->email,
+                'merge_fields' => [
+                    'FNAME' => $customer->first_name ?? '',
+                    'LNAME' => $customer->last_name ?? '',
+                ],
+            ]),
+            'headers' => [
+                'Authorization' => 'Basic ' . base64_encode( 'anystring:' . MAILCHIMP_API_KEY ),
+                'Content-Type' => 'application/json',
+            ],
+        ]
+    );
+}, 10, 2 );
+```
+

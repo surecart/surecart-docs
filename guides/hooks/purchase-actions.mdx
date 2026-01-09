@@ -1,0 +1,157 @@
+---
+title: "Purchase Actions"
+description: "Hook into purchase lifecycle events"
+---
+
+These actions are triggered throughout the purchase lifecycle, including:
+
+- **Checkout** — When a customer completes a purchase
+- **Refunds** — When a purchase is refunded and access is revoked
+- **Upgrades/Downgrades** — When a customer switches to a different product
+- **Quantity changes** — When a customer adjusts the quantity of their purchase
+- **Subscription cancellations** — When a subscription ends and access is revoked
+- **Subscription restorations** — When a canceled subscription is reactivated
+
+These hooks are essential for building integrations that grant or revoke access to content, sync with external systems, or trigger custom workflows.
+
+<Note>
+  **Important**: If you are wanting to create a full purchase integration that
+  handles refunds, upgrades, downgrades and more, please follow the [Purchase
+  Integration Guide](/guides/orders-and-purchases)
+</Note>
+
+## `surecart/purchase_created`
+
+Fired when a new purchase is created after a successful checkout.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The purchase model object containing product, customer, quantity, and
+      other purchase details.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_created', function( $purchase ) {
+    // Get purchase details
+    $product_id = $purchase->product;
+    $customer_id = $purchase->customer;
+    $quantity = $purchase->quantity;
+
+    // Get the WordPress user associated with this purchase
+    $user = $purchase->getWPUser();
+
+    if ( $user ) {
+        // Grant access, send notifications, etc.
+        update_user_meta( $user->ID, 'purchased_product_' . $product_id, true );
+    }
+} );
+```
+
+## `surecart/purchase_invoked`
+
+Fired when a purchase is invoked (access is granted). This happens when a subscription is restored or when manually invoking access.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The purchase model object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_invoked', function( $purchase ) {
+    $user = $purchase->getWPUser();
+
+    if ( $user ) {
+        // Re-grant access to content
+        update_user_meta( $user->ID, 'has_active_subscription', true );
+    }
+} );
+```
+
+## `surecart/purchase_revoked`
+
+Fired when a purchase is revoked (access is removed). This happens when a subscription is canceled or when manually revoking access.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The purchase model object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_revoked', function( $purchase ) {
+    $user = $purchase->getWPUser();
+
+    if ( $user ) {
+        // Remove access to content
+        delete_user_meta( $user->ID, 'has_active_subscription' );
+
+        // Optionally notify the user
+        wp_mail(
+            $user->user_email,
+            'Access Revoked',
+            'Your subscription has been canceled and access has been removed.'
+        );
+    }
+} );
+```
+
+## `surecart/purchase_updated`
+
+Fired when a purchase is updated. Provides both the updated purchase and webhook request data.
+
+<ResponseField name="Parameters" type="Action Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$purchase" type="\SureCart\Models\Purchase">
+      The updated purchase model.
+    </ResponseField>
+    <ResponseField name="$request" type="object">
+      The webhook request containing `data->object` and
+      `data->previous_attributes`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_action( 'surecart/purchase_updated', function( $purchase, $request ) {
+    $data = $request->data->object ?? null;
+    $previous = $request->data->previous_attributes ?? null;
+
+    // Check if the product changed
+    if ( ! empty( $previous->product ) && $data->product !== $previous->product ) {
+        // Handle product change - revoke old, grant new
+    }
+
+    // Check if quantity changed
+    if ( ! empty( $previous->quantity ) && $data->quantity !== $previous->quantity ) {
+        // Handle quantity change
+    }
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Orders & Purchases Guide"
+    icon="puzzle-piece"
+    href="/guides/orders-and-purchases"
+  >
+    Build integrations using the Integration class that handles purchases,
+    refunds, upgrades, and more.
+  </Card>
+  <Card
+    title="Checkout Actions"
+    icon="credit-card"
+    href="/guides/hooks/checkout-actions"
+  >
+    Learn about checkout-triggered actions for purchases.
+  </Card>
+</CardGroup>

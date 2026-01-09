@@ -1,0 +1,134 @@
+---
+title: "Model Actions"
+description: "Hook into model lifecycle events"
+---
+
+SureCart fires dynamic actions when model events occur. These follow the pattern `surecart/models/{model_name}/{event}` and provide fine-grained control over model lifecycle events.
+
+## Pattern
+
+```
+surecart/models/{model_name}/{event}
+```
+
+Where:
+- `{model_name}` is the lowercase model name (e.g., `subscription`, `price`, `product`)
+- `{event}` is the lifecycle event (e.g., `created`, `updated`, `canceled`)
+
+## Available Events
+
+| Event | Description |
+| ----- | ----------- |
+| `creating` | Before a model is created |
+| `created` | After a model is created |
+| `updating` | Before a model is updated |
+| `updated` | After a model is updated |
+| `deleting` | Before a model is deleted |
+| `deleted` | After a model is deleted |
+| `canceled` | After a subscription is canceled |
+| `restored` | After a subscription is restored |
+| `completed` | After a subscription is completed |
+| `revoked` | After a purchase is revoked |
+| `invoked` | After a purchase is invoked |
+
+## Examples
+
+### Handle Subscription Cancellation
+
+```php
+add_action( 'surecart/models/subscription/canceled', function( $subscription ) {
+    // Handle subscription cancellation
+    error_log( 'Subscription canceled: ' . $subscription->id );
+    
+    // Send cancellation survey
+    $customer = $subscription->customer;
+    wp_mail(
+        $customer->email,
+        'We\'re sorry to see you go',
+        'Would you mind sharing why you canceled? Reply to this email with your feedback.'
+    );
+} );
+```
+
+### Handle Subscription Restoration
+
+```php
+add_action( 'surecart/models/subscription/restored', function( $subscription ) {
+    // Handle subscription restoration
+    error_log( 'Subscription restored: ' . $subscription->id );
+    
+    // Re-enable access
+    $user = $subscription->purchase->getWPUser();
+    if ( $user ) {
+        update_user_meta( $user->ID, 'subscription_active', true );
+    }
+} );
+```
+
+### Clear Caches on Price Update
+
+```php
+add_action( 'surecart/models/price/updated', function( $price ) {
+    // Clear price caches
+    wp_cache_delete( 'price_' . $price->id, 'surecart' );
+    wp_cache_flush_group( 'surecart_prices' );
+} );
+```
+
+### Log Product Changes
+
+```php
+add_action( 'surecart/models/product/updated', function( $product ) {
+    // Log product changes for auditing
+    error_log( sprintf(
+        'Product updated: %s (ID: %s) at %s',
+        $product->name,
+        $product->id,
+        current_time( 'mysql' )
+    ) );
+} );
+```
+
+## `surecart/{object_name}/attributes_set`
+
+Fired after all attributes are set on a model. Useful for modifying model data after it's been populated.
+
+```php
+add_action( 'surecart/checkout/attributes_set', function( $checkout ) {
+    // Modify checkout after attributes are set
+    // This runs after the checkout model has been populated
+} );
+
+add_action( 'surecart/product/attributes_set', function( $product ) {
+    // Add custom computed attributes
+    $product->custom_attribute = 'computed_value';
+} );
+```
+
+## Available Models
+
+You can hook into events for these models:
+
+- `subscription` - Subscription lifecycle events
+- `purchase` - Purchase lifecycle events
+- `product` - Product changes
+- `price` - Price changes
+- `customer` - Customer changes
+- `order` - Order changes
+- `checkout` - Checkout process events
+- `charge` - Payment charge events
+- `refund` - Refund events
+- `invoice` - Invoice events
+- `coupon` - Coupon changes
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Product Actions" icon="box" href="/guides/hooks/product-actions">
+    Hook into product creation, updates, and deletion events.
+  </Card>
+  <Card title="Purchase Actions" icon="bag-shopping" href="/guides/hooks/purchase-actions">
+    Higher-level purchase events built on model actions.
+  </Card>
+</CardGroup>
+

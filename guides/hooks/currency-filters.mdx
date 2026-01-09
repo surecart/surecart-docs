@@ -1,0 +1,181 @@
+---
+title: "Currency Filters"
+description: "Customize currency formatting, locales, and display"
+---
+
+These filters allow you to customize how currency amounts are formatted and displayed throughout SureCart.
+
+## `surecart/currency/format`
+
+Filter the formatted currency string. This is the final output that users see.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$formatted" type="string">
+      The formatted currency string (e.g., "$19.99").
+    </ResponseField>
+    <ResponseField name="$amount" type="int">
+      The amount in cents.
+    </ResponseField>
+    <ResponseField name="$currency_code" type="string">
+      The currency code (e.g., 'USD', 'EUR').
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/currency/format', function( $formatted, $amount, $currency_code ) {
+    // Add custom prefix
+    return 'Price: ' . $formatted;
+}, 10, 3 );
+```
+
+## `surecart/currency/locale`
+
+Filter the locale used for currency formatting. This affects number formatting, currency symbol placement, and decimal separators.
+
+```php
+add_filter( 'surecart/currency/locale', function( $locale ) {
+    // Force a specific locale
+    return 'en_US';
+} );
+
+// Or use WordPress locale
+add_filter( 'surecart/currency/locale', function( $locale ) {
+    return get_locale();
+} );
+```
+
+## `surecart/currency/max_cents`
+
+Filter the maximum number of decimal places shown. Useful for currencies that don't use cents or when you want to always show/hide decimals.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$decimals" type="int">
+      Number of decimal places to display.
+    </ResponseField>
+    <ResponseField name="$amount" type="int">
+      The original amount in cents.
+    </ResponseField>
+    <ResponseField name="$converted_amount" type="float">
+      The converted amount after currency conversion.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/currency/max_cents', function( $decimals, $amount, $converted ) {
+    // Always show 2 decimal places
+    return 2;
+}, 10, 3 );
+
+// Or hide decimals for whole amounts
+add_filter( 'surecart/currency/max_cents', function( $decimals, $amount, $converted ) {
+    // If the amount is a whole number, show no decimals
+    return ( $converted == floor( $converted ) ) ? 0 : 2;
+}, 10, 3 );
+```
+
+## `surecart/currency/filter_url`
+
+Control whether currency conversion parameters are added to URLs. Useful when you want to disable URL-based currency switching.
+
+```php
+add_filter( 'surecart/currency/filter_url', function( $filter, $permalink ) {
+    // Disable currency URL parameters
+    return false;
+}, 10, 2 );
+
+// Or disable only for specific pages
+add_filter( 'surecart/currency/filter_url', function( $filter, $permalink ) {
+    // Don't add currency params to checkout pages
+    if ( strpos( $permalink, 'checkout' ) !== false ) {
+        return false;
+    }
+    return $filter;
+}, 10, 2 );
+```
+
+## `surecart/display_amount/free`
+
+Filter the text displayed for free products (when amount is 0).
+
+```php
+add_filter( 'surecart/display_amount/free', function( $text ) {
+    return 'No Cost';
+} );
+
+// Or with context
+add_filter( 'surecart/display_amount/free', function( $text ) {
+    return __( 'Complimentary', 'my-theme' );
+} );
+```
+
+## `surecart/currency_switcher/label`
+
+Filter the currency switcher label text.
+
+```php
+add_filter( 'surecart/currency_switcher/label', function( $label ) {
+    // Lowercase currency code
+    return strtolower( $label );
+} );
+
+// Or add currency name
+add_filter( 'surecart/currency_switcher/label', function( $label ) {
+    $currencies = [
+        'USD' => 'US Dollar',
+        'EUR' => 'Euro',
+        'GBP' => 'British Pound',
+    ];
+    
+    return $currencies[ $label ] ?? $label;
+} );
+```
+
+## Use Cases
+
+### Always Show Currency Symbol
+
+```php
+add_filter( 'surecart/currency/format', function( $formatted, $amount, $currency_code ) {
+    // Ensure currency code is always visible
+    if ( strpos( $formatted, $currency_code ) === false ) {
+        $formatted .= ' ' . $currency_code;
+    }
+    return $formatted;
+}, 10, 3 );
+```
+
+### Round to Nearest Dollar
+
+```php
+add_filter( 'surecart/currency/format', function( $formatted, $amount, $currency_code ) {
+    // Round to nearest whole number for display
+    $rounded = round( $amount / 100 );
+    return '$' . number_format( $rounded );
+}, 10, 3 );
+```
+
+### Add "Starting at" for Variable Prices
+
+```php
+add_filter( 'surecart/currency/format', function( $formatted, $amount, $currency_code ) {
+    // This would need context about whether it's a variable price
+    // Just showing the pattern
+    return $formatted;
+}, 10, 3 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Request Filters" icon="arrow-right-arrow-left" href="/guides/hooks/request-filters">
+    Modify API requests and responses.
+  </Card>
+  <Card title="Product Filters" icon="box" href="/guides/hooks/product-filters">
+    Customize product display and pricing.
+  </Card>
+</CardGroup>
+

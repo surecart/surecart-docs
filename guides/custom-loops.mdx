@@ -1,0 +1,203 @@
+---
+title: "Custom Loops"
+icon: "code"
+---
+
+Querying products utilizes the "WordPress Loop". This makes things nice and familiar if you are already familiar with WordPress queries. In order to get products, you will want to to specify the `sc_product` post type in the query.
+
+## Simple Query Example
+
+Here is a query example. To query the posts, you will need to specify `sc_product` as the post type.
+
+```php php
+$products = new WP_Query(
+  array(
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+  )
+);
+```
+
+### Querying Product Posts
+
+This will return a posts query. You can show the the title (the product name) and the excerpt (the product description) for example.
+
+```php php
+$products = new WP_Query(
+  array(
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+  )
+);
+
+if ( $products->have_posts() ) :
+  while ( $products->have_posts() ) :
+    $products->the_post(); // this is a very important line!
+
+    the_title(); // the product name.
+
+    the_excerpt(); // the product description.
+  endwhile;
+endif;
+```
+
+## Getting Product Data From The Post
+
+However, you will likely want to display the product data, such as the price amount, whether it is out of stock, and more. You can do that in several ways.
+
+### In the loop
+
+Since we are already in the loop, and have called `$products->the_post()`, you can use `sc_get_product()` to fetch the current posts' product:
+
+```php php
+$products = new WP_Query(
+  array(
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+  )
+);
+
+if ( $products->have_posts() ) :
+  while ( $products->have_posts() ) :
+    $products->the_post(); // this is a very important line!
+
+    $product = sc_get_product();
+
+    echo esc_html( $product->display_amount );
+  endwhile;
+endif;
+```
+
+### Outside the loop
+
+However, if you are not in the loop, you can still use the sc_get_product function, and pass a post or post id:
+
+```php
+$posts = get_posts(
+  array(
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+ )
+);
+
+foreach($posts as $post) {
+  $product = sc_get_product( $post );
+  echo esc_html( $product->display_amount );
+}
+```
+
+### Full Example
+
+```php php
+// query products by "sc_product" post type.
+$products = new WP_Query(
+  array(
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+  )
+);
+
+// loop through products.
+if ( $products->have_posts() ) :
+  while ( $products->have_posts() ) :
+    // this sets up post data for the_title(), the_content(), etc.
+    // it also prepares the global $sc_product object.
+    $products->the_post();
+
+    // display the title.
+    the_title();
+
+    // display the product description.
+    the_excerpt();
+
+    // get the current post's product (e.g. display_amount, prices, variations, etc.).
+    $product = sc_get_product();
+
+    // display the amount.
+    echo esc_html( $product->display_amount );
+
+    // show if out of stock.
+    if ( $product->is_out_of_stock ) {
+      echo 'Out of stock!';
+    }
+
+    // show if low stock.
+    if ( $product->is_low_stock ) {
+      echo 'Only ' . (int) $product->available_stock . ' left!';
+    }
+  endwhile;
+endif;
+```
+
+<br />
+
+## Querying Variant Options
+
+You can also query by a variant option or multiple variant options by using the `variant_options` parameter.
+
+### Querying a single variant option
+
+Querying products by option:
+
+```php
+$products = new WP_Query(
+  [
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+    'variant_options' => [
+      [
+        'name' => 'Color',
+        'values' => 'Orange'
+      ]
+    ]
+  ]
+);
+```
+
+### Querying multiple variant options
+
+When querying multiple variant options, you will want to pass a `relation` argument, to let the query know if these options are inclusive or exclusive.
+
+Here's an example to get products that are small and orange.
+
+```php
+$products = new WP_Query(
+  [
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+    'variant_options' => [
+      'relation' => 'AND'
+      [
+        'name' => 'Color',
+        'values' => 'Orange'
+      ],
+      [
+        'name' => 'Size',
+        'values' => 'Small'
+      ]
+    ]
+  ]
+);
+```
+
+Whereas here is an example to get products that are small, medium **OR** orange:
+
+```php
+$products = new WP_Query(
+  [
+    'post_type'      => 'sc_product',
+    'posts_per_page' => 10,
+    'variant_options' => [
+      'relation' => 'OR'
+      [
+        'name' => 'Color',
+        'values' => 'Orange'
+      ],
+      [
+        'name' => 'Size',
+        'values' => ['Small', 'Medium']
+      ]
+    ]
+  ]
+);
+```

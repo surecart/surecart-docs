@@ -1,0 +1,234 @@
+---
+title: "Product Filters"
+description: "Modify product display, SEO, images, and related products"
+---
+
+These filters allow you to customize how products are displayed, including SEO meta tags, images, and related products.
+
+## Content Display
+
+### `surecart/product/replace_content_with_product_info_part`
+
+Control whether product content is replaced with the product info template part. Return `false` to use custom templates.
+
+```php
+add_filter( 'surecart/product/replace_content_with_product_info_part', function( $replace ) {
+    // Disable replacement for specific conditions
+    if ( is_page_template( 'custom-product-template.php' ) ) {
+        return false;
+    }
+    return $replace;
+} );
+
+// Or disable entirely
+add_filter( 'surecart/product/replace_content_with_product_info_part', '__return_false' );
+```
+
+## SEO Filters
+
+### `sc_display_product_json_ld_schema`
+
+Control whether JSON-LD schema markup is output for products. Important for search engine optimization.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$display" type="bool">
+      Whether to display the schema markup.
+    </ResponseField>
+    <ResponseField name="$product" type="\SureCart\Models\Product">
+      The product model object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    // Disable schema for draft products
+    return $product->status === 'published';
+}, 10, 2 );
+
+// Or disable for specific products
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    $excluded_ids = [ 'prod_xxx', 'prod_yyy' ];
+    return ! in_array( $product->id, $excluded_ids );
+}, 10, 2 );
+```
+
+### `sc_display_product_seo_meta`
+
+Control whether SEO meta tags are output for products.
+
+```php
+add_filter( 'sc_display_product_seo_meta', function( $display, $product ) {
+    // Use your own SEO plugin instead
+    if ( class_exists( 'WPSEO_Frontend' ) ) {
+        return false;
+    }
+    return $display;
+}, 10, 2 );
+```
+
+### `surecart/og:image/size`
+
+Filter the image size used for Open Graph meta tags.
+
+```php
+add_filter( 'surecart/og:image/size', function( $size ) {
+    return 'large'; // or 'medium', 'thumbnail', 'full', etc.
+} );
+```
+
+## Permalink Filters
+
+### `sc_product_post_type_link_sc_collection`
+
+Filter the collection term used in product permalinks when using collection-based URLs.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$term" type="\WP_Term">
+      The selected collection term for the permalink.
+    </ResponseField>
+    <ResponseField name="$terms" type="array">
+      All collection terms assigned to the product.
+    </ResponseField>
+    <ResponseField name="$post" type="\WP_Post">
+      The product post object.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'sc_product_post_type_link_sc_collection', function( $term, $terms, $post ) {
+    // Use the primary collection (first term) always
+    return $terms[0] ?? $term;
+}, 10, 3 );
+
+// Or prioritize a specific collection
+add_filter( 'sc_product_post_type_link_sc_collection', function( $term, $terms, $post ) {
+    foreach ( $terms as $t ) {
+        if ( $t->slug === 'featured' ) {
+            return $t;
+        }
+    }
+    return $term;
+}, 10, 3 );
+```
+
+## Image Filters
+
+### `surecart/product-line-item-image/fallback_src`
+
+Filter the fallback image for product line items when no image is set.
+
+```php
+add_filter( 'surecart/product-line-item-image/fallback_src', function( $src, $product ) {
+    return get_template_directory_uri() . '/images/placeholder.png';
+}, 10, 2 );
+```
+
+### `surecart/product-list/thumbnail-cover-size`
+
+Filter the thumbnail size for product list items.
+
+```php
+add_filter( 'surecart/product-list/thumbnail-cover-size', function( $size, $post_id ) {
+    return 'medium_large';
+}, 10, 2 );
+
+// Or use different sizes based on context
+add_filter( 'surecart/product-list/thumbnail-cover-size', function( $size, $post_id ) {
+    if ( is_archive() ) {
+        return 'medium';
+    }
+    return 'large';
+}, 10, 2 );
+```
+
+## Related Products Filters
+
+### `surecart_product_related_posts_query_limit`
+
+Filter the limit for related products query.
+
+```php
+add_filter( 'surecart_product_related_posts_query_limit', function( $limit ) {
+    return 20; // Increase related products limit
+} );
+```
+
+### `surecart_product_related_posts_query`
+
+Filter the related products SQL query for advanced customization.
+
+```php
+add_filter( 'surecart_product_related_posts_query', function( $query, $post_id ) {
+    // Modify query parts
+    // $query is an array with 'select', 'from', 'where', etc.
+    return $query;
+}, 10, 2 );
+```
+
+## Product Page Filters
+
+### `surecart_product_page_query_args`
+
+Filter product page query arguments.
+
+```php
+add_filter( 'surecart_product_page_query_args', function( $args ) {
+    // Modify query args
+    $args['posts_per_page'] = 24;
+    return $args;
+} );
+```
+
+## Use Cases
+
+### Use Custom Placeholder Image
+
+```php
+add_filter( 'surecart/product-line-item-image/fallback_src', function( $src, $product ) {
+    // Check if product has a category
+    $terms = get_the_terms( $product->post, 'sc_collection' );
+    
+    if ( $terms && ! is_wp_error( $terms ) ) {
+        $category_slug = $terms[0]->slug;
+        $custom_placeholder = get_template_directory_uri() . '/images/placeholders/' . $category_slug . '.png';
+        
+        if ( file_exists( get_template_directory() . '/images/placeholders/' . $category_slug . '.png' ) ) {
+            return $custom_placeholder;
+        }
+    }
+    
+    return get_template_directory_uri() . '/images/default-product.png';
+}, 10, 2 );
+```
+
+### Disable Schema for Free Products
+
+```php
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    // Don't output schema for free products
+    if ( $product->prices && count( $product->prices ) > 0 ) {
+        foreach ( $product->prices as $price ) {
+            if ( $price->amount === 0 ) {
+                return false;
+            }
+        }
+    }
+    return $display;
+}, 10, 2 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Currency Filters" icon="dollar-sign" href="/guides/hooks/currency-filters">
+    Customize how prices are formatted.
+  </Card>
+  <Card title="Display Filters" icon="eye" href="/guides/hooks/display-filters">
+    Modify reviews, blocks, and media display.
+  </Card>
+</CardGroup>
+

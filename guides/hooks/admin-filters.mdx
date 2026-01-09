@@ -1,0 +1,286 @@
+---
+title: "Admin Filters"
+description: "Customize admin menus, toolbars, and list tables"
+---
+
+These filters allow you to customize the WordPress admin experience for SureCart.
+
+## Menu Filters
+
+### `surecart_menu_priority`
+
+Filter the admin menu position. Lower numbers appear higher in the menu.
+
+```php
+add_filter( 'surecart_menu_priority', function( $priority ) {
+    return 5; // Move menu higher (closer to Dashboard)
+} );
+
+// Or move it lower
+add_filter( 'surecart_menu_priority', function( $priority ) {
+    return 80; // Move below Settings
+} );
+```
+
+## Admin Bar Filters
+
+### `surecart_show_admin_bar_visit_store`
+
+Control whether "Visit Store" appears in the admin bar.
+
+```php
+add_filter( 'surecart_show_admin_bar_visit_store', '__return_false' );
+
+// Or show only for specific roles
+add_filter( 'surecart_show_admin_bar_visit_store', function( $show ) {
+    return current_user_can( 'manage_options' );
+} );
+```
+
+### `surecart_show_admin_bar_new_content`
+
+Control whether "New" content menu appears in admin bar.
+
+```php
+add_filter( 'surecart_show_admin_bar_new_content', '__return_false' );
+```
+
+### `surecart/help_widget/show`
+
+Control when the help widget is shown.
+
+```php
+add_filter( 'surecart/help_widget/show', function( $show ) {
+    // Hide for non-admins
+    return current_user_can( 'manage_options' );
+} );
+
+// Or always hide
+add_filter( 'surecart/help_widget/show', '__return_false' );
+```
+
+## List Table Filters
+
+### `surecart/subscription/index/links`
+
+Filter subscription status links in the admin list table.
+
+```php
+add_filter( 'surecart/subscription/index/links', function( $status_links ) {
+    // Add custom status link
+    $status_links['custom'] = '<a href="#">Custom</a>';
+    return $status_links;
+} );
+```
+
+### `sc_order_status_links`
+
+Filter order status links in the admin list table.
+
+```php
+add_filter( 'sc_order_status_links', function( $status_links ) {
+    // Modify status links
+    return $status_links;
+} );
+```
+
+### `sc_invoice_status_links`
+
+Filter invoice status links in the admin list table.
+
+```php
+add_filter( 'sc_invoice_status_links', function( $status_links ) {
+    return $status_links;
+} );
+```
+
+### `sc_affiliation_referrals_status_links`
+
+Filter affiliation referral status links in the admin list table.
+
+```php
+add_filter( 'sc_affiliation_referrals_status_links', function( $status_links ) {
+    return $status_links;
+} );
+```
+
+## Dropdown Filters
+
+### `surecart/disable_product_collection_dropdown`
+
+Hide the product collection dropdown in the products admin.
+
+```php
+add_filter( 'surecart/disable_product_collection_dropdown', '__return_true' );
+```
+
+### `surecart/disable_fulfillment_dropdown`
+
+Hide the fulfillment dropdown in the orders admin.
+
+```php
+add_filter( 'surecart/disable_fulfillment_dropdown', '__return_true' );
+```
+
+### `surecart/disable_shipment_dropdown`
+
+Hide the shipment dropdown in the orders admin.
+
+```php
+add_filter( 'surecart/disable_shipment_dropdown', '__return_true' );
+```
+
+## Sync Filters
+
+### `surecart_get_{post_type}_post`
+
+Filter the synced post lookup result. Replace `{post_type}` with the actual post type (e.g., `sc_product`).
+
+```php
+add_filter( 'surecart_get_sc_product_post', function( $post, $model_id, $service ) {
+    // Custom post lookup logic
+    return $post;
+}, 10, 3 );
+```
+
+### `surecart_excluded_post_meta_keys`
+
+Filter meta keys excluded from sync.
+
+```php
+add_filter( 'surecart_excluded_post_meta_keys', function( $keys ) {
+    $keys[] = 'my_excluded_key';
+    $keys[] = '_custom_meta';
+    return $keys;
+} );
+```
+
+## Integration Provider Filters
+
+These filters are used internally for the integration system.
+
+### `surecart/integrations/providers/list/{model}`
+
+Filter the list of providers for a model type.
+
+```php
+add_filter( 'surecart/integrations/providers/list/product', function( $providers ) {
+    // Add custom provider
+    $providers[] = [
+        'name' => 'my_provider',
+        'label' => 'My Custom Provider',
+    ];
+    return $providers;
+} );
+```
+
+### `surecart/integrations/providers/find/{provider_name}`
+
+Find a specific provider by name.
+
+```php
+add_filter( 'surecart/integrations/providers/find/my_provider', function( $provider ) {
+    return [
+        'name' => 'my_provider',
+        'label' => 'My Custom Provider',
+        'model' => 'product',
+    ];
+} );
+```
+
+### `surecart/integrations/providers/{provider}/{model}/items`
+
+Get items for a provider and model.
+
+### `surecart/integrations/providers/{provider}/item`
+
+Get a single item from a provider.
+
+## Miscellaneous Filters
+
+### `surecart/noindex_query_vars`
+
+Filter query vars that trigger noindex meta tag.
+
+```php
+add_filter( 'surecart/noindex_query_vars', function( $vars ) {
+    // Add custom query vars to noindex
+    $vars[] = 'my_var';
+    return $vars;
+} );
+```
+
+### `sc_wpseo_frontend_presenters`
+
+Filter Yoast SEO presenters for SureCart pages.
+
+```php
+add_filter( 'sc_wpseo_frontend_presenters', function( $title_presenters, $presenters ) {
+    // Modify SEO presenters
+    return $title_presenters;
+}, 10, 2 );
+```
+
+### `sc_elementor_templates`
+
+Filter available Elementor templates.
+
+```php
+add_filter( 'sc_elementor_templates', function( $templates ) {
+    // Add or remove templates
+    return $templates;
+} );
+```
+
+## Use Cases
+
+### Hide Admin Features for Shop Managers
+
+```php
+// Hide help widget for non-admins
+add_filter( 'surecart/help_widget/show', function( $show ) {
+    return current_user_can( 'manage_options' );
+} );
+
+// Hide admin bar links for shop managers
+add_filter( 'surecart_show_admin_bar_new_content', function( $show ) {
+    return current_user_can( 'manage_options' );
+} );
+```
+
+### Simplify Admin Interface
+
+```php
+// Hide all dropdowns for a cleaner interface
+add_filter( 'surecart/disable_product_collection_dropdown', '__return_true' );
+add_filter( 'surecart/disable_fulfillment_dropdown', '__return_true' );
+add_filter( 'surecart/disable_shipment_dropdown', '__return_true' );
+```
+
+### Customize Menu Position
+
+```php
+// Move SureCart menu right after Dashboard
+add_filter( 'surecart_menu_priority', function( $priority ) {
+    return 3;
+} );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Template Actions"
+    icon="code"
+    href="/guides/hooks/template-actions"
+  >
+    Hook into admin and template actions.
+  </Card>
+  <Card
+    title="Request Filters"
+    icon="arrow-right-arrow-left"
+    href="/guides/hooks/request-filters"
+  >
+    Modify API requests and responses.
+  </Card>
+</CardGroup>

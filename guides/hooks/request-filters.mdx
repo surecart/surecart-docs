@@ -1,0 +1,173 @@
+---
+title: "Request Filters"
+description: "Modify API requests, endpoints, and responses"
+---
+
+These filters allow you to modify how SureCart communicates with its API, including request arguments, endpoints, and responses.
+
+## `surecart/request/args`
+
+Filter the arguments sent with API requests. Use this to add custom headers, modify timeouts, or adjust request parameters.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$args" type="array">
+      The request arguments including headers, body, and method.
+    </ResponseField>
+    <ResponseField name="$endpoint" type="string">
+      The API endpoint being called.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/request/args', function( $args, $endpoint ) {
+    // Add custom headers
+    $args['headers']['X-Custom-Header'] = 'value';
+    
+    // Increase timeout for specific endpoints
+    if ( strpos( $endpoint, 'exports' ) !== false ) {
+        $args['timeout'] = 60;
+    }
+    
+    return $args;
+}, 10, 2 );
+```
+
+## `surecart/request/endpoint`
+
+Filter the API endpoint URL before the request is made.
+
+```php
+add_filter( 'surecart/request/endpoint', function( $endpoint, $args ) {
+    // Log endpoint calls
+    error_log( 'SureCart API call: ' . $endpoint );
+    
+    // Modify endpoint if needed
+    return $endpoint;
+}, 10, 2 );
+```
+
+## `surecart/request/response`
+
+Filter the API response before it's returned. Useful for logging, caching, or transforming responses.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$response" type="mixed">
+      The API response object or array.
+    </ResponseField>
+    <ResponseField name="$args" type="array">
+      The request arguments that were sent.
+    </ResponseField>
+    <ResponseField name="$endpoint" type="string">
+      The API endpoint that was called.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```php
+add_filter( 'surecart/request/response', function( $response, $args, $endpoint ) {
+    // Log all API responses
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( sprintf(
+            'SureCart API Response [%s]: %s',
+            $endpoint,
+            wp_json_encode( $response )
+        ) );
+    }
+    
+    return $response;
+}, 10, 3 );
+```
+
+## `surecart/request/model`
+
+Filter the model class used for API requests. Allows you to use custom model classes.
+
+```php
+add_filter( 'surecart/request/model', function( $class, $request ) {
+    // Use custom model class for specific requests
+    if ( $class === \SureCart\Models\Product::class ) {
+        return MyCustomProductModel::class;
+    }
+    
+    return $class;
+}, 10, 2 );
+```
+
+## Use Cases
+
+### Add Request Logging
+
+```php
+add_filter( 'surecart/request/args', function( $args, $endpoint ) {
+    // Log request for debugging
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( sprintf(
+            'SureCart Request [%s]: %s',
+            $args['method'] ?? 'GET',
+            $endpoint
+        ) );
+    }
+    
+    return $args;
+}, 10, 2 );
+```
+
+### Add Custom Authentication
+
+```php
+add_filter( 'surecart/request/args', function( $args, $endpoint ) {
+    // Add additional authentication for specific endpoints
+    if ( strpos( $endpoint, 'custom-endpoint' ) !== false ) {
+        $args['headers']['X-Custom-Auth'] = get_option( 'my_custom_auth_token' );
+    }
+    
+    return $args;
+}, 10, 2 );
+```
+
+### Cache API Responses
+
+```php
+add_filter( 'surecart/request/response', function( $response, $args, $endpoint ) {
+    // Cache product responses
+    if ( strpos( $endpoint, 'products' ) !== false && ! is_wp_error( $response ) ) {
+        $cache_key = 'sc_' . md5( $endpoint . serialize( $args ) );
+        set_transient( $cache_key, $response, HOUR_IN_SECONDS );
+    }
+    
+    return $response;
+}, 10, 3 );
+```
+
+### Handle API Errors
+
+```php
+add_filter( 'surecart/request/response', function( $response, $args, $endpoint ) {
+    // Handle specific error codes
+    if ( is_wp_error( $response ) ) {
+        $error_code = $response->get_error_code();
+        
+        if ( $error_code === 'rate_limit_exceeded' ) {
+            // Log rate limiting
+            error_log( 'SureCart rate limit exceeded for: ' . $endpoint );
+        }
+    }
+    
+    return $response;
+}, 10, 3 );
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Currency Filters" icon="dollar-sign" href="/guides/hooks/currency-filters">
+    Modify how currency is formatted and displayed.
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Learn about the SureCart API.
+  </Card>
+</CardGroup>
+
