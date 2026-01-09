@@ -543,9 +543,12 @@ add_filter( 'surecart/product-line-item-image/fallback_src', function( $src, $pr
 
 ```php
 add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    // Fetch product with prices relation loaded.
+    $product = \SureCart\Models\Product::with(['prices'])->find( $product->id );
+    
     // Don't output schema for free products
-    if ( $product->prices && count( $product->prices ) > 0 ) {
-        foreach ( $product->prices as $price ) {
+    if ( ! empty( $product->prices->data ) ) {
+        foreach ( $product->prices->data as $price ) {
             if ( $price->amount === 0 ) {
                 return false;
             }

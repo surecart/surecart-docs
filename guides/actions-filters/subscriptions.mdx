@@ -26,11 +26,12 @@ Fires when a subscription successfully renews.
 
 ```php
 add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
-    $customer = $subscription->customer;
+    // Fetch the subscription with customer relation loaded.
+    $subscription = \SureCart\Models\Subscription::with(['customer'])->find( $subscription->id );
 
-    // Send renewal confirmation
+    // Send renewal confirmation.
     wp_mail(
-        $customer->email,
+        $subscription->customer->email,
         'Subscription Renewed',
         'Thank you! Your subscription has been renewed.'
     );
@@ -43,6 +44,9 @@ add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
 
 ```php
 add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    // Fetch subscription with customer, price, and product relations loaded.
+    $subscription = \SureCart\Models\Subscription::with(['customer', 'price', 'price.product'])->find( $subscription->id );
+    
     $customer = $subscription->customer;
     $product = $subscription->price->product ?? null;
     $product_name = is_object( $product ) ? $product->name : 'your subscription';
@@ -63,6 +67,9 @@ add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
 
 ```php
 add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    // Fetch subscription with customer and price relations loaded.
+    $subscription = \SureCart\Models\Subscription::with(['customer', 'price'])->find( $subscription->id );
+    
     // Track in Google Analytics
     if ( function_exists( 'gtag' ) ) {
         // Server-side tracking
@@ -83,27 +90,13 @@ add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
 }, 10, 2 );
 ```
 
-### Extend Access Periods
-
-```php
-add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
-    $user = $subscription->purchase->getWPUser();
-    
-    if ( $user ) {
-        // Update access expiration
-        $new_expiration = $subscription->current_period_end_at;
-        update_user_meta( $user->ID, 'access_expires', $new_expiration );
-        
-        // Reset usage limits
-        delete_user_meta( $user->ID, 'monthly_downloads_count' );
-    }
-}, 10, 2 );
-```
-
 ### Notify Team of High-Value Renewals
 
 ```php
 add_action( 'surecart/subscription_renewed', function( $subscription, $data ) {
+    // Fetch subscription with customer and price relations loaded.
+    $subscription = \SureCart\Models\Subscription::with(['customer', 'price'])->find( $subscription->id );
+    
     $amount = $subscription->price->amount ?? 0;
     
     // Notify for renewals over $500

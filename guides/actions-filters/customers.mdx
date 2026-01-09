@@ -57,17 +57,17 @@ SureCart automatically syncs customer updates to WordPress users, but you can ad
 
 ```php
 add_action( 'surecart/customer_updated', function( $customer, $data ) {
-    // Find the WordPress user
-    $user = get_user_by( 'email', $customer->email );
+    // Get the linked WordPress user via the customer model
+    $user = $customer->getUser();
     
     if ( $user ) {
-        // Update additional user meta
+        // Access WP_User properties directly via __get magic method
         update_user_meta( $user->ID, 'billing_phone', $customer->phone ?? '' );
         
         // Update display name if changed
         if ( ! empty( $customer->name ) && $user->display_name !== $customer->name ) {
             wp_update_user([
-                'ID' => $user->ID,
+                'ID'           => $user->ID,
                 'display_name' => $customer->name,
             ]);
         }

@@ -24,8 +24,8 @@ Fires when a new order is created.
 
 ```php
 add_action( 'surecart/order_created', function( $order, $data ) {
-    // Send order to fulfillment system
-    send_to_fulfillment( $order );
+    // Log new order
+    error_log( sprintf( 'New order created: %s', $order ) );
 }, 10, 2 );
 ```
 
@@ -105,7 +105,7 @@ add_action( 'surecart/refund_created', function( $refund, $data ) {
 
 ### `surecart/invoice_created`
 
-Fires when an invoice is created.
+Fires when an invoice is manually created by a user in the admin. This does not fire for automatic subscription invoices or checkout orders—only for invoices explicitly created through the SureCart dashboard.
 
 <ResponseField name="Parameters" type="Action Parameters">
   <Expandable title="properties">
@@ -126,42 +126,6 @@ add_action( 'surecart/invoice_created', function( $invoice, $data ) {
 ```
 
 ## Use Cases
-
-### Send Orders to Fulfillment
-
-```php
-add_action( 'surecart/order_created', function( $order, $data ) {
-    // Access the checkout from the order (requires expansion)
-    $checkout = $order->checkout ?? null;
-    if ( empty( $checkout ) ) {
-        return;
-    }
-    
-    // Check if order has physical products
-    $has_physical = false;
-    $line_items = $checkout->line_items->data ?? [];
-    foreach ( $line_items as $item ) {
-        if ( ! empty( $item->price->product->shipping_enabled ) ) {
-            $has_physical = true;
-            break;
-        }
-    }
-    
-    if ( $has_physical ) {
-        wp_remote_post( 'https://fulfillment.example.com/api/orders', [
-            'body' => json_encode([
-                'order_id' => $order->id,
-                'shipping_address' => $checkout->shipping_address,
-                'items' => $line_items,
-            ]),
-            'headers' => [
-                'Authorization' => 'Bearer ' . FULFILLMENT_API_KEY,
-                'Content-Type' => 'application/json',
-            ],
-        ]);
-    }
-}, 10, 2 );
-```
 
 ### Track Revenue
 
@@ -189,27 +153,29 @@ add_action( 'surecart/refund_created', function( $refund, $data ) {
     // Update accounting
     record_refund_in_books( $refund->amount, $refund->currency );
     
-    // Notify customer
-    $customer_email = $data->data->object->customer->email ?? null;
-    
-    if ( $customer_email ) {
-        wp_mail(
-            $customer_email,
-            'Refund Processed',
-            sprintf(
-                'Your refund of $%s has been processed and should appear in your account within 5-10 business days.',
-                number_format( $refund->amount / 100, 2 )
-            )
-        );
-    }
+    // Notify admin
+    wp_mail(
+        get_option( 'admin_email' ),
+        'Refund Processed',
+        sprintf(
+            'A refund of $%s has been processed for refund ID: %s',
+             $refund->display_amount,
+            $refund->id
+        )
+    );
 }, 10, 2 );
 ```
 
-### Sync Invoices to Accounting
+### Sync Manual Invoices to Accounting
 
 ```php
 add_action( 'surecart/invoice_created', function( $invoice, $data ) {
-    // Access the checkout from the invoice (requires expansion)
+    // Note: This only fires for manually created invoices.
+    // For syncing all revenue, use surecart/charge_created instead.
+    
+    // Fetch the invoice with checkout and customer relations loaded.
+    $invoice = \SureCart\Models\Invoice::with(['checkout', 'checkout.customer'])->find( $invoice->id );
+    
     $checkout = $invoice->checkout ?? null;
     if ( empty( $checkout ) ) {
         return;

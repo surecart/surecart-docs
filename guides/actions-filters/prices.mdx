@@ -3,7 +3,7 @@ title: "Prices"
 description: "Hook into price lifecycle events"
 ---
 
-These actions fire when prices are created, updated, or deleted.
+These actions fire when prices are created, updated, or deleted. Prices in SureCart are similar to Stripe prices—they define the cost, currency, and billing interval for a product.
 
 ## `surecart/price_created`
 
@@ -22,17 +22,22 @@ Fires when a new price is created for a product.
 
 ```php
 add_action( 'surecart/price_created', function( $price, $data ) {
-    // Log new price creation
-    error_log( sprintf( 'New price created: %s for %d cents', $price->id, $price->amount ) );
-    
-    // Sync to external system
-    sync_price_to_crm( $price );
+    // Notify team about new pricing option
+    wp_remote_post( SLACK_WEBHOOK_URL, [
+        'body' => json_encode([
+            'text' => sprintf( 
+                '💰 New price created: %s (%s)',
+                $price->name ?? $price->id,
+                $price->display_amount
+            )
+        ]),
+    ]);
 }, 10, 2 );
 ```
 
 ## `surecart/price_updated`
 
-Fires when a price is updated.
+Fires when a price is updated (e.g., amount changed, name updated, or archived).
 
 <ResponseField name="Parameters" type="Action Parameters">
   <Expandable title="properties">
@@ -47,18 +52,21 @@ Fires when a price is updated.
 
 ```php
 add_action( 'surecart/price_updated', function( $price, $data ) {
-    // Clear price caches
-    wp_cache_delete( 'price_' . $price->id, 'surecart' );
-    wp_cache_flush_group( 'surecart_prices' );
-    
-    // Log price change
-    error_log( sprintf( 'Price %s updated to %d cents', $price->id, $price->amount ) );
+    // Sync price change to accounting software
+    wp_remote_patch( 'https://api.accounting.example.com/prices/' . $price->id, [
+        'headers' => [ 'Authorization' => 'Bearer ' . ACCOUNTING_API_KEY ],
+        'body'    => json_encode([
+            'amount'   => $price->amount,
+            'currency' => $price->currency,
+            'name'     => $price->name,
+        ]),
+    ]);
 }, 10, 2 );
 ```
 
 ## `surecart/price_deleted`
 
-Fires when a price is deleted.
+Fires when a price is deleted (archived).
 
 <ResponseField name="Parameters" type="Action Parameters">
   <Expandable title="properties">
@@ -73,52 +81,64 @@ Fires when a price is deleted.
 
 ```php
 add_action( 'surecart/price_deleted', function( $price, $data ) {
-    // Clear caches
-    wp_cache_delete( 'price_' . $price->id, 'surecart' );
-    
-    // Remove from external system
-    remove_price_from_crm( $price->id );
+    // Archive price in external billing system
+    wp_remote_request( 'https://api.billing.example.com/prices/' . $price->id, [
+        'method'  => 'DELETE',
+        'headers' => [ 'Authorization' => 'Bearer ' . BILLING_API_KEY ],
+    ]);
 }, 10, 2 );
 ```
 
 ## Use Cases
 
-### Notify Team of Price Changes
+### Sync Prices to External Billing System
+
+```php
+add_action( 'surecart/price_created', 'sync_price_to_billing', 10, 2 );
+add_action( 'surecart/price_updated', 'sync_price_to_billing', 10, 2 );
+
+function sync_price_to_billing( $price, $data ) {
+    // Fetch the associated product for context
+    $product = \SureCart\Models\Product::find( $price->product );
+    
+    wp_remote_post( 'https://api.billing.example.com/prices', [
+        'headers' => [ 
+            'Authorization' => 'Bearer ' . BILLING_API_KEY,
+            'Content-Type'  => 'application/json',
+        ],
+        'body' => json_encode([
+            'external_id'      => $price->id,
+            'product_id'       => $price->product,
+            'product_name'     => $product->name ?? '',
+            'amount'           => $price->amount,
+            'currency'         => $price->currency,
+            'recurring'        => ! empty( $price->recurring_interval ),
+            'interval'         => $price->recurring_interval ?? null,
+            'interval_count'   => $price->recurring_interval_count ?? null,
+        ]),
+    ]);
+}
+```
+
+### Alert on High-Value Price Changes
 
 ```php
 add_action( 'surecart/price_updated', function( $price, $data ) {
-    // Get the product name
-    $product = \SureCart\Models\Product::find( $price->product );
-    $product_name = $product->name ?? 'Unknown Product';
-    
-    // Format the price
-    $formatted_price = '$' . number_format( $price->amount / 100, 2 );
-    
-    // Send notification
-    wp_mail(
-        'sales@example.com',
-        'Price Updated: ' . $product_name,
-        sprintf(
-            'The price for "%s" has been updated to %s.',
-            $product_name,
-            $formatted_price
-        )
-    );
-}, 10, 2 );
-```
-
-### Clear CDN Cache on Price Changes
-
-```php
-add_action( 'surecart/price_created', 'purge_pricing_cache', 10, 2 );
-add_action( 'surecart/price_updated', 'purge_pricing_cache', 10, 2 );
-add_action( 'surecart/price_deleted', 'purge_pricing_cache', 10, 2 );
-
-function purge_pricing_cache( $price, $data ) {
-    // Purge Cloudflare cache for pricing pages
-    if ( function_exists( 'cloudflare_purge_by_url' ) ) {
-        cloudflare_purge_by_url( home_url( '/pricing/' ) );
+    // Alert finance team when prices over $1000 are modified
+    if ( $price->amount >= 100000 ) { // Amount in cents
+        $product = \SureCart\Models\Product::find( $price->product );
+        
+        wp_remote_post( SLACK_WEBHOOK_URL, [
+            'body' => json_encode([
+                'text' => sprintf(
+                    '⚠️ High-value price modified: %s - %s is now %s',
+                    $product->name ?? 'Unknown Product',
+                    $price->name ?? $price->id,
+                    $price->display_amount
+                )
+            ]),
+        ]);
     }
-}
+}, 10, 2 );
 ```
 

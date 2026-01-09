@@ -26,10 +26,12 @@ Fired after an order is confirmed and all purchases have been processed. Use thi
 
 ```php
 add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
+    // Fetch the checkout with customer relation loaded.
+    $checkout = \SureCart\Models\Checkout::with(['customer'])->find( $checkout->id );
+    
     // Access order details
     $order_id = $checkout->id;
     $total = $checkout->total_amount;
-    $customer = $checkout->customer;
 
     // Track conversion
     if ( function_exists( 'track_conversion' ) ) {
@@ -41,7 +43,7 @@ add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
         'body' => [
             'order_id' => $order_id,
             'total' => $total,
-            'customer_email' => $customer->email,
+            'customer_email' => $checkout->customer->email,
         ]
     ]);
 }, 10, 2 );
@@ -214,6 +216,9 @@ add_filter( 'surecart/payments/mode', function( $mode ) {
 
 ```php
 add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
+    // Fetch the checkout with customer relation loaded.
+    $checkout = \SureCart\Models\Checkout::with(['customer'])->find( $checkout->id );
+    
     // Google Analytics 4 - Server-side tracking
     $measurement_id = 'G-XXXXXXXXXX';
     $api_secret = 'your-api-secret';
@@ -238,6 +243,9 @@ add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
 
 ```php
 add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
+    // Fetch the checkout with customer relation loaded.
+    $checkout = \SureCart\Models\Checkout::with(['customer'])->find( $checkout->id );
+    
     $webhook_url = 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL';
 
     wp_remote_post( $webhook_url, [
