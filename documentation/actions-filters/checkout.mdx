@@ -28,7 +28,7 @@ Fired after an order is confirmed and all purchases have been processed. Use thi
 add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
     // Fetch the checkout with customer relation loaded.
     $checkout = \SureCart\Models\Checkout::with(['customer'])->find( $checkout->id );
-    
+
     // Access order details
     $order_id = $checkout->id;
     $total = $checkout->total_amount;
@@ -210,6 +210,174 @@ add_filter( 'surecart/payments/mode', function( $mode ) {
 } );
 ```
 
+## JavaScript Filters
+
+SureCart provides JavaScript filters using the WordPress hooks system (`wp.hooks`) to customize the Stripe Payment Element. These filters allow you to modify payment method order, wallet visibility, legal terms display, and billing fields.
+
+<Note>
+  These filters use the
+  [@wordpress/hooks](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-hooks/)
+  package, which is automatically available on pages with SureCart checkout.
+</Note>
+
+### Payment Method Order
+
+Use `surecart_stripe_payment_element_payment_method_order` to reorder the payment methods displayed in Stripe's Payment Element.
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_payment_method_order",
+  "my-customization",
+  (paymentMethodOrder, checkout) => {
+    // Return an array of payment method types in your preferred order
+    return ["card", "us_bank_account", "klarna"];
+  }
+);
+```
+
+See the [Stripe Payment Element documentation](https://docs.stripe.com/js/elements_object/create_payment_element#payment_element_create-options-business) for available payment method types.
+
+### Wallet Visibility
+
+Use `surecart_stripe_payment_element_wallets` to control the visibility of digital wallets like Apple Pay, Google Pay, and Link within the Payment Element.
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_wallets",
+  "my-customization",
+  (wallets, checkout) => {
+    return {
+      applePay: "auto", // 'auto' | 'never'
+      googlePay: "auto", // 'auto' | 'never'
+      link: "never", // 'auto' | 'never'
+    };
+  }
+);
+```
+
+See the [Stripe wallets documentation](https://docs.stripe.com/js/elements_object/create_payment_element#payment_element_create-options-wallets) for more options.
+
+### Legal Terms Display
+
+Use `surecart_stripe_payment_element_terms` to manage the display of mandates and other legal agreements within the Payment Element. By default, these are shown only when necessary.
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_terms",
+  "my-customization",
+  (terms, checkout) => {
+    return {
+      card: "never", // Hide card terms
+      usBankAccount: "always", // Always show bank account terms
+    };
+  }
+);
+```
+
+See the [Stripe terms documentation](https://docs.stripe.com/js/elements_object/create_payment_element#payment_element_create-options-terms) for available options.
+
+### Billing Fields
+
+Use `surecart_stripe_payment_element_fields` to control which billing address fields are displayed within the Stripe Payment Element. This is useful when you're already collecting billing information elsewhere in your checkout form.
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_fields",
+  "my-customization",
+  (fields) => {
+    return {
+      billingDetails: {
+        name: "never",
+        email: "never",
+        address: {
+          line1: "never",
+          line2: "never",
+          city: "never",
+          state: "never",
+          postalCode: "never",
+          country: "never",
+        },
+      },
+    };
+  }
+);
+```
+
+To show specific fields, simply remove them from the object or set them to `'auto'`. For example, to hide all fields except country:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_fields",
+  "my-customization",
+  (fields) => {
+    return {
+      billingDetails: {
+        address: {
+          line1: "never",
+          line2: "never",
+          city: "never",
+          state: "never",
+          postalCode: "never",
+          // country is not set, so it will display
+        },
+      },
+    };
+  }
+);
+```
+
+See the [Stripe fields documentation](https://docs.stripe.com/js/elements_object/create_payment_element#payment_element_create-options-fields) for all available options.
+
+### Address Countries
+
+Use `surecart_address_countries` to customize the list of countries available in address fields. You can add, remove, reorder, or translate country names.
+
+<Note>
+  To add custom JavaScript filters to your site, you can use plugins like
+  [Simple Custom CSS and JS](https://wordpress.org/plugins/custom-css-js/). Be
+  sure to load scripts in the footer for checkout page compatibility.
+</Note>
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_address_countries",
+  "my-customization",
+  (countries) => {
+    // Return only specific countries
+    return [
+      { value: "US", label: "United States" },
+      { value: "CA", label: "Canada" },
+      { value: "GB", label: "United Kingdom" },
+    ];
+  }
+);
+```
+
+Each country object must include both `value` (ISO country code) and `label` (display name) properties.
+
+### Address Regions
+
+Use `surecart_address_regions` to customize the regions (states, provinces, etc.) available for specific countries. You can add, remove, or translate region names.
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_address_regions",
+  "my-customization",
+  (regions, country) => {
+    // Add custom regions for Taiwan
+    if (country === "TW") {
+      regions.push(
+        { value: "test-region-one", label: "Test Region 1" },
+        { value: "test-region-two", label: "Test Region 2" }
+      );
+    }
+    return regions;
+  }
+);
+```
+
+The filter receives the current `regions` array and the `country` code. Each region object must include both `value` and `label` properties.
+
 ## Use Cases
 
 ### Analytics & Conversion Tracking
@@ -218,7 +386,7 @@ add_filter( 'surecart/payments/mode', function( $mode ) {
 add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
     // Fetch the checkout with customer relation loaded.
     $checkout = \SureCart\Models\Checkout::with(['customer'])->find( $checkout->id );
-    
+
     // Google Analytics 4 - Server-side tracking
     $measurement_id = 'G-XXXXXXXXXX';
     $api_secret = 'your-api-secret';
@@ -245,7 +413,7 @@ add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
 add_action( 'surecart/checkout_confirmed', function( $checkout, $request ) {
     // Fetch the checkout with customer relation loaded.
     $checkout = \SureCart\Models\Checkout::with(['customer'])->find( $checkout->id );
-    
+
     $webhook_url = 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL';
 
     wp_remote_post( $webhook_url, [
@@ -325,12 +493,12 @@ Use the built-in `tax_identifier` field to validate VAT/tax ID numbers:
 add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
     $tax_identifier = $args['tax_identifier'] ?? [];
     $billing_address = $args['billing_address'] ?? [];
-    
+
     // Require tax ID for EU business customers
     $eu_countries = [ 'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE' ];
-    
+
     $country = $billing_address['country'] ?? '';
-    
+
     if ( in_array( $country, $eu_countries, true ) ) {
         // Check if tax identifier number is provided
         if ( empty( $tax_identifier['number'] ) ) {
@@ -355,6 +523,163 @@ add_filter( 'surecart/payments/mode', function( $mode ) {
 
     return $mode;
 } );
+```
+
+## JavaScript Filter Use Cases
+
+### Sell Only to Specific Countries
+
+Restrict your checkout to only allow purchases from certain countries:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_address_countries",
+  "my-customization",
+  (countries) => {
+    // Only sell to North American countries
+    const allowedCountries = ["US", "CA", "MX"];
+    return countries.filter((country) =>
+      allowedCountries.includes(country.value)
+    );
+  }
+);
+```
+
+### Exclude Specific Countries
+
+Remove certain countries from the dropdown while keeping all others:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_address_countries",
+  "my-customization",
+  (countries) => {
+    // Exclude countries you don't ship to
+    const excludedCountries = ["RU", "BY", "KP"];
+    return countries.filter(
+      (country) => !excludedCountries.includes(country.value)
+    );
+  }
+);
+```
+
+### Change County Name Translations
+
+Change the transled country names to something different.
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_address_countries",
+  "my-customization",
+  (countries) => {
+    // Spanish translations for common countries
+    const translations = {
+      US: "Estados Unidos",
+      CA: "Canadá",
+      MX: "México",
+      ES: "España",
+      GB: "Reino Unido",
+      FR: "Francia",
+      DE: "Alemania",
+    };
+
+    return countries.map((country) => ({
+      value: country.value,
+      label: translations[country.value] || country.label,
+    }));
+  }
+);
+```
+
+### Prioritize Common Countries
+
+Move your most common customer countries to the top of the list:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_address_countries",
+  "my-customization",
+  (countries) => {
+    const priorityCountries = ["US", "CA", "GB", "AU"];
+
+    // Separate priority and other countries
+    const priority = countries.filter((c) =>
+      priorityCountries.includes(c.value)
+    );
+    const others = countries.filter(
+      (c) => !priorityCountries.includes(c.value)
+    );
+
+    // Sort priority countries in specified order
+    priority.sort(
+      (a, b) =>
+        priorityCountries.indexOf(a.value) - priorityCountries.indexOf(b.value)
+    );
+
+    return [...priority, ...others];
+  }
+);
+```
+
+### Prioritize Card Payments
+
+Show card payment first for faster checkout:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_payment_method_order",
+  "my-customization",
+  (paymentMethodOrder, checkout) => {
+    return ["card", "apple_pay", "google_pay", "klarna", "afterpay_clearpay"];
+  }
+);
+```
+
+### Disable Link Wallet for Subscriptions
+
+Hide Stripe Link for recurring payments:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_wallets",
+  "my-customization",
+  (wallets, checkout) => {
+    // Check if checkout contains a subscription
+    const hasSubscription = checkout?.line_items?.data?.some(
+      (item) => item.price?.recurring_interval
+    );
+
+    if (hasSubscription) {
+      return {
+        ...wallets,
+        link: "never",
+      };
+    }
+
+    return wallets;
+  }
+);
+```
+
+### Show Bank Terms for High-Value Orders
+
+Always display ACH terms for orders over a certain amount:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_terms",
+  "my-customization",
+  (terms, checkout) => {
+    // Show bank account terms for orders over $500
+    if (checkout?.total_amount > 50000) {
+      return {
+        ...terms,
+        usBankAccount: "always",
+      };
+    }
+    return terms;
+  }
+);
 ```
 
 ## Related
