@@ -3,43 +3,151 @@ title: "SEO"
 description: "Customize SEO behavior and meta tags"
 ---
 
-These filters allow you to customize SEO-related behavior in SureCart.
+These filters allow you to customize SEO-related behavior in SureCart, including meta tags, Open Graph data, and structured data (JSON-LD schema).
 
 ## Meta Tags
 
+SureCart automatically outputs SEO meta tags for product pages, including title, description, Open Graph tags, and Twitter Card data. These filters let you customize or disable this behavior.
+
 ### `surecart/noindex_query_vars`
 
-Filter query vars that trigger noindex meta tag.
+Filter the query variables that trigger a `noindex` meta tag on product pages. When a URL contains any of these query parameters, SureCart adds `<meta name="robots" content="noindex">` to prevent search engines from indexing that page variation.
+
+This is useful for preventing duplicate content issues. For example, URLs with tracking parameters, filter states, or session data should typically not be indexed separately from the canonical product page.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$vars" type="array">
+      Array of query variable names that trigger noindex. Default includes common tracking and session parameters.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+**Add custom query vars to noindex:**
 
 ```php
 add_filter( 'surecart/noindex_query_vars', function( $vars ) {
-    // Add custom query vars to noindex
-    $vars[] = 'my_var';
+    // Prevent indexing of URLs with affiliate tracking
+    $vars[] = 'ref';
+    $vars[] = 'affiliate_id';
+
+    // Prevent indexing of filtered product views
+    $vars[] = 'sort_by';
+    $vars[] = 'filter_color';
+
+    return $vars;
+} );
+```
+
+**Remove a query var from noindex (allow indexing):**
+
+```php
+add_filter( 'surecart/noindex_query_vars', function( $vars ) {
+    // Allow pages with 'campaign' parameter to be indexed
+    $vars = array_diff( $vars, [ 'campaign' ] );
     return $vars;
 } );
 ```
 
 ### `sc_display_product_seo_meta`
 
-Control whether SEO meta tags are output for products.
+Control whether SureCart outputs its built-in SEO meta tags for product pages. SureCart generates meta tags including:
+
+- `<title>` and `<meta name="description">`
+- Open Graph tags (`og:title`, `og:description`, `og:image`, `og:url`, `og:type`)
+- Twitter Card tags (`twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`)
+
+Return `false` to disable SureCart's meta tag output, which is recommended when using a dedicated SEO plugin that generates its own meta tags.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$display" type="bool">
+      Whether to display the SEO meta tags. Default: `true`.
+    </ResponseField>
+    <ResponseField name="$product" type="\SureCart\Models\Product">
+      The product model object for the current page.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+**Disable when using Yoast SEO:**
 
 ```php
 add_filter( 'sc_display_product_seo_meta', function( $display, $product ) {
-    // Use your own SEO plugin instead
-    if ( class_exists( 'WPSEO_Frontend' ) ) {
+    // Let Yoast SEO handle all meta tags
+    if ( class_exists( 'WPSEO_Frontend' ) || defined( 'WPSEO_VERSION' ) ) {
         return false;
     }
     return $display;
 }, 10, 2 );
 ```
 
+**Disable when using Rank Math:**
+
+```php
+add_filter( 'sc_display_product_seo_meta', function( $display, $product ) {
+    // Let Rank Math handle all meta tags
+    if ( class_exists( 'RankMath' ) ) {
+        return false;
+    }
+    return $display;
+}, 10, 2 );
+```
+
+**Disable when using All in One SEO:**
+
+```php
+add_filter( 'sc_display_product_seo_meta', function( $display, $product ) {
+    // Let AIOSEO handle all meta tags
+    if ( class_exists( 'AIOSEO\\Plugin\\AIOSEO' ) || defined( 'AIOSEO_VERSION' ) ) {
+        return false;
+    }
+    return $display;
+}, 10, 2 );
+```
+
+**Disable for any SEO plugin:**
+
+```php
+// Completely disable SureCart's SEO meta tag output
+add_filter( 'sc_display_product_seo_meta', '__return_false' );
+```
+
 ### `surecart/og:image/size`
 
-Filter the image size used for Open Graph meta tags.
+Filter the WordPress image size used for Open Graph (`og:image`) and Twitter Card (`twitter:image`) meta tags. The Open Graph image is the preview image shown when your product pages are shared on social media platforms like Facebook, LinkedIn, and Twitter.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$size" type="string">
+      The WordPress image size name. Default: `'full'`. Can be any registered image size: `'thumbnail'`, `'medium'`, `'medium_large'`, `'large'`, `'full'`, or custom sizes.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Facebook recommends images at least 1200×630 pixels for optimal display. The `'large'` or `'full'` sizes typically work best, but if your product images are very high resolution, you may want to use a smaller size to reduce page load time.
+</Note>
+
+**Use a specific image size:**
 
 ```php
 add_filter( 'surecart/og:image/size', function( $size ) {
-    return 'large'; // or 'medium', 'thumbnail', 'full', etc.
+    return 'large'; // 1024px wide by default
+} );
+```
+
+**Use a custom registered image size:**
+
+```php
+// First, register a custom image size optimized for social sharing
+add_action( 'after_setup_theme', function() {
+    add_image_size( 'social-share', 1200, 630, true );
+} );
+
+// Then use it for Open Graph images
+add_filter( 'surecart/og:image/size', function( $size ) {
+    return 'social-share';
 } );
 ```
 
@@ -97,14 +205,55 @@ add_filter( 'sc_display_product_json_ld_schema', '__return_false' );
 
 ## Yoast SEO Integration
 
+SureCart integrates with Yoast SEO to provide proper SEO meta data for product pages. These filters allow you to customize how SureCart interacts with Yoast SEO's presenter system.
+
 ### `sc_wpseo_frontend_presenters`
 
-Filter Yoast SEO presenters for SureCart pages.
+Filter the Yoast SEO "presenters" that SureCart uses on product pages. Presenters are Yoast's system for outputting different types of SEO meta tags (title, description, Open Graph, etc.).
+
+By default, SureCart uses a subset of Yoast's presenters optimized for product pages. This filter lets you modify which presenters are used, allowing you to add custom meta tags or remove ones you don't need.
+
+<ResponseField name="Parameters" type="Filter Parameters">
+  <Expandable title="properties">
+    <ResponseField name="$title_presenters" type="array">
+      Array of presenter class names that SureCart will use for the current page. These are fully qualified Yoast SEO presenter class names.
+    </ResponseField>
+    <ResponseField name="$presenters" type="array">
+      The full array of all available Yoast SEO presenters, for reference.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+**Add additional Yoast presenters:**
 
 ```php
 add_filter( 'sc_wpseo_frontend_presenters', function( $title_presenters, $presenters ) {
-    // Modify SEO presenters
+    // Add the robots presenter for custom robot meta handling
+    $title_presenters[] = 'Yoast\\WP\\SEO\\Presenters\\Meta\\Robots_Presenter';
+
     return $title_presenters;
+}, 10, 2 );
+```
+
+**Remove specific presenters:**
+
+```php
+add_filter( 'sc_wpseo_frontend_presenters', function( $title_presenters, $presenters ) {
+    // Remove Twitter Card presenters if you don't use Twitter
+    $title_presenters = array_filter( $title_presenters, function( $presenter ) {
+        return strpos( $presenter, 'Twitter' ) === false;
+    } );
+
+    return array_values( $title_presenters );
+}, 10, 2 );
+```
+
+**Use the full set of Yoast presenters:**
+
+```php
+add_filter( 'sc_wpseo_frontend_presenters', function( $title_presenters, $presenters ) {
+    // Use all available Yoast presenters instead of SureCart's subset
+    return $presenters;
 }, 10, 2 );
 ```
 
@@ -112,11 +261,13 @@ add_filter( 'sc_wpseo_frontend_presenters', function( $title_presenters, $presen
 
 ### Disable Schema for Free Products
 
+Free products may not benefit from rich product snippets in search results. You can disable schema output for products with a $0 price:
+
 ```php
 add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
     // Fetch product with prices relation loaded.
     $product = \SureCart\Models\Product::with(['prices'])->find( $product->id );
-    
+
     // Don't output schema for free products
     if ( ! empty( $product->prices->data ) ) {
         foreach ( $product->prices->data as $price ) {
@@ -125,6 +276,134 @@ add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) 
             }
         }
     }
+    return $display;
+}, 10, 2 );
+```
+
+### Disable All SureCart SEO for Third-Party Plugin
+
+If you're using an SEO plugin that fully supports custom post types, you may want to disable all of SureCart's SEO output and let your plugin handle everything:
+
+```php
+// Disable meta tags
+add_filter( 'sc_display_product_seo_meta', '__return_false' );
+
+// Disable JSON-LD schema
+add_filter( 'sc_display_product_json_ld_schema', '__return_false' );
+```
+
+### Prevent Indexing of Sale/Promotion URLs
+
+If you use query parameters to show promotional pricing or limited-time offers, prevent these variations from being indexed as separate pages:
+
+```php
+add_filter( 'surecart/noindex_query_vars', function( $vars ) {
+    // Promotional and campaign tracking parameters
+    $vars[] = 'promo';
+    $vars[] = 'sale';
+    $vars[] = 'coupon';
+    $vars[] = 'discount';
+
+    // UTM tracking parameters (if not already included)
+    $vars[] = 'utm_source';
+    $vars[] = 'utm_medium';
+    $vars[] = 'utm_campaign';
+    $vars[] = 'utm_content';
+    $vars[] = 'utm_term';
+
+    return $vars;
+} );
+```
+
+### Disable Schema for Specific Product Types
+
+If certain products (like services or digital downloads) shouldn't have Product schema, you can conditionally disable it:
+
+```php
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    // Fetch product with product_collections relation loaded.
+    $product = \SureCart\Models\Product::with(['product_collections'])->find( $product->id );
+
+    // Check if product is in a "services" collection
+    if ( ! empty( $product->product_collections->data ) ) {
+        foreach ( $product->product_collections->data as $collection ) {
+            if ( $collection->slug === 'services' ) {
+                return false;
+            }
+        }
+    }
+
+    return $display;
+}, 10, 2 );
+```
+
+### Use Different OG Image Sizes Based on Product
+
+Customize the Open Graph image size based on the product's image dimensions or category:
+
+```php
+add_filter( 'surecart/og:image/size', function( $size ) {
+    $post_id = get_the_ID();
+
+    if ( ! $post_id ) {
+        return $size;
+    }
+
+    // Get the featured image dimensions
+    $image_id = get_post_thumbnail_id( $post_id );
+
+    if ( $image_id ) {
+        $image_data = wp_get_attachment_image_src( $image_id, 'full' );
+
+        if ( $image_data ) {
+            $width = $image_data[1];
+
+            // Use medium_large for very large images to reduce load time
+            if ( $width > 2000 ) {
+                return 'medium_large';
+            }
+        }
+    }
+
+    return 'large';
+} );
+```
+
+### Detect and Disable Duplicate SEO Plugins
+
+Automatically detect common SEO plugins and disable SureCart's SEO output accordingly:
+
+```php
+add_filter( 'sc_display_product_seo_meta', function( $display, $product ) {
+    // Check for common SEO plugins
+    $seo_plugins_active = (
+        defined( 'WPSEO_VERSION' ) ||              // Yoast SEO
+        class_exists( 'RankMath' ) ||              // Rank Math
+        defined( 'AIOSEO_VERSION' ) ||             // All in One SEO
+        class_exists( 'SeoPress' ) ||              // SEOPress
+        defined( 'JEENGINE_VERSION' )              // Jepack SEO
+    );
+
+    if ( $seo_plugins_active ) {
+        return false;
+    }
+
+    return $display;
+}, 10, 2 );
+
+// Apply the same logic to schema output
+add_filter( 'sc_display_product_json_ld_schema', function( $display, $product ) {
+    $seo_plugins_active = (
+        defined( 'WPSEO_VERSION' ) ||
+        class_exists( 'RankMath' ) ||
+        defined( 'AIOSEO_VERSION' ) ||
+        class_exists( 'SeoPress' )
+    );
+
+    if ( $seo_plugins_active ) {
+        return false;
+    }
+
     return $display;
 }, 10, 2 );
 ```
