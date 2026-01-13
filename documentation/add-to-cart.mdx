@@ -1,0 +1,195 @@
+---
+title: "Cart & Checkout"
+description: "Add products to the cart programmatically using URL parameters or shortcodes"
+icon: "bag-shopping"
+---
+
+SureCart provides multiple ways to add items to the cart programmatically:
+
+1. **URL Parameters** - Redirect users to checkout with pre-filled line items
+2. **Shortcodes** - Use built-in shortcodes for add-to-cart buttons
+
+<Info>
+  Looking to customize cart or checkout behavior? See the [Cart
+  Hooks](/documentation/actions-filters/cart) and [Checkout
+  Hooks](/documentation/actions-filters/checkout) reference for available
+  actions and filters.
+</Info>
+
+---
+
+## URL Parameters
+
+The most straightforward way to add items to cart is by redirecting users to the checkout page with `line_items` query parameters.
+
+### Basic Example
+
+```php
+<?php
+$checkout_url = add_query_arg(
+    [
+        'line_items' => [
+            [
+                'price_id' => 'price_xxxxxxxxxxxxx', // Your SureCart price ID
+                'quantity' => 1,
+            ],
+        ],
+    ],
+    \SureCart::pages()->url( 'checkout' )
+);
+?>
+
+<a href="<?php echo esc_url( $checkout_url ); ?>">
+    Add to Cart
+</a>
+```
+
+### Multiple Items
+
+```php
+<?php
+$checkout_url = add_query_arg(
+    [
+        'line_items' => [
+            [
+                'price_id' => 'price_product_one',
+                'quantity' => 1,
+            ],
+            [
+                'price_id' => 'price_product_two',
+                'quantity' => 2,
+            ],
+        ],
+    ],
+    \SureCart::pages()->url( 'checkout' )
+);
+?>
+```
+
+### With Coupon Code
+
+```php
+<?php
+$checkout_url = add_query_arg(
+    [
+        'line_items' => [
+            [
+                'price_id' => 'price_xxxxxxxxxxxxx',
+                'quantity' => 1,
+            ],
+        ],
+        'coupon' => 'SAVE10', // Promotion code
+    ],
+    \SureCart::pages()->url( 'checkout' )
+);
+?>
+```
+
+### With Product Variant
+
+```php
+<?php
+$checkout_url = add_query_arg(
+    [
+        'line_items' => [
+            [
+                'price_id'   => 'price_xxxxxxxxxxxxx',
+                'quantity'   => 1,
+                'variant_id' => 'variant_xxxxxxxxxxxxx', // Optional variant
+            ],
+        ],
+    ],
+    \SureCart::pages()->url( 'checkout' )
+);
+?>
+```
+
+---
+
+## Shortcodes
+
+SureCart provides built-in shortcodes for adding products to cart.
+
+### Add to Cart Button
+
+```
+[sc_product_cart_button id="prod_xxxxxxxxxxxxx" text="Add To Cart"]
+```
+
+<ResponseField name="Parameters" type="Shortcode Parameters">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string" required>
+      Product ID.
+    </ResponseField>
+    <ResponseField name="text" type="string">
+      Button text. Default: "Add To Cart"
+    </ResponseField>
+    <ResponseField name="width" type="integer">
+      Button width in pixels.
+    </ResponseField>
+    <ResponseField name="add_to_cart" type="boolean">
+      Whether to add to cart or go directly to checkout.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Buy Button with Line Items
+
+```
+[sc_buy_button]
+    [sc_line_item price_id="price_xxxxxxxxxxxxx" quantity="1"]
+[/sc_buy_button]
+```
+
+### Multiple Line Items
+
+```
+[sc_buy_button]
+    [sc_line_item price_id="price_product_one" quantity="1"]
+    [sc_line_item price_id="price_product_two" quantity="2"]
+[/sc_buy_button]
+```
+
+### Using Shortcodes in PHP
+
+You can render shortcodes programmatically in PHP using WordPress's `do_shortcode` function.
+
+```php
+<?php
+echo do_shortcode( '[sc_product_cart_button id="prod_xxxxxxxxxxxxx" text="Buy Now"]' );
+?>
+```
+
+For buy buttons with multiple line items:
+
+```php
+<?php
+echo do_shortcode( '
+    [sc_buy_button]
+        [sc_line_item price_id="price_product_one" quantity="1"]
+        [sc_line_item price_id="price_product_two" quantity="2"]
+    [/sc_buy_button]
+' );
+?>
+```
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Cart Hooks"
+    icon="cart-shopping"
+    href="/documentation/actions-filters/cart"
+  >
+    Customize cart icon, visibility, and behavior.
+  </Card>
+  <Card
+    title="Checkout Hooks"
+    icon="credit-card"
+    href="/documentation/actions-filters/checkout"
+  >
+    Hook into checkout events and customize validation.
+  </Card>
+</CardGroup>
