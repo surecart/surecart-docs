@@ -1,6 +1,6 @@
 ---
 title: "Cart & Checkout"
-description: "Add products to the cart programmatically using URL parameters or shortcodes"
+description: "Add products to cart programmatically and customize checkout forms"
 icon: "bag-shopping"
 ---
 
@@ -8,12 +8,12 @@ SureCart provides multiple ways to add items to the cart programmatically:
 
 1. **URL Parameters** - Redirect users to checkout with pre-filled line items
 2. **Shortcodes** - Use built-in shortcodes for add-to-cart buttons
+3. **Checkout Form Customization** - Add custom fields, checkboxes, or content
 
 <Info>
-  Looking to customize cart or checkout behavior? See the [Cart
+  For a complete reference of available hooks, see the [Cart
   Hooks](/documentation/actions-filters/cart) and [Checkout
-  Hooks](/documentation/actions-filters/checkout) reference for available
-  actions and filters.
+  Hooks](/documentation/actions-filters/checkout) documentation.
 </Info>
 
 ---
@@ -172,6 +172,70 @@ echo do_shortcode( '
 ' );
 ?>
 ```
+
+---
+
+## Checkout Form Customization
+
+Add custom fields, checkboxes, or content to checkout forms using the `render_block` filter. This example walks you through adding a terms checkbox with server-side validation.
+
+<Steps>
+<Step title="Add custom content before the submit button">
+Use the `render_block` filter to inject HTML before any checkout block. Target the block by checking `$block['blockName']`.
+
+```php
+add_filter( 'render_block', function( $block_content, $block ) {
+    if ( 'surecart/submit' !== $block['blockName'] ) {
+        return $block_content;
+    }
+
+    $checkbox = '<div class="my-terms-checkbox" style="margin-bottom: 1em;">
+        <label style="display: flex; align-items: start; gap: 0.5em; cursor: pointer;">
+            <input type="checkbox" name="accept_terms" value="yes" required />
+            <span>I agree to the <a href="/terms" target="_blank">terms and conditions</a></span>
+        </label>
+    </div>';
+
+    return $checkbox . $block_content;
+}, 10, 2 );
+```
+</Step>
+
+<Step title="Add server-side validation">
+Validate custom fields using the `surecart/checkout/validate` filter. Return errors to prevent checkout submission.
+
+```php
+add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    $accept_terms = isset( $_POST['accept_terms'] ) ? sanitize_text_field( wp_unslash( $_POST['accept_terms'] ) ) : '';
+
+    if ( 'yes' !== $accept_terms ) {
+        $errors->add( 'terms_required', 'You must accept the terms and conditions.' );
+    }
+
+    return $errors;
+}, 10, 3 );
+```
+
+See [Checkout Hooks](/documentation/actions-filters/checkout#form-validation) for more validation examples.
+</Step>
+</Steps>
+
+### Checkout Block Names
+
+| Block Name | Description |
+|------------|-------------|
+| `surecart/submit` | Submit/Pay button |
+| `surecart/email` | Email field |
+| `surecart/name` | Full name field |
+| `surecart/first-name` | First name field |
+| `surecart/last-name` | Last name field |
+| `surecart/phone` | Phone number field |
+| `surecart/address` | Address fields |
+| `surecart/payment` | Payment method selection |
+| `surecart/coupon` | Coupon code field |
+| `surecart/line-items` | Order line items |
+| `surecart/totals` | Order totals summary |
 
 ---
 

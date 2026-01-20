@@ -142,66 +142,6 @@ SureCart's `.sc-tag` component supports variants like `--warning`, `--success`, 
 The HTML Tag Processor is available in WordPress 6.2+. For older versions, consider using [DOMDocument](https://www.php.net/manual/en/class.domdocument.php) or carefully crafted string replacements.
 </Note>
 
-## Checkout Form Customization
-
-Add custom fields, checkboxes, or content to checkout forms using the `render_block` filter. This guide walks you through adding a terms checkbox with server-side validation.
-
-<Steps>
-<Step title="Add custom content before the submit button">
-Use the `render_block` filter to inject HTML before any checkout block. Target the block by checking `$block['blockName']`.
-
-```php
-add_filter( 'render_block', function( $block_content, $block ) {
-    if ( 'surecart/submit' !== $block['blockName'] ) {
-        return $block_content;
-    }
-
-    $checkbox = '<div class="my-terms-checkbox" style="margin-bottom: 1em;">
-        <label style="display: flex; align-items: start; gap: 0.5em; cursor: pointer;">
-            <input type="checkbox" name="accept_terms" value="yes" required />
-            <span>I agree to the <a href="/terms" target="_blank">terms and conditions</a></span>
-        </label>
-    </div>';
-
-    return $checkbox . $block_content;
-}, 10, 2 );
-```
-</Step>
-
-<Step title="Add server-side validation">
-Validate custom fields using the `surecart/checkout/validate` filter. Return errors to prevent checkout submission.
-
-```php
-add_filter( 'surecart/checkout/validate', function( $errors, $args, $request ) {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    $accept_terms = isset( $_POST['accept_terms'] ) ? sanitize_text_field( wp_unslash( $_POST['accept_terms'] ) ) : '';
-
-    if ( 'yes' !== $accept_terms ) {
-        $errors->add( 'terms_required', 'You must accept the terms and conditions.' );
-    }
-
-    return $errors;
-}, 10, 3 );
-```
-
-See [Checkout validation](/documentation/actions-filters/checkout#form-validation) for more validation examples.
-</Step>
-</Steps>
-
-### Checkout Block Names
-
-| Block Name | Description |
-|------------|-------------|
-| `surecart/submit` | Submit/Pay button |
-| `surecart/email` | Email field |
-| `surecart/name` | Full name field |
-| `surecart/phone` | Phone number field |
-| `surecart/address` | Address fields |
-| `surecart/payment` | Payment method selection |
-| `surecart/coupon` | Coupon code field |
-| `surecart/line-items` | Order line items |
-| `surecart/totals` | Order totals summary |
-
 ## Block Pattern Filters
 
 ### `surecart/blocks/pattern_categories`
