@@ -1,0 +1,149 @@
+---
+title: "Variant Swatches"
+description: "Display product variant options as image swatches instead of text pills"
+---
+
+This guide shows you how to transform variant option pills (like "Red", "Blue", "Green") into visual image swatches using variant images.
+
+<Info>
+  Before starting, you need to assign images to your variants. See the [Variant
+  Images documentation](https://surecart.com/docs/variant-images/) for setup
+  instructions.
+</Info>
+
+## How it works
+
+The code below intercepts the `surecart/product-variant-pill` block and replaces the text pill with a thumbnail from the variant's assigned image. When a customer clicks a swatch, the product image updates to show the selected variant.
+
+## Implementation
+
+Add this code to your theme's `functions.php` file or a custom plugin.
+
+```php
+<?php
+$variant_option_name_for_swatch = 'color'; // Change this to match your variant option name.
+
+add_action(
+	'render_block',
+	function ( $block_content, $block, $wp_block ) use ( $variant_option_name_for_swatch ) {
+		// Only target the variant pill block for the specified option.
+		if ( empty( $wp_block->context['name'] ) || $variant_option_name_for_swatch !== strtolower( $wp_block->context['name'] ) ) {
+			return $block_content;
+		}
+
+		if ( 'surecart/product-variant-pill' !== $block['blockName'] ) {
+			return $block_content;
+		}
+
+		$product = sc_get_product();
+
+		// Find images that match this variant option value.
+		$gallery = array_values(
+			array_filter(
+				$product->gallery,
+				function ( $image ) use ( $wp_block ) {
+					return strtolower( $image->getMetadata( 'variant_option' ) ) === strtolower( $wp_block->context['value'] );
+				}
+			)
+		);
+
+		$background = ! empty( $gallery[0] ) ? ( $gallery[0]->guid ?? null ) : null;
+		if ( empty( $background ) ) {
+			return $block_content;
+		}
+
+		$processor = new \WP_HTML_Tag_Processor( $block_content );
+		$processor->next_tag( 'div' );
+
+		if ( ! empty( $background ) ) {
+			$processor->set_attribute(
+				'style',
+				'background: url(' . esc_url( $background ) . '); background-size: 150%; background-position: center; color:transparent;width: 56px; height: 56px; border-radius: 4px; margin: 5px auto; cursor: pointer; box-sizing: border-box; text-indent: -9999px; border-width: 2px;'
+			);
+		}
+
+		$processor->add_class( 'sc-variant-color-swatch' );
+		$processor->set_attribute( 'data-wp-class--sc-variant-color-swatch--selected', 'state.isOptionSelected' );
+		$processor->set_attribute( 'data-wp-class--sc-variant-color-swatch--disabled', 'state.isOptionUnavailable' );
+
+		// Wrap swatch and name in a parent div.
+		$updated_html  = '<div class="sc-variant-color-wrapper" style="display:flex; flex-direction:column; align-items:center;">';
+		$updated_html .= $processor->get_updated_html();
+
+		// Uncomment to show the variant option name below the image:
+		// $variant_name = esc_html( $wp_block->context['value'] ?? '' );
+		// $updated_html .= '<div class="sc-variant-color-name" style="font-size: 12px; text-align: center; color:#333; text-transform: capitalize;">' . $variant_name . '</div>';
+
+		$updated_html .= '</div>';
+
+		return $updated_html;
+	},
+	10,
+	3
+);
+```
+
+## Customization options
+
+### Change the variant option name
+
+By default, this code targets the "color" variant option. To use a different option (like "Size" or "Material"), change the variable at the top:
+
+```php
+$variant_option_name_for_swatch = 'size'; // Target "Size" variants instead.
+```
+
+### Show variant labels
+
+To display the variant name below each swatch, uncomment the label section in the code:
+
+```php
+$variant_name = esc_html( $wp_block->context['value'] ?? '' );
+$updated_html .= '<div class="sc-variant-color-name" style="font-size: 12px; text-align: center; color:#333; text-transform: capitalize;">' . $variant_name . '</div>';
+```
+
+### Adjust swatch size
+
+Modify the `width` and `height` values in the style attribute to change the swatch dimensions:
+
+```php
+'style',
+'background: url(' . esc_url( $background ) . '); background-size: 150%; background-position: center; color:transparent;width: 72px; height: 72px; border-radius: 4px; margin: 5px auto; cursor: pointer; box-sizing: border-box; text-indent: -9999px; border-width: 2px;'
+```
+
+## Styling the swatches
+
+Add CSS to customize the selected and disabled states:
+
+```css
+/* Selected swatch */
+.sc-variant-color-swatch--selected {
+    border-color: #00824c;
+    box-shadow: 0 0 0 2px #00824c;
+}
+
+/* Disabled/unavailable swatch */
+.sc-variant-color-swatch--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Product Hooks"
+    icon="box"
+    href="/documentation/actions-filters/products"
+  >
+    Additional hooks for customizing product display.
+  </Card>
+  <Card
+    title="Checkout Customization"
+    icon="credit-card"
+    href="/documentation/add-to-cart"
+  >
+    Add custom fields and content to checkout.
+  </Card>
+</CardGroup>
