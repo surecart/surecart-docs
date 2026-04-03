@@ -2713,6 +2713,76 @@
           }
         }
       },
+      "contact_base": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The full name of the contact."
+          },
+          "email": {
+            "type": "string",
+            "description": "The email address of the contact."
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "The company name of the contact."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "The phone number of the contact."
+          }
+        }
+      },
+      "contact_body": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/contact_base"
+          },
+          {
+            "properties": {
+              "address": {
+                "description": "The address for this contact.",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/address_body"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "contact_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "$ref": "#/components/schemas/contact_base"
+          },
+          {
+            "properties": {
+              "address": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/address_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
       "coupon_base": {
         "allOf": [
           {
@@ -3743,7 +3813,7 @@
               },
               "shipment_status": {
                 "type": "string",
-                "description": "The current shipment status of this fulfillment – one of `unshippable`, `unshipped`, `shipped`, or `delivered`."
+                "description": "The current shipment status of this fulfillment – one of `unshippable`, `unshipped`, `label_purchased`, `shipped`, `in_transit`, `delivered`, `returned`, or `failed`."
               }
             }
           },
@@ -4796,7 +4866,7 @@
               },
               "shipment_status": {
                 "type": "string",
-                "description": "The overall shipment status of this order based on all fulfillments – one of `unshippable`, `unshipped`, `shipped`, `partially_shipped`, or `delivered`."
+                "description": "The overall shipment status of this order based on all fulfillments – one of `unshippable`, `unshipped`, `partially_shipped`, `label_purchased`, `shipped`, `in_transit`, or `delivered`."
               },
               "statement_url": {
                 "type": "string",
@@ -7979,6 +8049,10 @@
             "type": "boolean",
             "description": "When true, inherit the weight from the fulfillment."
           },
+          "shipping_date": {
+            "type": "integer",
+            "description": "The date the shipment will be tendered to the carrier. Measured in seconds since the Unix epoch."
+          },
           "dimensions": {
             "type": "object",
             "nullable": true,
@@ -8019,19 +8093,19 @@
                 "type": "string",
                 "description": "The UUID of the shipping provider."
               },
-              "from_address": {
-                "description": "The origin address for this shipment.",
+              "from_contact": {
+                "description": "The origin contact for this shipment.",
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/address_body"
+                    "$ref": "#/components/schemas/contact_body"
                   }
                 ]
               },
-              "to_address": {
-                "description": "The destination address for this shipment.",
+              "to_contact": {
+                "description": "The destination contact for this shipment.",
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/address_body"
+                    "$ref": "#/components/schemas/contact_body"
                   }
                 ]
               }
@@ -8058,25 +8132,42 @@
             "description": "The unique identifier for this rate."
           },
           "amount": {
-            "type": "string",
-            "description": "The cost of this rate."
+            "type": "integer",
+            "description": "The amount in cents to be paid for this rate. For example `9900` is equivalent to `$99`."
           },
           "currency": {
             "type": "string",
             "description": "The three-letter currency code for this rate."
           },
-          "provider": {
+          "duration_terms": {
             "type": "string",
-            "description": "The shipping carrier providing this rate."
-          },
-          "service_name": {
-            "type": "string",
-            "description": "The name of the shipping service."
+            "nullable": true,
+            "description": "The clarification for the transit times."
           },
           "estimated_days": {
             "type": "integer",
             "nullable": true,
             "description": "The estimated number of days for delivery."
+          },
+          "provider": {
+            "type": "string",
+            "description": "The shipping carrier providing this rate."
+          },
+          "provider_logo_url": {
+            "type": "string",
+            "description": "The URL for logo of the shipping carrier providing this rate.",
+            "nullable": true
+          },
+          "service_name": {
+            "type": "string",
+            "description": "The name of the shipping service."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "An array containing specific attributes of this rate in context of the entire shipment. one of `cheapest`, `fastest`, or `bestvalue`"
           }
         }
       },
@@ -8118,6 +8209,27 @@
                 "nullable": true,
                 "description": "The shipping carrier for this shipment."
               },
+              "carrier_messages": {
+                "type": "array",
+                "nullable": true,
+                "description": "Messages from carriers about this shipment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "carrier": {
+                      "type": "string",
+                      "description": "The carrier source of the messages."
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The messages from this carrier."
+                    }
+                  }
+                }
+              },
               "tracking_status": {
                 "type": "string",
                 "nullable": true,
@@ -8128,86 +8240,21 @@
                 "nullable": true,
                 "description": "The estimated time of arrival."
               },
-              "weight": {
-                "type": "string",
-                "nullable": true,
-                "description": "The weight of the parcel."
-              },
-              "weight_unit": {
-                "type": "string",
-                "nullable": true,
-                "description": "The unit of the weight."
-              },
-              "dimensions": {
-                "type": "object",
-                "nullable": true,
-                "description": "The dimensions of the parcel."
-              },
               "rates": {
                 "type": "array",
                 "description": "The available shipping rates for this shipment.",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The unique identifier for this rate."
-                    },
-                    "amount": {
-                      "type": "string",
-                      "description": "The cost of this rate."
-                    },
-                    "currency": {
-                      "type": "string",
-                      "description": "The three-letter currency code for this rate."
-                    },
-                    "provider": {
-                      "type": "string",
-                      "description": "The shipping carrier providing this rate."
-                    },
-                    "service_name": {
-                      "type": "string",
-                      "description": "The name of the shipping service."
-                    },
-                    "estimated_days": {
-                      "type": "integer",
-                      "nullable": true,
-                      "description": "The estimated number of days for delivery."
-                    }
-                  }
+                  "$ref": "#/components/schemas/shipment_rate"
                 }
               },
               "selected_rate": {
-                "type": "object",
-                "nullable": true,
-                "description": "The selected shipping rate for this shipment.",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "The unique identifier for this rate."
-                  },
-                  "amount": {
-                    "type": "string",
-                    "description": "The cost of this rate."
-                  },
-                  "currency": {
-                    "type": "string",
-                    "description": "The three-letter currency code for this rate."
-                  },
-                  "provider": {
-                    "type": "string",
-                    "description": "The shipping carrier providing this rate."
-                  },
-                  "service_name": {
-                    "type": "string",
-                    "description": "The name of the shipping service."
-                  },
-                  "estimated_days": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "The estimated number of days for delivery."
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/shipment_rate"
                   }
-                }
+                ],
+                "nullable": true,
+                "description": "The selected shipping rate for this shipment."
               },
               "fulfillment": {
                 "anyOf": [
@@ -8233,29 +8280,27 @@
                   }
                 ]
               },
-              "from_address": {
-                "nullable": true,
+              "from_contact": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated contact ID."
                   },
                   {
-                    "$ref": "#/components/schemas/address_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                    "$ref": "#/components/schemas/contact_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated contact object."
                   }
                 ]
               },
-              "to_address": {
-                "nullable": true,
+              "to_contact": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated contact ID."
                   },
                   {
-                    "$ref": "#/components/schemas/address_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                    "$ref": "#/components/schemas/contact_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated contact object."
                   }
                 ]
               },
@@ -10216,25 +10261,36 @@
           }
         ]
       },
-      "warehouse_body": {
+      "warehouse_base": {
         "properties": {
           "label": {
             "type": "string",
-            "description": "A name for this warehouse."
+            "description": "The label for this warehouse."
           },
           "default": {
             "type": "boolean",
-            "description": "If set to `true`, this warehouse will be set as the account's default warehouse."
-          },
-          "address": {
-            "description": "The address for this warehouse.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/address_body"
-              }
-            ]
+            "description": "Whether or not this warehouse is the account's default."
           }
         }
+      },
+      "warehouse_body": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/warehouse_base"
+          },
+          {
+            "properties": {
+              "contact": {
+                "description": "The contact for this warehouse.",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/contact_body"
+                  }
+                ]
+              }
+            }
+          }
+        ]
       },
       "warehouse_response": {
         "allOf": [
@@ -10242,24 +10298,19 @@
             "$ref": "#/components/schemas/model_identifiers"
           },
           {
+            "$ref": "#/components/schemas/warehouse_base"
+          },
+          {
             "properties": {
-              "label": {
-                "type": "string",
-                "description": "The name of this warehouse."
-              },
-              "default": {
-                "type": "boolean",
-                "description": "Whether or not this warehouse is the account's default."
-              },
-              "address": {
+              "contact": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated contact ID."
                   },
                   {
-                    "$ref": "#/components/schemas/address_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                    "$ref": "#/components/schemas/contact_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated contact object."
                   }
                 ]
               }
@@ -10698,14 +10749,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ca1ffb15-c1a0-4127-8312-d0460472b743",
+                  "id": "312e039c-e40c-4630-b972-b4d970325df4",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "1f157d00-d37a-41de-af1d-29f9faf07bb7",
-                  "created_at": 1773903572,
-                  "updated_at": 1773903572
+                  "license": "ff441458-b749-40ef-899a-0039cc7a2e12",
+                  "created_at": 1775218945,
+                  "updated_at": 1775218945
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10732,7 +10783,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "1f157d00-d37a-41de-af1d-29f9faf07bb7"
+                    "license_id": "ff441458-b749-40ef-899a-0039cc7a2e12"
                   }
                 }
               }
@@ -10765,14 +10816,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "dac52e76-b66f-45fa-ac6c-37878fec400c",
+                  "id": "99151088-a1c6-4ebd-a4e3-fc9d694ffc20",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "35803975-68db-4e00-8716-70683e5dd1cf",
-                  "created_at": 1773903573,
-                  "updated_at": 1773903573
+                  "license": "3298160e-e12c-4d1f-93d0-f52d2218f785",
+                  "created_at": 1775218946,
+                  "updated_at": 1775218946
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10805,14 +10856,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f12415d3-bf75-492b-b76e-267108643cd2",
+                  "id": "97094904-f4da-410e-b6a9-f1bc9eac67d5",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "37f0413d-421a-4ef8-af65-b55a9cc4539a",
-                  "created_at": 1773903574,
-                  "updated_at": 1773903574
+                  "license": "248d9487-3b11-44a0-8719-54d185cd939f",
+                  "created_at": 1775218947,
+                  "updated_at": 1775218947
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10868,7 +10919,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8099a39e-c7b3-48bb-9000-035fc0b944cf",
+                  "id": "b225ae83-9742-41d4-8ece-18719fc354f5",
                   "object": "activation",
                   "deleted": true
                 },
@@ -12466,14 +12517,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bd7eeb3f-11a4-4cfc-827c-1a721d41dfdc",
+                  "id": "70fcc2b2-e318-4b64-9de6-bd127f9a970d",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1776495575,
+                  "expires_at": 1777810951,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1773903575,
-                  "updated_at": 1773903575
+                  "created_at": 1775218951,
+                  "updated_at": 1775218951
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -12498,7 +12549,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "15835536",
+                    "affiliation_code": "F88143A4",
                     "url": "http://example.com"
                   }
                 }
@@ -12532,19 +12583,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3d08d701-5bbc-4d13-befb-be8018cd9f75",
+                  "id": "0b4f7fda-b4e2-4ade-8c27-ec53990ad171",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "4184c0c5-a809-42a5-85a6-baa7b74fde71",
+                  "key": "7e285c9c-93e9-4ecb-a3b4-c7d3ac9e8529",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "f696f3ae-a911-423f-bab7-7cc623355680",
-                  "product": "b72a57f2-1560-40d1-878b-2e2c8107661d",
+                  "price": "e69bcdf0-117c-47d9-965e-0714c87c44f6",
+                  "product": "f8b59928-dddb-45da-9b7f-aec65178f354",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1773903576,
-                  "updated_at": 1773903576
+                  "created_at": 1775218952,
+                  "updated_at": 1775218952
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -12597,7 +12648,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f588120a-8e61-4367-bd2a-069cfd86fcd8",
+                  "id": "e173f862-b658-490b-a0f0-ad0b5870352c",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -12608,11 +12659,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjVmZjk1NTg2LTlkYzItNGRiNy05ZDA0LTZhMDMyYjY3MWI1MyIsImV4cCI6IjIwMjYtMDMtMTlUMDc6MTQ6MzYuODU1WiIsInB1ciI6ImJsb2JfaWQifX0=--5ba7362bed89776f4839115de409c5275190d1c0/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImQ0MmQxOTFlLTNkMDUtNDk4MC1hMzUwLThhNjM0YWEyZjMwNCIsImV4cCI6IjIwMjYtMDQtMDNUMTI6Mzc6MzQuMDQ1WiIsInB1ciI6ImJsb2JfaWQifX0=--de8c49818afaed82471dff7a75e11c098aab086e/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1773904476,
-                  "created_at": 1773903576,
-                  "updated_at": 1773903576
+                  "url_expires_at": 1775219854,
+                  "created_at": 1775218953,
+                  "updated_at": 1775218953
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"

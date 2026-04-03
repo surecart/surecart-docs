@@ -2713,6 +2713,76 @@
           }
         }
       },
+      "contact_base": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The full name of the contact."
+          },
+          "email": {
+            "type": "string",
+            "description": "The email address of the contact."
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "The company name of the contact."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "The phone number of the contact."
+          }
+        }
+      },
+      "contact_body": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/contact_base"
+          },
+          {
+            "properties": {
+              "address": {
+                "description": "The address for this contact.",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/address_body"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "contact_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "$ref": "#/components/schemas/contact_base"
+          },
+          {
+            "properties": {
+              "address": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/address_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
       "coupon_base": {
         "allOf": [
           {
@@ -3743,7 +3813,7 @@
               },
               "shipment_status": {
                 "type": "string",
-                "description": "The current shipment status of this fulfillment – one of `unshippable`, `unshipped`, `shipped`, or `delivered`."
+                "description": "The current shipment status of this fulfillment – one of `unshippable`, `unshipped`, `label_purchased`, `shipped`, `in_transit`, `delivered`, `returned`, or `failed`."
               }
             }
           },
@@ -4796,7 +4866,7 @@
               },
               "shipment_status": {
                 "type": "string",
-                "description": "The overall shipment status of this order based on all fulfillments – one of `unshippable`, `unshipped`, `shipped`, `partially_shipped`, or `delivered`."
+                "description": "The overall shipment status of this order based on all fulfillments – one of `unshippable`, `unshipped`, `partially_shipped`, `label_purchased`, `shipped`, `in_transit`, or `delivered`."
               },
               "statement_url": {
                 "type": "string",
@@ -7979,6 +8049,10 @@
             "type": "boolean",
             "description": "When true, inherit the weight from the fulfillment."
           },
+          "shipping_date": {
+            "type": "integer",
+            "description": "The date the shipment will be tendered to the carrier. Measured in seconds since the Unix epoch."
+          },
           "dimensions": {
             "type": "object",
             "nullable": true,
@@ -8019,19 +8093,19 @@
                 "type": "string",
                 "description": "The UUID of the shipping provider."
               },
-              "from_address": {
-                "description": "The origin address for this shipment.",
+              "from_contact": {
+                "description": "The origin contact for this shipment.",
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/address_body"
+                    "$ref": "#/components/schemas/contact_body"
                   }
                 ]
               },
-              "to_address": {
-                "description": "The destination address for this shipment.",
+              "to_contact": {
+                "description": "The destination contact for this shipment.",
                 "allOf": [
                   {
-                    "$ref": "#/components/schemas/address_body"
+                    "$ref": "#/components/schemas/contact_body"
                   }
                 ]
               }
@@ -8058,25 +8132,42 @@
             "description": "The unique identifier for this rate."
           },
           "amount": {
-            "type": "string",
-            "description": "The cost of this rate."
+            "type": "integer",
+            "description": "The amount in cents to be paid for this rate. For example `9900` is equivalent to `$99`."
           },
           "currency": {
             "type": "string",
             "description": "The three-letter currency code for this rate."
           },
-          "provider": {
+          "duration_terms": {
             "type": "string",
-            "description": "The shipping carrier providing this rate."
-          },
-          "service_name": {
-            "type": "string",
-            "description": "The name of the shipping service."
+            "nullable": true,
+            "description": "The clarification for the transit times."
           },
           "estimated_days": {
             "type": "integer",
             "nullable": true,
             "description": "The estimated number of days for delivery."
+          },
+          "provider": {
+            "type": "string",
+            "description": "The shipping carrier providing this rate."
+          },
+          "provider_logo_url": {
+            "type": "string",
+            "description": "The URL for logo of the shipping carrier providing this rate.",
+            "nullable": true
+          },
+          "service_name": {
+            "type": "string",
+            "description": "The name of the shipping service."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "An array containing specific attributes of this rate in context of the entire shipment. one of `cheapest`, `fastest`, or `bestvalue`"
           }
         }
       },
@@ -8118,6 +8209,27 @@
                 "nullable": true,
                 "description": "The shipping carrier for this shipment."
               },
+              "carrier_messages": {
+                "type": "array",
+                "nullable": true,
+                "description": "Messages from carriers about this shipment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "carrier": {
+                      "type": "string",
+                      "description": "The carrier source of the messages."
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The messages from this carrier."
+                    }
+                  }
+                }
+              },
               "tracking_status": {
                 "type": "string",
                 "nullable": true,
@@ -8128,86 +8240,21 @@
                 "nullable": true,
                 "description": "The estimated time of arrival."
               },
-              "weight": {
-                "type": "string",
-                "nullable": true,
-                "description": "The weight of the parcel."
-              },
-              "weight_unit": {
-                "type": "string",
-                "nullable": true,
-                "description": "The unit of the weight."
-              },
-              "dimensions": {
-                "type": "object",
-                "nullable": true,
-                "description": "The dimensions of the parcel."
-              },
               "rates": {
                 "type": "array",
                 "description": "The available shipping rates for this shipment.",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The unique identifier for this rate."
-                    },
-                    "amount": {
-                      "type": "string",
-                      "description": "The cost of this rate."
-                    },
-                    "currency": {
-                      "type": "string",
-                      "description": "The three-letter currency code for this rate."
-                    },
-                    "provider": {
-                      "type": "string",
-                      "description": "The shipping carrier providing this rate."
-                    },
-                    "service_name": {
-                      "type": "string",
-                      "description": "The name of the shipping service."
-                    },
-                    "estimated_days": {
-                      "type": "integer",
-                      "nullable": true,
-                      "description": "The estimated number of days for delivery."
-                    }
-                  }
+                  "$ref": "#/components/schemas/shipment_rate"
                 }
               },
               "selected_rate": {
-                "type": "object",
-                "nullable": true,
-                "description": "The selected shipping rate for this shipment.",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "The unique identifier for this rate."
-                  },
-                  "amount": {
-                    "type": "string",
-                    "description": "The cost of this rate."
-                  },
-                  "currency": {
-                    "type": "string",
-                    "description": "The three-letter currency code for this rate."
-                  },
-                  "provider": {
-                    "type": "string",
-                    "description": "The shipping carrier providing this rate."
-                  },
-                  "service_name": {
-                    "type": "string",
-                    "description": "The name of the shipping service."
-                  },
-                  "estimated_days": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "The estimated number of days for delivery."
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/shipment_rate"
                   }
-                }
+                ],
+                "nullable": true,
+                "description": "The selected shipping rate for this shipment."
               },
               "fulfillment": {
                 "anyOf": [
@@ -8233,29 +8280,27 @@
                   }
                 ]
               },
-              "from_address": {
-                "nullable": true,
+              "from_contact": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated contact ID."
                   },
                   {
-                    "$ref": "#/components/schemas/address_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                    "$ref": "#/components/schemas/contact_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated contact object."
                   }
                 ]
               },
-              "to_address": {
-                "nullable": true,
+              "to_contact": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated contact ID."
                   },
                   {
-                    "$ref": "#/components/schemas/address_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                    "$ref": "#/components/schemas/contact_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated contact object."
                   }
                 ]
               },
@@ -10216,25 +10261,36 @@
           }
         ]
       },
-      "warehouse_body": {
+      "warehouse_base": {
         "properties": {
           "label": {
             "type": "string",
-            "description": "A name for this warehouse."
+            "description": "The label for this warehouse."
           },
           "default": {
             "type": "boolean",
-            "description": "If set to `true`, this warehouse will be set as the account's default warehouse."
-          },
-          "address": {
-            "description": "The address for this warehouse.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/address_body"
-              }
-            ]
+            "description": "Whether or not this warehouse is the account's default."
           }
         }
+      },
+      "warehouse_body": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/warehouse_base"
+          },
+          {
+            "properties": {
+              "contact": {
+                "description": "The contact for this warehouse.",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/contact_body"
+                  }
+                ]
+              }
+            }
+          }
+        ]
       },
       "warehouse_response": {
         "allOf": [
@@ -10242,24 +10298,19 @@
             "$ref": "#/components/schemas/model_identifiers"
           },
           {
+            "$ref": "#/components/schemas/warehouse_base"
+          },
+          {
             "properties": {
-              "label": {
-                "type": "string",
-                "description": "The name of this warehouse."
-              },
-              "default": {
-                "type": "boolean",
-                "description": "Whether or not this warehouse is the account's default."
-              },
-              "address": {
+              "contact": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated address ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated contact ID."
                   },
                   {
-                    "$ref": "#/components/schemas/address_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated address object."
+                    "$ref": "#/components/schemas/contact_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated contact object."
                   }
                 ]
               }
@@ -10762,17 +10813,17 @@
                   },
                   "data": [
                     {
-                      "id": "2defbcd2-5b4d-47c7-87ec-4f71f88b28a7",
+                      "id": "5c006272-8c7a-4921-9a4a-e1a6805dfa49",
                       "object": "balance_transaction",
                       "amount": 2000,
                       "currency": "usd",
                       "ending_balance_amount": 0,
                       "transaction_type": "adjustment",
-                      "balance": "c0c22eac-32ed-49e4-b8a1-8d23de8f208b",
-                      "customer": "1e038aad-6a94-474a-93f5-1e4d6ab2518b",
+                      "balance": "67025435-9419-4764-943f-c8c4e90b8412",
+                      "customer": "4f25ed55-9407-4aca-8f57-142477d7cb6d",
                       "checkout": null,
-                      "created_at": 1773903527,
-                      "updated_at": 1773903527
+                      "created_at": 1775218843,
+                      "updated_at": 1775218843
                     }
                   ]
                 },
@@ -10798,17 +10849,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "aa917dd1-ed62-48af-a2de-cf34c6e022f2",
+                  "id": "b93da2cf-b6ec-433c-aebb-580bf208a2c9",
                   "object": "balance_transaction",
                   "amount": 5000,
                   "currency": "usd",
                   "ending_balance_amount": 5000,
                   "transaction_type": "adjustment",
-                  "balance": "b5414063-8596-4f9a-b4f8-2fa59b151383",
-                  "customer": "f188a107-464d-489b-a4fb-87b04c3cb2fc",
+                  "balance": "67d83ac5-a42d-426e-a9a3-f2a33ea8afd8",
+                  "customer": "ce89937d-4438-44d4-995f-13049c598ffc",
                   "checkout": null,
-                  "created_at": 1773903528,
-                  "updated_at": 1773903528
+                  "created_at": 1775218843,
+                  "updated_at": 1775218843
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -10835,7 +10886,7 @@
                   "balance_transaction": {
                     "amount": 5000,
                     "currency": "usd",
-                    "customer": "f188a107-464d-489b-a4fb-87b04c3cb2fc"
+                    "customer": "ce89937d-4438-44d4-995f-13049c598ffc"
                   }
                 }
               }
@@ -10868,17 +10919,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "dc85f24c-75be-4d0a-ac6d-dd851a82520f",
+                  "id": "43fefe25-3f3f-451a-a452-891425c3226c",
                   "object": "balance_transaction",
                   "amount": 2000,
                   "currency": "usd",
                   "ending_balance_amount": 0,
                   "transaction_type": "adjustment",
-                  "balance": "f93151a3-eed0-4c9b-ab47-1e1a608d2717",
-                  "customer": "efb341f5-ad4e-4fcf-a7b9-4a3fb26dda77",
+                  "balance": "1b544ed0-cd40-4033-bfd7-f8c787983472",
+                  "customer": "c24f548c-dfc4-460b-944b-758ff45c5023",
                   "checkout": null,
-                  "created_at": 1773903528,
-                  "updated_at": 1773903528
+                  "created_at": 1775218843,
+                  "updated_at": 1775218843
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -10968,13 +11019,13 @@
                   },
                   "data": [
                     {
-                      "id": "e5e395ac-8430-46e7-92b3-8cb68c6db002",
+                      "id": "b8cb551d-dc9e-4a61-ac38-ce72ca6791cf",
                       "object": "balance",
                       "amount": 0,
                       "currency": "usd",
-                      "customer": "27b4d381-5a81-483d-a278-410ed8c716d5",
-                      "created_at": 1773903528,
-                      "updated_at": 1773903528
+                      "customer": "57bbab9a-04c5-453c-8dcd-a5110f5da730",
+                      "created_at": 1775218843,
+                      "updated_at": 1775218843
                     }
                   ]
                 },
@@ -11001,7 +11052,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c2c5eca8-5d05-400e-9578-ce22679ca049",
+                  "id": "e11eb35c-cf7a-417a-986f-4adf2d12f971",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": null,
@@ -11010,13 +11061,13 @@
                   "payment_failure_enabled": true,
                   "purchase_enabled": true,
                   "refund_enabled": true,
-                  "reply_to_email": "reply_to@kozey.example",
+                  "reply_to_email": "reply_to@walker-hirthe.test",
                   "subscription_cancellation_enabled": false,
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1773903537,
-                  "updated_at": 1773903537
+                  "created_at": 1775218857,
+                  "updated_at": 1775218857
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11040,7 +11091,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ce2d89b6-c0aa-42f1-b777-ba30a7ed98fc",
+                  "id": "d8b2bb4f-eb83-4ad3-9bd9-3c597db28470",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": "Support Team",
@@ -11054,8 +11105,8 @@
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1773903537,
-                  "updated_at": 1773903537
+                  "created_at": 1775218857,
+                  "updated_at": 1775218857
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11104,7 +11155,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8ed9576e-70d5-4996-a91c-f939145ee23b",
+                  "id": "ef5c39d1-a8d2-4e76-95a4-d38001116b58",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11116,8 +11167,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1773903537,
-                  "updated_at": 1773903537
+                  "created_at": 1775218857,
+                  "updated_at": 1775218857
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -11141,7 +11192,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bcbe5227-6c26-4803-b228-febe3cbf3e9c",
+                  "id": "e6eca10c-0cf4-484b-a330-90c1fc78ffb9",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11153,8 +11204,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1773903537,
-                  "updated_at": 1773903537
+                  "created_at": 1775218857,
+                  "updated_at": 1775218858
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -11291,7 +11342,7 @@
                   },
                   "data": [
                     {
-                      "id": "869ab053-91e5-495c-95c4-0b4f0331a110",
+                      "id": "2867c87b-ac68-4c82-8264-70eaa07ba14e",
                       "object": "customer",
                       "affiliation_expires_at": null,
                       "billing_matches_shipping": true,
@@ -11304,14 +11355,14 @@
                       "phone": null,
                       "unsubscribed": false,
                       "tax_enabled": true,
-                      "portal_url": "http://app.example.com/portal_redirect/customers/869ab053-91e5-495c-95c4-0b4f0331a110",
+                      "portal_url": "http://app.example.com/portal_redirect/customers/2867c87b-ac68-4c82-8264-70eaa07ba14e",
                       "affiliation": null,
-                      "billing_address": "543e4e12-9827-474e-9419-dd7c31da008c",
+                      "billing_address": "b5bc1465-e59f-4c71-b57d-77034d17564d",
                       "default_payment_method": null,
                       "shipping_address": null,
                       "tax_identifier": null,
-                      "created_at": 1773903537,
-                      "updated_at": 1773903537
+                      "created_at": 1775218858,
+                      "updated_at": 1775218858
                     }
                   ]
                 },
@@ -11337,7 +11388,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "caf5618b-f9e6-41db-8a2b-fb90244b783d",
+                  "id": "68a86f46-1270-4f95-9dcc-57f36e89c248",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -11350,14 +11401,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/caf5618b-f9e6-41db-8a2b-fb90244b783d",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/68a86f46-1270-4f95-9dcc-57f36e89c248",
                   "affiliation": null,
                   "billing_address": null,
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1773903538,
-                  "updated_at": 1773903538
+                  "created_at": 1775218859,
+                  "updated_at": 1775218859
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -11416,7 +11467,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3e13ef10-6f05-4f23-a446-12d15c2a7058",
+                  "id": "701f53b3-2dcd-49dd-a3e5-56e657a40c12",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -11429,14 +11480,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/3e13ef10-6f05-4f23-a446-12d15c2a7058",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/701f53b3-2dcd-49dd-a3e5-56e657a40c12",
                   "affiliation": null,
-                  "billing_address": "577da4bb-b698-48e3-b22c-834d8072a98a",
+                  "billing_address": "7989af8b-0753-4c0d-87c1-d944709bb0e4",
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1773903539,
-                  "updated_at": 1773903539
+                  "created_at": 1775218859,
+                  "updated_at": 1775218859
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -11478,7 +11529,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "19c9c260-b4ac-4d3f-b555-b85d9ac79c1f",
+                  "id": "f4ba186a-29dc-4bc3-8534-b20c156b5eba",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -11491,14 +11542,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/19c9c260-b4ac-4d3f-b555-b85d9ac79c1f",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/f4ba186a-29dc-4bc3-8534-b20c156b5eba",
                   "affiliation": null,
-                  "billing_address": "ec6d3f7d-718d-4647-adf2-b2ea6443dbe5",
+                  "billing_address": "3c1a0ab3-0a9f-4e66-80d6-250172cba883",
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1773903539,
-                  "updated_at": 1773903540
+                  "created_at": 1775218860,
+                  "updated_at": 1775218861
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -11554,7 +11605,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f8cca473-02b2-423b-bd1c-1508e8003142",
+                  "id": "2c09d3ac-ae0f-4523-bdab-7e36a8f87c93",
                   "object": "customer",
                   "deleted": true
                 },
@@ -11610,7 +11661,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8bff68fa-cc0a-4afa-8b5c-f8c2a985e278",
+                  "id": "073d3edb-b578-4e39-bf02-b3db766db156",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -11621,11 +11672,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjI2ZWJiMmZjLWU3MjctNGNjYS1iYjZhLTA5NDQ4NjI2NmJlZSIsImV4cCI6IjIwMjYtMDMtMTlUMDc6MTQ6MDEuODkxWiIsInB1ciI6ImJsb2JfaWQifX0=--385b351a0cf9ef6a0b4108e2324eceed4411dffb/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjM0NDdiNTU2LWU2ODktNDhjYy1iNDZjLWY1MmZjNGVkZjNhMCIsImV4cCI6IjIwMjYtMDQtMDNUMTI6MzY6MDQuMzA4WiIsInB1ciI6ImJsb2JfaWQifX0=--76695b4869153a401f0209411a95e67b1126f454/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1773904441,
-                  "created_at": 1773903541,
-                  "updated_at": 1773903541
+                  "url_expires_at": 1775219764,
+                  "created_at": 1775218862,
+                  "updated_at": 1775218862
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"
@@ -11651,13 +11702,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a30b7d21-24d8-495a-83a0-4f0af40c834e",
+                  "id": "91eed46c-970c-4562-a0cd-7a97f3fc272b",
                   "object": "verification_code",
                   "email": "test@example.com",
                   "verified": false,
                   "verified_at": null,
-                  "created_at": 1773903613,
-                  "updated_at": 1773903613
+                  "created_at": 1775219057,
+                  "updated_at": 1775219057
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -11706,13 +11757,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "643ec6bd-42fc-4b6d-b492-d9de156ec567",
+                  "id": "2be8389d-9a98-4ca3-b468-822e7d1d13c5",
                   "object": "verification_code",
                   "email": "test-1@example.com",
                   "verified": true,
-                  "verified_at": 1773903613,
-                  "created_at": 1773903613,
-                  "updated_at": 1773903613
+                  "verified_at": 1775219057,
+                  "created_at": 1775219057,
+                  "updated_at": 1775219057
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -11737,7 +11788,7 @@
                 },
                 "example": {
                   "verification_code": {
-                    "code": 903288,
+                    "code": 264475,
                     "email": "test-1@example.com"
                   }
                 }
