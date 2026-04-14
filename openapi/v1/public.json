@@ -1322,6 +1322,130 @@
           }
         ]
       },
+      "batch_body": {
+        "allOf": [
+          {
+            "properties": {
+              "batch_operations": {
+                "type": "array",
+                "description": "Array of operations to execute in this batch.",
+                "items": {
+                  "$ref": "#/components/schemas/batch_operation_body"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "batch_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "properties": {
+              "finished_batch_operations_count": {
+                "type": "integer",
+                "description": "The number of operations that have finished processing (completed, failed, or timed out)."
+              },
+              "batch_operations_count": {
+                "type": "integer",
+                "description": "The total number of operations in this batch."
+              },
+              "status": {
+                "type": "string",
+                "description": "The status of the batch. Possible values include:\n- `completed`: All operations in the batch have finished processing.\n- `in_progress`: The batch operations are currently being executed.\n- `pending`: The batch has been created but processing has not yet started.\n"
+              },
+              "batch_operations": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of operations associated with this batch."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "batch_operation_body": {
+        "allOf": [
+          {
+            "properties": {
+              "body": {
+                "type": "object",
+                "nullable": true,
+                "description": "The JSON request body for this operation."
+              },
+              "http_method": {
+                "type": "string",
+                "description": "The HTTP method for this operation – one of `DELETE`, `GET`, `PATCH`, `POST`, or `PUT`."
+              },
+              "path": {
+                "type": "string",
+                "description": "The API path for this operation. Must start with `/` and contain only valid URL characters."
+              },
+              "query_params": {
+                "type": "object",
+                "nullable": true,
+                "description": "The query parameters for this operation."
+              }
+            }
+          }
+        ]
+      },
+      "batch_operation_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "$ref": "#/components/schemas/batch_operation_body"
+          },
+          {
+            "properties": {
+              "response_body": {
+                "type": "object",
+                "nullable": true,
+                "description": "The JSON response body returned by this operation."
+              },
+              "response_status": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The HTTP response status code returned by this operation."
+              },
+              "status": {
+                "type": "string",
+                "description": "The status of this operation. Possible values include:\n- `completed`: The operation was executed and a response was received.\n- `failed`: The operation encountered an internal error and could not be executed.\n- `in_progress`: The operation is currently being executed.\n- `pending`: The operation has not yet started execution.\n- `timed_out`: The operation exceeded the allowed execution time.\n"
+              },
+              "batch": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The batch this operation belongs to.\n\n[Expandable](/api-reference/expanding-responses) – The associated batch ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/batch_response",
+                    "description": "The batch this operation belongs to.\n\n[Expanded](/api-reference/expanding-responses) – The associated batch object."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
       "brand_base": {
         "properties": {
           "color": {
@@ -10788,14 +10912,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "42886773-257b-43d0-ac4c-84dee7bd5402",
+                  "id": "058c925c-b634-4a4d-9991-f5d8148d4398",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "11b53cb1-4e18-4c72-854d-6823c2238af4",
-                  "created_at": 1775656695,
-                  "updated_at": 1775656695
+                  "license": "4f1ab9c1-a840-4284-a64d-89803bb7f9a3",
+                  "created_at": 1776176556,
+                  "updated_at": 1776176556
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10822,7 +10946,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "11b53cb1-4e18-4c72-854d-6823c2238af4"
+                    "license_id": "4f1ab9c1-a840-4284-a64d-89803bb7f9a3"
                   }
                 }
               }
@@ -10855,14 +10979,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a91ae9f4-570f-434b-ac92-f49d836e1225",
+                  "id": "ac447ea6-e79f-4484-b96c-89ab9fbe3f6f",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "900bee17-6d27-4dce-b0ba-204437971c61",
-                  "created_at": 1775656696,
-                  "updated_at": 1775656696
+                  "license": "5c0bf0f0-1399-477d-a29c-58465b52fa47",
+                  "created_at": 1776176557,
+                  "updated_at": 1776176557
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10895,14 +11019,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "622665e0-5392-416d-8c16-95467970dbe1",
+                  "id": "874d121a-3a67-4c25-8bcb-fdd8e72371aa",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "06e85d01-1328-4a68-91b2-b59e6fba91db",
-                  "created_at": 1775656697,
-                  "updated_at": 1775656697
+                  "license": "72e458d9-15b9-4e58-8ad3-b209adb26891",
+                  "created_at": 1776176558,
+                  "updated_at": 1776176558
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10958,7 +11082,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6db862d1-625f-4e11-98d0-ed9744a5097e",
+                  "id": "4c682202-e887-4fc9-8253-15f23f8e9ee3",
                   "object": "activation",
                   "deleted": true
                 },
@@ -12556,14 +12680,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d1b53b34-f483-4b80-bd2f-3e6b7246b1ec",
+                  "id": "6ec4e92a-776b-42ab-b1b4-733431bd4dc5",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1778248699,
+                  "expires_at": 1778768559,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1775656699,
-                  "updated_at": 1775656699
+                  "created_at": 1776176559,
+                  "updated_at": 1776176559
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -12588,7 +12712,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "4738849E",
+                    "affiliation_code": "6716623C",
                     "url": "http://example.com"
                   }
                 }
@@ -12622,19 +12746,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "14581c09-2f38-49ac-b846-58bd1dc3ef4e",
+                  "id": "006e0f42-c376-4ccd-bf0b-299c9589c390",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "3c03bb0a-ac36-4e78-babd-e0d5659ef3da",
+                  "key": "cc1086ed-04fd-4722-9291-a661880fc1e1",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "fefa5786-8b52-469a-9cc8-4e75c9b54109",
-                  "product": "14b0dc66-195d-449b-b57d-9addf00046e2",
+                  "price": "1020d088-dc66-4737-8bd6-7cd2fa897165",
+                  "product": "327ce067-eeec-46ff-87a3-c9c7f7df2656",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1775656700,
-                  "updated_at": 1775656700
+                  "created_at": 1776176559,
+                  "updated_at": 1776176559
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -12687,7 +12811,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e4b0c9aa-18d8-4614-9f04-fe7cd4d54427",
+                  "id": "51d18536-20ab-4f1c-93c8-15cd14d696c6",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -12698,11 +12822,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjIyN2E3YzZkLWUzNDgtNGIyMC05ZDY0LTVlYWI2YmQ3YjRjMSIsImV4cCI6IjIwMjYtMDQtMDhUMTQ6MTM6MjEuNzg3WiIsInB1ciI6ImJsb2JfaWQifX0=--82cd1f88def7e6f4143b049d027c542e79a6e66d/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImYzMDg5OGJiLWQzYmMtNDI1Zi04MDIwLTE4Njc5ZTkzOTIwZiIsImV4cCI6IjIwMjYtMDQtMTRUMTQ6Mzc6NDAuMjg4WiIsInB1ciI6ImJsb2JfaWQifX0=--aa90439a4d3d2fac72bd5a1ecd5019c5f98679d1/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1775657601,
-                  "created_at": 1775656701,
-                  "updated_at": 1775656701
+                  "url_expires_at": 1776177460,
+                  "created_at": 1776176559,
+                  "updated_at": 1776176559
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"

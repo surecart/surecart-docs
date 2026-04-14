@@ -1322,6 +1322,130 @@
           }
         ]
       },
+      "batch_body": {
+        "allOf": [
+          {
+            "properties": {
+              "batch_operations": {
+                "type": "array",
+                "description": "Array of operations to execute in this batch.",
+                "items": {
+                  "$ref": "#/components/schemas/batch_operation_body"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "batch_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "properties": {
+              "finished_batch_operations_count": {
+                "type": "integer",
+                "description": "The number of operations that have finished processing (completed, failed, or timed out)."
+              },
+              "batch_operations_count": {
+                "type": "integer",
+                "description": "The total number of operations in this batch."
+              },
+              "status": {
+                "type": "string",
+                "description": "The status of the batch. Possible values include:\n- `completed`: All operations in the batch have finished processing.\n- `in_progress`: The batch operations are currently being executed.\n- `pending`: The batch has been created but processing has not yet started.\n"
+              },
+              "batch_operations": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of operations associated with this batch."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "batch_operation_body": {
+        "allOf": [
+          {
+            "properties": {
+              "body": {
+                "type": "object",
+                "nullable": true,
+                "description": "The JSON request body for this operation."
+              },
+              "http_method": {
+                "type": "string",
+                "description": "The HTTP method for this operation – one of `DELETE`, `GET`, `PATCH`, `POST`, or `PUT`."
+              },
+              "path": {
+                "type": "string",
+                "description": "The API path for this operation. Must start with `/` and contain only valid URL characters."
+              },
+              "query_params": {
+                "type": "object",
+                "nullable": true,
+                "description": "The query parameters for this operation."
+              }
+            }
+          }
+        ]
+      },
+      "batch_operation_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "$ref": "#/components/schemas/batch_operation_body"
+          },
+          {
+            "properties": {
+              "response_body": {
+                "type": "object",
+                "nullable": true,
+                "description": "The JSON response body returned by this operation."
+              },
+              "response_status": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The HTTP response status code returned by this operation."
+              },
+              "status": {
+                "type": "string",
+                "description": "The status of this operation. Possible values include:\n- `completed`: The operation was executed and a response was received.\n- `failed`: The operation encountered an internal error and could not be executed.\n- `in_progress`: The operation is currently being executed.\n- `pending`: The operation has not yet started execution.\n- `timed_out`: The operation exceeded the allowed execution time.\n"
+              },
+              "batch": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "The batch this operation belongs to.\n\n[Expandable](/api-reference/expanding-responses) – The associated batch ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/batch_response",
+                    "description": "The batch this operation belongs to.\n\n[Expanded](/api-reference/expanding-responses) – The associated batch object."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
       "brand_base": {
         "properties": {
           "color": {
@@ -10840,14 +10964,14 @@
                   },
                   "data": [
                     {
-                      "id": "f77e6351-f6e0-4c81-b92f-93dbc9c9cda3",
+                      "id": "78815e87-204e-4611-849a-05ba50d1abd9",
                       "object": "activation",
                       "counted": true,
                       "name": null,
                       "fingerprint": "example.com",
-                      "license": "3c1e7585-7849-4254-9087-28c967ac69ec",
-                      "created_at": 1775656618,
-                      "updated_at": 1775656618
+                      "license": "309db963-a523-4c73-a8ca-43356c8de901",
+                      "created_at": 1776176505,
+                      "updated_at": 1776176505
                     }
                   ]
                 },
@@ -10873,14 +10997,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f0c3505d-77b8-44f3-9437-7d610e6df1ff",
+                  "id": "36b597f3-46be-43a6-b9af-3ba975a47956",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "5b8b88c6-fc0f-4bc0-b614-0c458e76b34a",
-                  "created_at": 1775656619,
-                  "updated_at": 1775656619
+                  "license": "a1766bda-366b-4fa6-90b1-da0255d6dd97",
+                  "created_at": 1776176506,
+                  "updated_at": 1776176506
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10907,7 +11031,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "5b8b88c6-fc0f-4bc0-b614-0c458e76b34a"
+                    "license_id": "a1766bda-366b-4fa6-90b1-da0255d6dd97"
                   }
                 }
               }
@@ -10940,14 +11064,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3c838c0a-5df0-468b-8d70-e0c93e9ee193",
+                  "id": "143749a2-fbc6-4c7c-884e-d545883a4fd4",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "1f0d4306-6f49-4010-84b2-c0d811ff14d2",
-                  "created_at": 1775656620,
-                  "updated_at": 1775656620
+                  "license": "1fc6e2ee-c29f-4028-8735-76fef1385b0e",
+                  "created_at": 1776176506,
+                  "updated_at": 1776176506
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -10980,14 +11104,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6a74a240-3016-4da6-8420-bbb5873414ca",
+                  "id": "2a4fe3fb-2be4-4438-9f66-c6a1d59f1011",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "cb2b12f3-90c6-4dcf-b4db-8e7cefa853a6",
-                  "created_at": 1775656621,
-                  "updated_at": 1775656621
+                  "license": "a0024c47-728f-4510-a5c7-66ff720046df",
+                  "created_at": 1776176507,
+                  "updated_at": 1776176507
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11043,7 +11167,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2a806407-7abf-4134-b7ce-7bec749796ef",
+                  "id": "c10e5cf5-2b36-4d2e-b877-82f3c7575dba",
                   "object": "activation",
                   "deleted": true
                 },
@@ -11174,17 +11298,17 @@
                   },
                   "data": [
                     {
-                      "id": "86825775-5087-449d-89f1-f471acde2aa1",
+                      "id": "99fcba13-cd0a-4adb-a941-3bbb81c5496e",
                       "object": "license",
                       "activations_count": 0,
                       "activation_limit": null,
-                      "key": "22e33dce-b945-40e7-b746-26912ba73408",
+                      "key": "36735c5f-8948-4624-a00d-2bec73e9883b",
                       "revokes_at": null,
                       "status": "inactive",
-                      "customer": "79f43b6c-2695-4151-9723-d9ffb05e5cd1",
-                      "purchase": "53196148-c8e3-4bc7-8552-038815e4b352",
-                      "created_at": 1775656666,
-                      "updated_at": 1775656666
+                      "customer": "3030081c-cd7f-4eab-b5df-9f99171fc9d4",
+                      "purchase": "c7988977-c4c8-4e2f-b6ca-ed2dbf8c7958",
+                      "created_at": 1776176537,
+                      "updated_at": 1776176537
                     }
                   ]
                 },
@@ -11210,17 +11334,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "95e1191f-7505-4321-a6ae-75b593b698ca",
+                  "id": "2ad56208-968f-4d5d-a9e0-4685e70b9630",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
                   "key": "abc-123-def-456",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "0b5f9c3f-acfa-4c09-87b2-c9979c1076d1",
-                  "purchase": "3b1b4109-bf2a-4874-887e-35fe4bbfa1ac",
-                  "created_at": 1775656668,
-                  "updated_at": 1775656668
+                  "customer": "bc89966e-e746-4d5e-934c-6edcdeb376e1",
+                  "purchase": "f6eb2ca8-7cd7-4a6b-8b09-6aab91835b94",
+                  "created_at": 1776176538,
+                  "updated_at": 1776176538
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -11246,7 +11370,7 @@
                 "example": {
                   "license": {
                     "key": "abc-123-def-456",
-                    "purchase": "3b1b4109-bf2a-4874-887e-35fe4bbfa1ac"
+                    "purchase": "f6eb2ca8-7cd7-4a6b-8b09-6aab91835b94"
                   }
                 }
               }
@@ -11279,17 +11403,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7e70573e-b020-4e58-bcc7-3060d60996e4",
+                  "id": "333802bf-ebee-4faf-9f5e-9c87f3160238",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "55a96e51-0617-4d52-8016-c1968ab543c5",
+                  "key": "814f305a-99c4-4d27-aea0-e37125852145",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "d5be327c-65a9-4386-80a3-7f331c979879",
-                  "purchase": "4b524e1c-4856-4bcf-89ce-75e4f305c569",
-                  "created_at": 1775656669,
-                  "updated_at": 1775656669
+                  "customer": "5ca4510f-a809-48ec-8bff-df965b0275e5",
+                  "purchase": "b0562d75-e686-4366-934f-4a92e419edef",
+                  "created_at": 1776176539,
+                  "updated_at": 1776176539
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -11322,17 +11446,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "15b4bbfc-88cd-4976-9530-18d14974ac84",
+                  "id": "16cf4d40-bc50-491e-8254-9fdd61ae7d73",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": 10,
-                  "key": "2342b2b4-61ff-484e-b91c-6c8657ec7c4f",
+                  "key": "b2fc5729-2899-4e35-abd7-637bcc8af060",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "a032cf9e-07db-4aba-8de8-c39a614b1eee",
-                  "purchase": "53ab636f-d299-40f3-a5a2-edf1d4164a98",
-                  "created_at": 1775656670,
-                  "updated_at": 1775656670
+                  "customer": "ade1b0d2-23ab-4297-ac9a-c0f3b9d0014e",
+                  "purchase": "d2c4d864-a2cb-431c-89fa-809acecb621f",
+                  "created_at": 1776176540,
+                  "updated_at": 1776176540
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -11388,7 +11512,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f7c38e7c-2e7d-427f-9c95-6a80e5067d76",
+                  "id": "fcc5f3a4-b641-4e6b-9824-ffcdeed14725",
                   "object": "license",
                   "deleted": true
                 },
