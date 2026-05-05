@@ -1710,6 +1710,11 @@
         "allOf": [
           {
             "properties": {
+              "basis_amount": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Optional relative weighting input (in cents) for this component. Nil uses default weighting by quantity."
+              },
               "quantity": {
                 "type": "integer",
                 "description": "The quantity of this component in the bundle."
@@ -1733,18 +1738,13 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "type": "string",
-                "description": "The UUID of the bundle price."
+                "description": "The UUID of the bundle product."
               },
-              "price": {
+              "component_product": {
                 "type": "string",
-                "description": "The UUID of the component price."
-              },
-              "variant": {
-                "type": "string",
-                "nullable": true,
-                "description": "The UUID of the variant."
+                "description": "The UUID of the component product."
               }
             }
           }
@@ -1760,53 +1760,33 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/bundle_price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle price object."
+                    "$ref": "#/components/schemas/bundle_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle product object."
                   }
                 ]
               },
-              "price": {
+              "component_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated component product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated price object."
+                    "$ref": "#/components/schemas/component_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated component product object."
                   }
                 ]
               },
-              "product": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated product ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/product_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated product object."
-                  }
-                ]
-              },
-              "variant": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated variant ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/variant_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated variant object."
-                  }
-                ]
+              "current_version": {
+                "type": "boolean",
+                "description": "Whether the returned version is the current one on the bundle item."
               }
             }
           },
@@ -6191,6 +6171,13 @@
           },
           {
             "properties": {
+              "bundle_items": {
+                "type": "array",
+                "description": "A list of this product's bundle items.",
+                "items": {
+                  "$ref": "#/components/schemas/bundle_item_body"
+                }
+              },
               "commission_structure": {
                 "description": "The commission structure to use when calculating referral commissions for this specific product.",
                 "allOf": [
@@ -6274,6 +6261,19 @@
               "average_stars": {
                 "type": "string",
                 "description": "The average stars for this product based on published reviews."
+              },
+              "bundle_items": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of associated bundle item objects."
+                  }
+                ]
               },
               "commission_structure": {
                 "nullable": true,
@@ -8068,6 +8068,35 @@
           }
         ]
       },
+      "filter_body": {
+        "description": "A rule tree describing how to filter records. May be a single `rule_condition` or a `rule_group` combining multiple conditions and nested groups with `and` / `or`. The valid `attribute_name` and `operator_label` values for each resource come from the corresponding `GET /v1/<resource>/filter_schema` endpoint.\n",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/rule_condition"
+          },
+          {
+            "$ref": "#/components/schemas/rule_group"
+          }
+        ],
+        "example": {
+          "type": "group",
+          "combinator": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "attribute_name": "order_type",
+              "operator_label": "is",
+              "comparison_value": "checkout"
+            },
+            {
+              "type": "condition",
+              "attribute_name": "products.name",
+              "operator_label": "contains",
+              "comparison_value": "shirt"
+            }
+          ]
+        }
+      },
       "rule_schema_attribute": {
         "properties": {
           "key": {
@@ -8087,7 +8116,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The data type of the attribute. One of `numeric`, `string`, or `date`."
+            "description": "The data type of the attribute. One of `string`, `numeric`, `date`, `uuid`, or `boolean`."
           },
           "operators": {
             "type": "array",
@@ -11085,17 +11114,17 @@
                   },
                   "data": [
                     {
-                      "id": "ab139a9f-61cf-4aa0-8c25-d97585c34dbd",
+                      "id": "a908297f-c95a-4bac-8bb9-2b65047ef848",
                       "object": "balance_transaction",
                       "amount": 2000,
                       "currency": "usd",
                       "ending_balance_amount": 0,
                       "transaction_type": "adjustment",
-                      "balance": "c5b9bb56-7748-4d8b-9568-3f95a4df78d8",
-                      "customer": "2a5554eb-438e-46af-b4d2-2ad07e5980bd",
+                      "balance": "ad895c05-a2c1-4edd-bd75-18ff5309dd35",
+                      "customer": "a8774901-3aee-49d7-9f40-e89484c89409",
                       "checkout": null,
-                      "created_at": 1776179333,
-                      "updated_at": 1776179333
+                      "created_at": 1778005361,
+                      "updated_at": 1778005361
                     }
                   ]
                 },
@@ -11121,17 +11150,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "884e93be-be54-4720-96ef-fe2a35e065e0",
+                  "id": "c7f57fd1-bbd7-4297-80cd-9c2e31d6eadf",
                   "object": "balance_transaction",
                   "amount": 5000,
                   "currency": "usd",
                   "ending_balance_amount": 5000,
                   "transaction_type": "adjustment",
-                  "balance": "1c4f2c09-5020-4d2c-8c1b-d3560e160ffa",
-                  "customer": "f85676b0-d8bb-4043-9fcb-c67f628785a1",
+                  "balance": "ec3793b9-795b-438f-be97-ca0d64c68188",
+                  "customer": "dfd6830c-d556-4e5d-a79e-2daaf15968a4",
                   "checkout": null,
-                  "created_at": 1776179333,
-                  "updated_at": 1776179333
+                  "created_at": 1778005361,
+                  "updated_at": 1778005361
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -11158,7 +11187,7 @@
                   "balance_transaction": {
                     "amount": 5000,
                     "currency": "usd",
-                    "customer": "f85676b0-d8bb-4043-9fcb-c67f628785a1"
+                    "customer": "dfd6830c-d556-4e5d-a79e-2daaf15968a4"
                   }
                 }
               }
@@ -11191,17 +11220,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "98041cf9-97a1-46c6-84c9-0a547e8bc838",
+                  "id": "be461e72-6cde-4d5b-9851-6fb13868a3eb",
                   "object": "balance_transaction",
                   "amount": 2000,
                   "currency": "usd",
                   "ending_balance_amount": 0,
                   "transaction_type": "adjustment",
-                  "balance": "6d45f6b1-df3d-4b9b-8624-20a337a9b9d0",
-                  "customer": "6c4559a5-dda4-4039-befe-6d73f120c3c3",
+                  "balance": "7c91e493-5109-4680-a4ee-0c9eaebbbd56",
+                  "customer": "1196ce5c-2a19-4b21-b588-2317a69c7a73",
                   "checkout": null,
-                  "created_at": 1776179334,
-                  "updated_at": 1776179334
+                  "created_at": 1778005361,
+                  "updated_at": 1778005361
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -11291,13 +11320,13 @@
                   },
                   "data": [
                     {
-                      "id": "2c3116f1-6cef-4cd3-9e5a-27fc2d576d9d",
+                      "id": "88957ca3-b216-4e9a-b46d-53209980370e",
                       "object": "balance",
                       "amount": 0,
                       "currency": "usd",
-                      "customer": "8b3c022e-39d7-4ac0-80d7-738d72a2f2ae",
-                      "created_at": 1776179334,
-                      "updated_at": 1776179334
+                      "customer": "b1082c9e-5f24-4983-950c-e1615be7fdc1",
+                      "created_at": 1778005361,
+                      "updated_at": 1778005361
                     }
                   ]
                 },
@@ -11324,7 +11353,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "da6cff20-4ddd-48db-8cb4-c13d731a58e4",
+                  "id": "f4f53387-a675-414c-b0bc-82a4f6cab4e9",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": null,
@@ -11333,13 +11362,13 @@
                   "payment_failure_enabled": true,
                   "purchase_enabled": true,
                   "refund_enabled": true,
-                  "reply_to_email": "reply_to@doyle.example",
+                  "reply_to_email": "reply.to@kertzmann-dicki.example",
                   "subscription_cancellation_enabled": false,
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1776179343,
-                  "updated_at": 1776179343
+                  "created_at": 1778005373,
+                  "updated_at": 1778005373
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11363,7 +11392,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "94d464eb-e279-486a-a959-0938404aa479",
+                  "id": "c56bbc9e-f27a-4d23-8f79-882fde6d6558",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": "Support Team",
@@ -11377,8 +11406,8 @@
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1776179343,
-                  "updated_at": 1776179343
+                  "created_at": 1778005373,
+                  "updated_at": 1778005373
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11427,7 +11456,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0d5c261a-6517-4536-bd19-2d3d75ace364",
+                  "id": "2c191b00-1821-4e80-bc66-d1f8289eb55a",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11439,8 +11468,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1776179343,
-                  "updated_at": 1776179343
+                  "created_at": 1778005373,
+                  "updated_at": 1778005373
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -11464,7 +11493,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f3df5fdc-b238-4006-8dfe-0e31552c7169",
+                  "id": "a7d84919-0cf3-4b31-80ef-b9ce08afec95",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11476,8 +11505,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1776179343,
-                  "updated_at": 1776179343
+                  "created_at": 1778005373,
+                  "updated_at": 1778005373
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -11503,6 +11532,221 @@
                 "example": {
                   "customer_portal_protocol": {
                     "subscription_cancellations_enabled": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/customers/filter_schema": {
+      "get": {
+        "summary": "Filter Schema",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "filterSchemaCustomer",
+        "description": "Retrieves the filter schema for customers.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "rule_schema",
+                  "schema_id": "customer",
+                  "attributes": [
+                    {
+                      "key": "live_mode",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "boolean",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "email",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "first_name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "last_name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "phone",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "purchases.created_at",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "date",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_after",
+                        "is_before",
+                        "is_on_or_after",
+                        "is_on_or_before"
+                      ]
+                    },
+                    {
+                      "key": "purchases.product.id",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "uuid",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "purchases.product.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "purchases.price.id",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "uuid",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "purchases.price.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/rule_schema_response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/customers/filter": {
+      "post": {
+        "summary": "Filter",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "filterCustomer",
+        "description": "Returns a list of customers matching the supplied rule tree.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "list",
+                  "pagination": {
+                    "count": 0,
+                    "limit": 20,
+                    "page": 1,
+                    "url": "/v1/customers/filter"
+                  },
+                  "data": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/list_response"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/filter_body"
+                      }
+                    ]
+                  }
+                },
+                "example": {
+                  "filter": {
+                    "type": "condition",
+                    "attribute_name": "email",
+                    "operator_label": "is",
+                    "comparison_value": "anyone@example.com"
                   }
                 }
               }
@@ -11614,11 +11858,11 @@
                   },
                   "data": [
                     {
-                      "id": "a2edb73f-e330-4a1a-8a0b-193f588893a7",
+                      "id": "fe139c32-ba03-4bd9-8a93-89fbad6d2d50",
                       "object": "customer",
                       "affiliation_expires_at": null,
                       "billing_matches_shipping": true,
-                      "email": "customer-19@example.com",
+                      "email": "customer-20@example.com",
                       "first_name": null,
                       "indexed": true,
                       "last_name": null,
@@ -11627,14 +11871,14 @@
                       "phone": null,
                       "unsubscribed": false,
                       "tax_enabled": true,
-                      "portal_url": "http://app.example.com/portal_redirect/customers/a2edb73f-e330-4a1a-8a0b-193f588893a7",
+                      "portal_url": "http://app.example.com/portal_redirect/customers/fe139c32-ba03-4bd9-8a93-89fbad6d2d50",
                       "affiliation": null,
-                      "billing_address": "4691f7de-dc72-4bbb-bdcf-6bb926b229cb",
+                      "billing_address": "d1102f25-fbe6-4c5a-841e-f8442a6a05d6",
                       "default_payment_method": null,
                       "shipping_address": null,
                       "tax_identifier": null,
-                      "created_at": 1776179343,
-                      "updated_at": 1776179343
+                      "created_at": 1778005374,
+                      "updated_at": 1778005374
                     }
                   ]
                 },
@@ -11660,7 +11904,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cb913f62-91d5-49fb-af48-c94ba40bb196",
+                  "id": "356f06f4-06ce-46eb-924f-e6e614b96bbb",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -11673,14 +11917,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/cb913f62-91d5-49fb-af48-c94ba40bb196",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/356f06f4-06ce-46eb-924f-e6e614b96bbb",
                   "affiliation": null,
                   "billing_address": null,
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1776179344,
-                  "updated_at": 1776179344
+                  "created_at": 1778005375,
+                  "updated_at": 1778005375
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -11739,11 +11983,11 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0c0fa23f-6f68-4a03-9bd3-ffe895434c67",
+                  "id": "5d9b5f75-8c08-409c-aa0b-0d080f69f4c9",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
-                  "email": "customer-21@example.com",
+                  "email": "customer-22@example.com",
                   "first_name": null,
                   "indexed": true,
                   "last_name": null,
@@ -11752,14 +11996,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/0c0fa23f-6f68-4a03-9bd3-ffe895434c67",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/5d9b5f75-8c08-409c-aa0b-0d080f69f4c9",
                   "affiliation": null,
-                  "billing_address": "0491f0da-fc1d-4af0-8125-9295c5980fcf",
+                  "billing_address": "27427347-fb40-415d-828d-bb40e7f00af2",
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1776179344,
-                  "updated_at": 1776179344
+                  "created_at": 1778005375,
+                  "updated_at": 1778005375
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -11801,11 +12045,11 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fdc74e9b-8742-4392-9ea7-a5e0fbb059af",
+                  "id": "3c666228-c09f-4e09-aeef-cf95a87838e8",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
-                  "email": "customer-22@example.com",
+                  "email": "customer-23@example.com",
                   "first_name": "Updated",
                   "indexed": true,
                   "last_name": "Customer",
@@ -11814,14 +12058,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/fdc74e9b-8742-4392-9ea7-a5e0fbb059af",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/3c666228-c09f-4e09-aeef-cf95a87838e8",
                   "affiliation": null,
-                  "billing_address": "82874234-1236-46bb-9e38-dd4f60a75fc6",
+                  "billing_address": "5ab56222-b64f-44f5-b01d-d7b79f197c77",
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1776179345,
-                  "updated_at": 1776179345
+                  "created_at": 1778005376,
+                  "updated_at": 1778005376
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -11877,7 +12121,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "10918644-71e4-4805-a252-8e1876f60913",
+                  "id": "33481865-95b5-448f-bccb-152dc20c1db8",
                   "object": "customer",
                   "deleted": true
                 },
@@ -11933,7 +12177,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bacdc1ad-b502-443b-acd1-bfe57e035cd0",
+                  "id": "fd927752-ec33-4e4b-be8e-50ff767c27a3",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -11944,11 +12188,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjdhY2M2OGJiLWViMGQtNDIxNi1iZTk3LTBkMTk4YzJkZDljYSIsImV4cCI6IjIwMjYtMDQtMTRUMTU6MjQ6MDYuOTg5WiIsInB1ciI6ImJsb2JfaWQifX0=--4fc96f7f63e7dd2ec9377f4d15c5ca34f243afc6/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjZiMGQwMzFkLWE4MGMtNGRkZS1hNGFkLTQwMTAzMmRjMTNmNyIsImV4cCI6IjIwMjYtMDUtMDVUMTg6Mzc6NTguNTcyWiIsInB1ciI6ImJsb2JfaWQifX0=--51eff84b194c1ee0bdfa0b16946904873753ee77/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1776180246,
-                  "created_at": 1776179346,
-                  "updated_at": 1776179346
+                  "url_expires_at": 1778006278,
+                  "created_at": 1778005377,
+                  "updated_at": 1778005377
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"
@@ -11974,13 +12218,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "895c115f-ea8d-4f54-9756-1781f029593d",
+                  "id": "7e8574eb-9bb3-4203-8f56-8fe131bffd41",
                   "object": "verification_code",
                   "email": "test@example.com",
                   "verified": false,
                   "verified_at": null,
-                  "created_at": 1776179410,
-                  "updated_at": 1776179410
+                  "created_at": 1778005463,
+                  "updated_at": 1778005463
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -12029,13 +12273,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2706f500-c8ea-4a1d-adbc-9fae2de4324d",
+                  "id": "a71864ec-828f-49e3-98f8-daf20842b954",
                   "object": "verification_code",
                   "email": "test-1@example.com",
                   "verified": true,
-                  "verified_at": 1776179410,
-                  "created_at": 1776179410,
-                  "updated_at": 1776179410
+                  "verified_at": 1778005463,
+                  "created_at": 1778005463,
+                  "updated_at": 1778005463
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -12060,7 +12304,7 @@
                 },
                 "example": {
                   "verification_code": {
-                    "code": 923443,
+                    "code": 189501,
                     "email": "test-1@example.com"
                   }
                 }

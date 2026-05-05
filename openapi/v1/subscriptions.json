@@ -1710,6 +1710,11 @@
         "allOf": [
           {
             "properties": {
+              "basis_amount": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Optional relative weighting input (in cents) for this component. Nil uses default weighting by quantity."
+              },
               "quantity": {
                 "type": "integer",
                 "description": "The quantity of this component in the bundle."
@@ -1733,18 +1738,13 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "type": "string",
-                "description": "The UUID of the bundle price."
+                "description": "The UUID of the bundle product."
               },
-              "price": {
+              "component_product": {
                 "type": "string",
-                "description": "The UUID of the component price."
-              },
-              "variant": {
-                "type": "string",
-                "nullable": true,
-                "description": "The UUID of the variant."
+                "description": "The UUID of the component product."
               }
             }
           }
@@ -1760,53 +1760,33 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/bundle_price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle price object."
+                    "$ref": "#/components/schemas/bundle_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle product object."
                   }
                 ]
               },
-              "price": {
+              "component_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated component product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated price object."
+                    "$ref": "#/components/schemas/component_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated component product object."
                   }
                 ]
               },
-              "product": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated product ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/product_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated product object."
-                  }
-                ]
-              },
-              "variant": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated variant ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/variant_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated variant object."
-                  }
-                ]
+              "current_version": {
+                "type": "boolean",
+                "description": "Whether the returned version is the current one on the bundle item."
               }
             }
           },
@@ -6191,6 +6171,13 @@
           },
           {
             "properties": {
+              "bundle_items": {
+                "type": "array",
+                "description": "A list of this product's bundle items.",
+                "items": {
+                  "$ref": "#/components/schemas/bundle_item_body"
+                }
+              },
               "commission_structure": {
                 "description": "The commission structure to use when calculating referral commissions for this specific product.",
                 "allOf": [
@@ -6274,6 +6261,19 @@
               "average_stars": {
                 "type": "string",
                 "description": "The average stars for this product based on published reviews."
+              },
+              "bundle_items": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of associated bundle item objects."
+                  }
+                ]
               },
               "commission_structure": {
                 "nullable": true,
@@ -8068,6 +8068,35 @@
           }
         ]
       },
+      "filter_body": {
+        "description": "A rule tree describing how to filter records. May be a single `rule_condition` or a `rule_group` combining multiple conditions and nested groups with `and` / `or`. The valid `attribute_name` and `operator_label` values for each resource come from the corresponding `GET /v1/<resource>/filter_schema` endpoint.\n",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/rule_condition"
+          },
+          {
+            "$ref": "#/components/schemas/rule_group"
+          }
+        ],
+        "example": {
+          "type": "group",
+          "combinator": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "attribute_name": "order_type",
+              "operator_label": "is",
+              "comparison_value": "checkout"
+            },
+            {
+              "type": "condition",
+              "attribute_name": "products.name",
+              "operator_label": "contains",
+              "comparison_value": "shirt"
+            }
+          ]
+        }
+      },
       "rule_schema_attribute": {
         "properties": {
           "key": {
@@ -8087,7 +8116,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The data type of the attribute. One of `numeric`, `string`, or `date`."
+            "description": "The data type of the attribute. One of `string`, `numeric`, `date`, `uuid`, or `boolean`."
           },
           "operators": {
             "type": "array",
@@ -11070,16 +11099,16 @@
                   },
                   "data": [
                     {
-                      "id": "e1c84ef0-d684-4138-90b3-36f7b019f5e9",
+                      "id": "caf0fc45-e5e4-40ea-82c7-6a8b20b229d6",
                       "object": "cancellation_act",
                       "comment": null,
                       "coupon_applied": false,
                       "preserved": false,
-                      "performed_at": 1776179336,
-                      "cancellation_reason": "e072f8f3-c399-4e9b-8858-4aeb260834aa",
-                      "subscription": "653f8b19-00c4-46e4-b37a-72532fd4c4ed",
-                      "created_at": 1776179336,
-                      "updated_at": 1776179336
+                      "performed_at": 1778005364,
+                      "cancellation_reason": "69f9cf3e-6a4a-43e0-a4cc-29b3943928cf",
+                      "subscription": "4a4808d5-dcb4-409d-83c6-4c4dad968a9c",
+                      "created_at": 1778005364,
+                      "updated_at": 1778005364
                     }
                   ]
                 },
@@ -11116,16 +11145,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f118d05b-63ba-4197-9c75-08c332d797f4",
+                  "id": "e5036d21-14cf-4bb8-8d37-99128cfa5064",
                   "object": "cancellation_act",
                   "comment": null,
                   "coupon_applied": false,
                   "preserved": false,
-                  "performed_at": 1776179336,
-                  "cancellation_reason": "3a4daeca-a498-45fa-b4ed-dcade514af3c",
-                  "subscription": "719f61a8-1eef-47fe-aca7-307c7ef5d109",
-                  "created_at": 1776179336,
-                  "updated_at": 1776179336
+                  "performed_at": 1778005364,
+                  "cancellation_reason": "d6614c33-cfa4-419f-85d3-ac5a51d751cb",
+                  "subscription": "cad12f3a-26a2-4ee7-8199-2ec978d34147",
+                  "created_at": 1778005364,
+                  "updated_at": 1778005364
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_act_response"
@@ -11191,7 +11220,7 @@
                   },
                   "data": [
                     {
-                      "id": "fc605332-8a40-4a6b-82fe-0b99c8ca6607",
+                      "id": "437fcd30-79e8-4846-9548-1a6ab4f6749d",
                       "object": "cancellation_reason",
                       "archived": false,
                       "archived_at": null,
@@ -11201,8 +11230,8 @@
                       "label": "Too expensive",
                       "position": 0,
                       "discarded_at": null,
-                      "created_at": 1776179336,
-                      "updated_at": 1776179336
+                      "created_at": 1778005365,
+                      "updated_at": 1778005365
                     }
                   ]
                 },
@@ -11228,7 +11257,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1355aeb9-cfa7-48a7-ab59-9473e8b14b25",
+                  "id": "9ba8aba4-b133-4223-a415-b20cfec48dfc",
                   "object": "cancellation_reason",
                   "archived": false,
                   "archived_at": null,
@@ -11238,8 +11267,8 @@
                   "label": "Switching to competitor",
                   "position": 1,
                   "discarded_at": null,
-                  "created_at": 1776179336,
-                  "updated_at": 1776179336
+                  "created_at": 1778005365,
+                  "updated_at": 1778005365
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_reason_response"
@@ -11297,7 +11326,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cb2dadc6-4cb1-443c-ac14-f8b491f22a2c",
+                  "id": "567f7ea1-c7a1-45b5-8b16-35ce8649ac9c",
                   "object": "cancellation_reason",
                   "archived": false,
                   "archived_at": null,
@@ -11307,8 +11336,8 @@
                   "label": "Too expensive",
                   "position": 0,
                   "discarded_at": null,
-                  "created_at": 1776179336,
-                  "updated_at": 1776179336
+                  "created_at": 1778005365,
+                  "updated_at": 1778005365
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_reason_response"
@@ -11341,7 +11370,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8fdd97e9-8521-45dc-8c64-821a23e24460",
+                  "id": "67b2415e-8ec7-4fdc-b943-9f3643a5ffe2",
                   "object": "cancellation_reason",
                   "archived": false,
                   "archived_at": null,
@@ -11351,8 +11380,8 @@
                   "label": "Too expensive",
                   "position": 0,
                   "discarded_at": null,
-                  "created_at": 1776179336,
-                  "updated_at": 1776179336
+                  "created_at": 1778005365,
+                  "updated_at": 1778005365
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_reason_response"
@@ -11408,7 +11437,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ffa70c51-e341-4c5b-b10e-f6fe5e1a16dc",
+                  "id": "4b2e4a48-e9c7-4d58-972e-62b6debc7ca5",
                   "object": "cancellation_reason",
                   "deleted": true
                 },
@@ -11488,10 +11517,10 @@
                   },
                   "data": [
                     {
-                      "id": "dd70f798-b7f9-44f0-9bcc-81e21107d61e",
+                      "id": "a364d165-aae9-48e2-8f40-e4204eb6dbf6",
                       "object": "period",
                       "ad_hoc_amount": null,
-                      "end_at": 1778771368,
+                      "end_at": 1780683811,
                       "next_payment_retry_at": null,
                       "payment_retry_count": 0,
                       "payoff": false,
@@ -11500,20 +11529,20 @@
                       "renewal_reminder_sent_at": null,
                       "restoral": false,
                       "skip_proration": false,
-                      "start_at": 1776179368,
+                      "start_at": 1778005411,
                       "status": "paid",
-                      "checkout": "da08bd53-804d-462f-93d3-4c8cba038e40",
-                      "price": "eb22c687-ed85-4cfd-8998-751345823e83",
-                      "subscription": "34f1172f-6895-4223-81ce-e0d165804577",
+                      "checkout": "7453e036-e1d9-41a0-9e3d-a02a3e364e38",
+                      "price": "39fed02f-8a10-40fa-9921-7d8cc2a71cf4",
+                      "subscription": "9f67626d-9b99-4251-88e4-ff766f317a1c",
                       "variant": null,
-                      "created_at": 1776179368,
-                      "updated_at": 1776179368
+                      "created_at": 1778005411,
+                      "updated_at": 1778005411
                     },
                     {
-                      "id": "a22aeb38-db4c-44ed-a2c7-34d2b2f54a79",
+                      "id": "ef93ab72-c092-4b4e-b7ae-375c763aace9",
                       "object": "period",
                       "ad_hoc_amount": null,
-                      "end_at": 1778771368,
+                      "end_at": 1780683811,
                       "next_payment_retry_at": null,
                       "payment_retry_count": 0,
                       "payoff": false,
@@ -11522,14 +11551,14 @@
                       "renewal_reminder_sent_at": null,
                       "restoral": false,
                       "skip_proration": false,
-                      "start_at": 1776179368,
+                      "start_at": 1778005411,
                       "status": "paid",
-                      "checkout": "d17bcf63-768a-4acd-9b66-ee579895bd50",
-                      "price": "eb22c687-ed85-4cfd-8998-751345823e83",
-                      "subscription": "34f1172f-6895-4223-81ce-e0d165804577",
+                      "checkout": "38c57165-8f89-4350-b8e9-90fcda6263a4",
+                      "price": "39fed02f-8a10-40fa-9921-7d8cc2a71cf4",
+                      "subscription": "9f67626d-9b99-4251-88e4-ff766f317a1c",
                       "variant": null,
-                      "created_at": 1776179368,
-                      "updated_at": 1776179368
+                      "created_at": 1778005411,
+                      "updated_at": 1778005411
                     }
                   ]
                 },
@@ -11566,10 +11595,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3de4f2f2-cc0a-431b-8b2b-b02a999dc5bd",
+                  "id": "ea9f0e32-f6ae-45b1-9796-977a4ee29f01",
                   "object": "period",
                   "ad_hoc_amount": null,
-                  "end_at": 1776182969,
+                  "end_at": 1778009011,
                   "next_payment_retry_at": null,
                   "payment_retry_count": 0,
                   "payoff": false,
@@ -11578,14 +11607,14 @@
                   "renewal_reminder_sent_at": null,
                   "restoral": false,
                   "skip_proration": false,
-                  "start_at": 1776179368,
+                  "start_at": 1778005411,
                   "status": "paid",
-                  "checkout": "f78046f8-6028-4015-8ba9-213ef1bcff8b",
-                  "price": "a9cb43a3-06a5-4a94-aa20-69e578552a55",
-                  "subscription": "fab91c79-70db-4b5a-b1e9-3c93b037a607",
+                  "checkout": "bc9d0bbe-110a-4b92-8eff-fe7e00bdde36",
+                  "price": "221cb126-3e82-4164-8e59-d80b32c030b7",
+                  "subscription": "afecec16-2f8a-4dc0-a3a9-d17e825068de",
                   "variant": null,
-                  "created_at": 1776179368,
-                  "updated_at": 1776179369
+                  "created_at": 1778005411,
+                  "updated_at": 1778005411
                 },
                 "schema": {
                   "$ref": "#/components/schemas/period_response"
@@ -11610,7 +11639,7 @@
                 },
                 "example": {
                   "period": {
-                    "end_at": 1776182969
+                    "end_at": 1778009011
                   }
                 }
               }
@@ -11643,10 +11672,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "797d5a87-fd62-4db5-85d3-cf5c57fdc867",
+                  "id": "70a9e9e0-2dfc-4573-8050-2665d19a957d",
                   "object": "period",
                   "ad_hoc_amount": null,
-                  "end_at": 1778771369,
+                  "end_at": 1780683812,
                   "next_payment_retry_at": null,
                   "payment_retry_count": 0,
                   "payoff": false,
@@ -11655,14 +11684,14 @@
                   "renewal_reminder_sent_at": null,
                   "restoral": false,
                   "skip_proration": false,
-                  "start_at": 1776179369,
+                  "start_at": 1778005412,
                   "status": "payment_failed",
-                  "checkout": "ac3b8484-24f7-458f-bfa9-e6a666f391c1",
-                  "price": "d419335a-07fc-4cd5-8b8f-fe6e9e3dfd51",
-                  "subscription": "c2d0c4f3-4e41-44cb-a38b-63f001ac0626",
+                  "checkout": "e4c01c53-55bc-41a9-8de3-54ccc5340ec1",
+                  "price": "4a351864-fa20-4cdd-adbc-cc362d6286fb",
+                  "subscription": "6893821d-8afb-4358-b6e9-68e3fbd9bc72",
                   "variant": null,
-                  "created_at": 1776179369,
-                  "updated_at": 1776179369
+                  "created_at": 1778005412,
+                  "updated_at": 1778005412
                 },
                 "schema": {
                   "$ref": "#/components/schemas/period_response"
@@ -11687,7 +11716,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c2f97589-b74e-4530-bf7b-b4c9a5bd8cd7",
+                  "id": "59d768af-d19b-4b6f-831c-1222c571fa0c",
                   "object": "subscription_protocol",
                   "bypass_duplicate_trials": false,
                   "cancel_behavior": "pending",
@@ -11712,9 +11741,9 @@
                   "require_upfront_payment_method": true,
                   "revoke_purchases_on_past_due": false,
                   "upgrade_behavior": "immediate",
-                  "preservation_coupon": "bd28510c-3078-41e9-a1de-c63595fd2378",
-                  "created_at": 1776179401,
-                  "updated_at": 1776179401
+                  "preservation_coupon": "311eeb4b-d43d-44de-aae0-0063c3b9b343",
+                  "created_at": 1778005451,
+                  "updated_at": 1778005451
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_protocol_response"
@@ -11738,7 +11767,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "69d0af88-1c6f-45de-8892-495058dc095d",
+                  "id": "c9d0c5f5-1231-4809-b798-0f118087acc7",
                   "object": "subscription_protocol",
                   "bypass_duplicate_trials": false,
                   "cancel_behavior": "pending",
@@ -11763,9 +11792,9 @@
                   "require_upfront_payment_method": true,
                   "revoke_purchases_on_past_due": false,
                   "upgrade_behavior": "immediate",
-                  "preservation_coupon": "dbc2af42-607a-49a2-9cb6-e4cc5120a8d7",
-                  "created_at": 1776179401,
-                  "updated_at": 1776179401
+                  "preservation_coupon": "b0c199f6-66f1-47a7-8812-de8334927f54",
+                  "created_at": 1778005451,
+                  "updated_at": 1778005451
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_protocol_response"
@@ -11791,6 +11820,263 @@
                 "example": {
                   "subscription_protocol": {
                     "downgrade_behavior": "immediate"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/subscriptions/filter_schema": {
+      "get": {
+        "summary": "Filter Schema",
+        "tags": [
+          "Subscriptions"
+        ],
+        "operationId": "filterSchemaSubscription",
+        "description": "Retrieves the filter schema for subscriptions.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "rule_schema",
+                  "schema_id": "subscription",
+                  "attributes": [
+                    {
+                      "key": "live_mode",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "boolean",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "cancel_at_period_end",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "boolean",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "created_at",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "date",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "is_after",
+                        "is_before",
+                        "is_on_or_after",
+                        "is_on_or_before"
+                      ]
+                    },
+                    {
+                      "key": "status",
+                      "metadata": false,
+                      "supported_values": [
+                        "active",
+                        "trialing",
+                        "past_due",
+                        "canceled",
+                        "completed",
+                        "incomplete"
+                      ],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "customer.id",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "uuid",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "customer.email",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "product.id",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "uuid",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "product.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    },
+                    {
+                      "key": "price.id",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "uuid",
+                      "operators": [
+                        "is",
+                        "is_not"
+                      ]
+                    },
+                    {
+                      "key": "price.name",
+                      "metadata": false,
+                      "supported_values": [],
+                      "type": "string",
+                      "operators": [
+                        "is",
+                        "is_not",
+                        "contains",
+                        "not_contains",
+                        "start_with",
+                        "end_with"
+                      ]
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/rule_schema_response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/subscriptions/filter": {
+      "post": {
+        "summary": "Filter",
+        "tags": [
+          "Subscriptions"
+        ],
+        "operationId": "filterSubscription",
+        "description": "Returns a list of subscriptions matching the supplied rule tree.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "list",
+                  "pagination": {
+                    "count": 1,
+                    "limit": 20,
+                    "page": 1,
+                    "url": "/v1/subscriptions/filter"
+                  },
+                  "data": [
+                    {
+                      "id": "7653a4dd-7bee-4216-8f0a-aba90bebdb0f",
+                      "object": "subscription",
+                      "ad_hoc_amount": null,
+                      "affiliation_expires_at": null,
+                      "cancel_at_period_end": false,
+                      "currency": "usd",
+                      "current_period_end_at": 1780683851,
+                      "current_period_start_at": 1778005451,
+                      "ended_at": null,
+                      "finite": false,
+                      "last_renewal_reminder_sent_at": null,
+                      "live_mode": true,
+                      "manual_payment": false,
+                      "metadata": {},
+                      "pending_update": {},
+                      "price_readonly": false,
+                      "portal_url": "http://app.example.com/portal_redirect/subscriptions/7653a4dd-7bee-4216-8f0a-aba90bebdb0f",
+                      "quantity": 1,
+                      "remaining_period_count": null,
+                      "restart_on_completed": false,
+                      "restore_at": null,
+                      "subtotal_amount": 2900,
+                      "status": "active",
+                      "tax_enabled": false,
+                      "trial_end_at": null,
+                      "trial_start_at": null,
+                      "variant_options": null,
+                      "affiliation": null,
+                      "current_cancellation_act": null,
+                      "current_period": "d432acbe-3c7d-42df-bb47-5ab293bcac13",
+                      "customer": "b8a398d1-5978-40d5-a3c9-45afa580b2db",
+                      "discount": null,
+                      "manual_payment_method": null,
+                      "payment_method": "7fb99934-c170-420e-bb9e-928846e606d9",
+                      "price": "955c53a1-f142-4153-921c-f9f1c383f214",
+                      "purchase": "5feff4a0-eafd-48d1-b8a0-13fe483f1144",
+                      "shipping_method": null,
+                      "variant": null,
+                      "created_at": 1778005451,
+                      "updated_at": 1778005451
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/list_response"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/filter_body"
+                      }
+                    ]
+                  }
+                },
+                "example": {
+                  "filter": {
+                    "type": "condition",
+                    "attribute_name": "status",
+                    "operator_label": "is",
+                    "comparison_value": "active"
                   }
                 }
               }
@@ -11953,14 +12239,14 @@
                   },
                   "data": [
                     {
-                      "id": "0a79892e-f508-492e-ad95-9ea5061b7511",
+                      "id": "250582d1-8dcd-488c-a030-8a4620f1eded",
                       "object": "subscription",
                       "ad_hoc_amount": null,
                       "affiliation_expires_at": null,
                       "cancel_at_period_end": false,
                       "currency": "usd",
-                      "current_period_end_at": 1778771401,
-                      "current_period_start_at": 1776179401,
+                      "current_period_end_at": 1780683851,
+                      "current_period_start_at": 1778005451,
                       "ended_at": null,
                       "finite": false,
                       "last_renewal_reminder_sent_at": null,
@@ -11969,7 +12255,7 @@
                       "metadata": {},
                       "pending_update": {},
                       "price_readonly": false,
-                      "portal_url": "http://app.example.com/portal_redirect/subscriptions/0a79892e-f508-492e-ad95-9ea5061b7511",
+                      "portal_url": "http://app.example.com/portal_redirect/subscriptions/250582d1-8dcd-488c-a030-8a4620f1eded",
                       "quantity": 1,
                       "remaining_period_count": null,
                       "restart_on_completed": false,
@@ -11982,17 +12268,17 @@
                       "variant_options": null,
                       "affiliation": null,
                       "current_cancellation_act": null,
-                      "current_period": "e5bcabbe-cf78-4bdf-b310-9f1687f52cd9",
-                      "customer": "f44b6db3-15ba-4359-a1ad-51c75c4e8211",
+                      "current_period": "e63dd194-b7fc-454b-a0c4-df3ede9b1ef2",
+                      "customer": "d8c7bd91-7df3-4d05-a84f-e37dae9b713a",
                       "discount": null,
                       "manual_payment_method": null,
-                      "payment_method": "b7893104-60eb-41b0-b281-f8f3985cb625",
-                      "price": "4cbccfec-199d-4bcf-8d22-b6adc32161b6",
-                      "purchase": "89039f2d-b9c5-4d52-90bf-2dd400ed7db4",
+                      "payment_method": "938260ce-7d41-4a62-a2f3-2689a6b7285a",
+                      "price": "fc7059ac-6a47-4450-8805-6d5238949aef",
+                      "purchase": "8ba5ccd7-ba94-4220-8e3b-0319f05c17e5",
                       "shipping_method": null,
                       "variant": null,
-                      "created_at": 1776179401,
-                      "updated_at": 1776179401
+                      "created_at": 1778005451,
+                      "updated_at": 1778005452
                     }
                   ]
                 },
@@ -12018,14 +12304,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "712f4b17-64c5-440e-ab74-66d44611bdea",
+                  "id": "d064621e-6f65-4c86-ab7e-5e782a88a778",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1778771401,
-                  "current_period_start_at": 1776179401,
+                  "current_period_end_at": 1780683852,
+                  "current_period_start_at": 1778005452,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12034,7 +12320,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/712f4b17-64c5-440e-ab74-66d44611bdea",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/d064621e-6f65-4c86-ab7e-5e782a88a778",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12047,17 +12333,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "f230cdd8-e53f-420a-afe2-f7513556f0ea",
-                  "customer": "34a9f45e-a1bb-43a7-8874-bba544e7f366",
+                  "current_period": "422c211b-3ee6-4a5e-b515-4e1f21b95847",
+                  "customer": "833aa0fb-6561-4535-b874-6766320d5719",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "302a5251-caa4-4343-ad66-724b1d89511b",
-                  "price": "311e6075-d192-4757-9269-6c03b90c500e",
-                  "purchase": "23f69408-701e-4070-82ff-f61e1831dda8",
+                  "payment_method": "df901623-494c-4b27-9c01-be6c08990640",
+                  "price": "5f36b83d-93aa-450e-b545-c11ee80eb832",
+                  "purchase": "dc3ef584-baff-4f35-9228-c05df727890d",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179401,
-                  "updated_at": 1776179402
+                  "created_at": 1778005452,
+                  "updated_at": 1778005452
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12082,9 +12368,9 @@
                 },
                 "example": {
                   "subscription": {
-                    "customer": "34a9f45e-a1bb-43a7-8874-bba544e7f366",
-                    "price": "311e6075-d192-4757-9269-6c03b90c500e",
-                    "payment_method": "302a5251-caa4-4343-ad66-724b1d89511b"
+                    "customer": "833aa0fb-6561-4535-b874-6766320d5719",
+                    "price": "5f36b83d-93aa-450e-b545-c11ee80eb832",
+                    "payment_method": "df901623-494c-4b27-9c01-be6c08990640"
                   }
                 }
               }
@@ -12117,14 +12403,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "500ca950-a4da-4da9-bbbd-28f964f79303",
+                  "id": "408156d5-7a5d-416a-9009-bae0a6164588",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1778771402,
-                  "current_period_start_at": 1776179402,
+                  "current_period_end_at": 1780683853,
+                  "current_period_start_at": 1778005453,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12133,7 +12419,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/500ca950-a4da-4da9-bbbd-28f964f79303",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/408156d5-7a5d-416a-9009-bae0a6164588",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12146,17 +12432,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "da4f760e-244c-411f-a661-03b931180bfd",
-                  "customer": "2dbac1e4-9ee7-4355-afb6-c6262881836f",
+                  "current_period": "9886da5c-a8a7-4f2a-96f4-1e656db2191a",
+                  "customer": "6c3b7df9-d411-4fa1-92ad-d83602a65ce7",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "385f662b-cfd9-4221-bbcf-233e655d869a",
-                  "price": "10e8bba8-802f-40d0-b58c-9d2614f0b823",
-                  "purchase": "443167c9-2dea-4396-b673-4f409aa8794f",
+                  "payment_method": "a8b5732e-2a27-4a80-a6ca-6a601181e98b",
+                  "price": "c38ed0fc-5890-48d9-81ba-c656ac2484b5",
+                  "purchase": "2823a6ec-c0e9-415a-bd42-ef90a024d5b3",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179402,
-                  "updated_at": 1776179402
+                  "created_at": 1778005453,
+                  "updated_at": 1778005453
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12217,14 +12503,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f94a04ce-4826-4649-afa3-7191f908016d",
+                  "id": "fad9dc29-c131-482b-a899-29ad240a4420",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1778771402,
-                  "current_period_start_at": 1776179402,
+                  "current_period_end_at": 1780683853,
+                  "current_period_start_at": 1778005453,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12233,7 +12519,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/f94a04ce-4826-4649-afa3-7191f908016d",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/fad9dc29-c131-482b-a899-29ad240a4420",
                   "quantity": 2,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12246,17 +12532,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "0c5cf08a-490a-4216-a9e8-644be0b7a3f9",
-                  "customer": "4bdfabc5-4f1e-4c97-a760-052ab437c29e",
+                  "current_period": "1e4ac6df-42ab-4a23-b0c4-2689603ee233",
+                  "customer": "1190ffa0-7842-4637-ba45-1e9688fb4d79",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "d01979e7-2267-40c7-a4b4-c3f450af3ce4",
-                  "price": "4b6aaa99-cc20-478f-8d22-0be50393870f",
-                  "purchase": "4c70cf96-f371-4d29-831a-511fc5d856ac",
+                  "payment_method": "0dcb91fc-7d95-4164-a145-32d076bbedc4",
+                  "price": "3a2c7955-dbd5-4cd0-879e-851e29585885",
+                  "purchase": "c43da810-a43e-454a-bf82-b0c8728ff240",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179402,
-                  "updated_at": 1776179403
+                  "created_at": 1778005453,
+                  "updated_at": 1778005453
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12343,14 +12629,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0a1b302b-b5ef-41da-a904-8934672d5cde",
+                  "id": "99b3bc82-813f-404c-ae85-85087da02fb0",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": true,
                   "currency": "usd",
-                  "current_period_end_at": 1778771403,
-                  "current_period_start_at": 1776179403,
+                  "current_period_end_at": 1780683854,
+                  "current_period_start_at": 1778005454,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12359,11 +12645,11 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/0a1b302b-b5ef-41da-a904-8934672d5cde",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/99b3bc82-813f-404c-ae85-85087da02fb0",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
-                  "restore_at": 1781449803,
+                  "restore_at": 1783275854,
                   "subtotal_amount": 2900,
                   "status": "active",
                   "tax_enabled": false,
@@ -12371,18 +12657,18 @@
                   "trial_start_at": null,
                   "variant_options": null,
                   "affiliation": null,
-                  "current_cancellation_act": "34728064-6cde-4e1b-a755-81900964d64e",
-                  "current_period": "0dd34377-bdfa-4c8f-8e0e-0bafce3d0def",
-                  "customer": "3f9731e1-c7bb-4a68-9b76-2f51b4e11c07",
+                  "current_cancellation_act": "d0fffb64-04d6-48c5-a653-646bef802c34",
+                  "current_period": "ca1f14f0-6261-4dd5-854b-2e73cc0e9ce4",
+                  "customer": "f6c21685-9370-4aa4-8227-3b671651e138",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "a032d843-079a-4d0a-8d57-8eef2b3e6209",
-                  "price": "a37f92ca-5e1b-4881-8999-089bde70bcfd",
-                  "purchase": "3968eb0a-1ab1-4b47-8df0-e4d6fb1d4840",
+                  "payment_method": "562f1da7-0cb6-4735-99f7-3b885f106556",
+                  "price": "d7ea7805-b9a7-4c1d-b32f-77ac6a94caa8",
+                  "purchase": "47e8c5aa-adb1-4707-a668-beac12cf8e15",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179403,
-                  "updated_at": 1776179403
+                  "created_at": 1778005454,
+                  "updated_at": 1778005454
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12407,7 +12693,7 @@
                 },
                 "example": {
                   "subscription": {
-                    "restore_at": "2026-06-14 15:10:03 UTC"
+                    "restore_at": "2026-07-05 18:24:14 UTC"
                   }
                 }
               }
@@ -12440,15 +12726,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a4728d20-5f0a-4413-94a8-30793a66d28e",
+                  "id": "9539a592-f8fe-4cdb-b123-cfe9693ff88b",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1778771403,
-                  "current_period_start_at": 1776179403,
-                  "ended_at": 1776179403,
+                  "current_period_end_at": 1780683854,
+                  "current_period_start_at": 1778005454,
+                  "ended_at": 1778005454,
                   "finite": true,
                   "last_renewal_reminder_sent_at": null,
                   "live_mode": true,
@@ -12456,7 +12742,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": true,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/a4728d20-5f0a-4413-94a8-30793a66d28e",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/9539a592-f8fe-4cdb-b123-cfe9693ff88b",
                   "quantity": 1,
                   "remaining_period_count": 5,
                   "restart_on_completed": false,
@@ -12469,17 +12755,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "40d34824-df23-4f08-9270-4a2beb1fe0cc",
-                  "customer": "6cb8a9e2-52ec-4f4e-9234-282f9316a87b",
+                  "current_period": "15bea8fd-633b-45eb-90b0-d15fbc95660f",
+                  "customer": "01ec92ce-5f48-4799-866f-fe1bcdd61c5e",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "65de50fa-039b-4e68-8863-8d4c6fb9509b",
-                  "price": "5f4a1a99-5629-4823-adf4-a8676a36fd7b",
-                  "purchase": "2b5a4998-0b07-4434-b9df-e8fa5a0f0c41",
+                  "payment_method": "8a8a1dc6-23db-40a1-828b-ef886226beac",
+                  "price": "f097c719-7858-4763-a627-3b98efeb01e1",
+                  "purchase": "58ad142e-cbc2-461c-bb59-720831e3bfee",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179403,
-                  "updated_at": 1776179403
+                  "created_at": 1778005454,
+                  "updated_at": 1778005454
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12514,14 +12800,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5a91bc08-c2cb-4748-95f4-3fd7a6f74d61",
+                  "id": "377e6989-461d-43e8-8f94-7dca6cd015f9",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1776179404,
-                  "current_period_start_at": 1776179404,
+                  "current_period_end_at": 1778005455,
+                  "current_period_start_at": 1778005455,
                   "ended_at": null,
                   "finite": true,
                   "last_renewal_reminder_sent_at": null,
@@ -12530,7 +12816,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": true,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/5a91bc08-c2cb-4748-95f4-3fd7a6f74d61",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/377e6989-461d-43e8-8f94-7dca6cd015f9",
                   "quantity": 1,
                   "remaining_period_count": 5,
                   "restart_on_completed": false,
@@ -12543,17 +12829,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "0fab4258-043d-4eb7-8461-39e4506ce05c",
-                  "customer": "049f5543-06ff-482c-be94-562986f2a81f",
+                  "current_period": "2d18b5ad-5a84-4374-b5ea-b223ab8a9f14",
+                  "customer": "58617feb-0e3d-4962-ae6b-1e536ecd2db8",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "793331c5-d9a5-48b0-8caf-190a3dbb3ad8",
-                  "price": "2dba241b-0a67-41e1-871d-7505870edde7",
-                  "purchase": "04d56fe4-6e1a-4b9c-83ae-58fce4b52758",
+                  "payment_method": "f7ef9d4b-64df-4e69-a2cb-c71083a22efc",
+                  "price": "73528aff-7278-4f4b-8aea-53438a2ba22f",
+                  "purchase": "dfedeed9-e550-4d02-b7dd-306362b937a4",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179404,
-                  "updated_at": 1776179404
+                  "created_at": 1778005455,
+                  "updated_at": 1778005455
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12608,14 +12894,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "60907ae1-cfc4-4fdf-8b7d-808fdd0ee83f",
+                  "id": "c599b52f-6d07-42ee-aef2-d8190e1cb7f0",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1778771404,
-                  "current_period_start_at": 1776179404,
+                  "current_period_end_at": 1780683856,
+                  "current_period_start_at": 1778005456,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12624,7 +12910,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/60907ae1-cfc4-4fdf-8b7d-808fdd0ee83f",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/c599b52f-6d07-42ee-aef2-d8190e1cb7f0",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12636,18 +12922,18 @@
                   "trial_start_at": null,
                   "variant_options": null,
                   "affiliation": null,
-                  "current_cancellation_act": "ea9ee710-1412-4912-a8d8-2ebe084222ac",
-                  "current_period": "f61bbf23-c781-4de3-94e7-ca264338422c",
-                  "customer": "42532d91-7b2f-4238-8d25-397d81b0d60e",
+                  "current_cancellation_act": "94bb3303-26ad-4fcb-b3fd-39bee7eee01f",
+                  "current_period": "e0bfbd80-ca63-4672-adfb-e31d0266442a",
+                  "customer": "01ee37c1-c0f6-4a5e-9b41-002cd7323c47",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "3c4f170b-d3c4-4bb5-bf47-a1bb4ae2bea8",
-                  "price": "e021110d-b465-4b5b-83e5-2946bec33ba2",
-                  "purchase": "f3fa3b4d-36af-4922-916b-6aacb86ee81b",
+                  "payment_method": "9f729917-00b2-42a1-8f1d-38635f2537a5",
+                  "price": "d4796631-7ba9-44fd-9949-8c671e474ed6",
+                  "purchase": "80b59943-9e8d-4957-aab7-cad0c1b80bee",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179404,
-                  "updated_at": 1776179404
+                  "created_at": 1778005456,
+                  "updated_at": 1778005456
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12693,15 +12979,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b2732928-b20e-4854-bd2b-7a6de08445d4",
+                  "id": "562e8faa-f7cf-4993-8c21-24068501b05e",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1778771405,
-                  "current_period_start_at": 1776179405,
-                  "ended_at": 1776179405,
+                  "current_period_end_at": 1780683856,
+                  "current_period_start_at": 1778005456,
+                  "ended_at": 1778005456,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
                   "live_mode": true,
@@ -12709,7 +12995,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/b2732928-b20e-4854-bd2b-7a6de08445d4",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/562e8faa-f7cf-4993-8c21-24068501b05e",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12722,17 +13008,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "0e26e1ed-ae56-4f72-b163-d036f51fb160",
-                  "customer": "ae04cc74-74a3-4282-b9e4-ae5d75988aec",
+                  "current_period": "70a29f80-7d6e-49f4-89a2-15b9bbaa0010",
+                  "customer": "365e24ee-a7c0-47b8-affc-146bc425af25",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "e5149747-484a-4548-abb6-01a99b290178",
-                  "price": "5df4011a-6b4d-4b8b-92fa-096052045772",
-                  "purchase": "26258c58-5242-47e8-90a8-80df4d429e81",
+                  "payment_method": "fe7ef4c1-04ee-4c8d-b226-5e4acb730b1f",
+                  "price": "50600a47-83be-4904-9949-cd3cd8c81a90",
+                  "purchase": "ef740157-e108-45a0-9912-ab726bec8c9c",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1776179405,
-                  "updated_at": 1776179405
+                  "created_at": 1778005456,
+                  "updated_at": 1778005456
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12814,10 +13100,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "64df72c8-81a0-45b8-8c87-f58b6f8e2fba",
+                  "id": "e6ed6c0c-65ea-4f89-ba8a-eb491a74e674",
                   "object": "period",
                   "ad_hoc_amount": null,
-                  "end_at": 1778771405,
+                  "end_at": 1780683857,
                   "next_payment_retry_at": null,
                   "payment_retry_count": 0,
                   "payoff": false,
@@ -12826,14 +13112,14 @@
                   "renewal_reminder_sent_at": null,
                   "restoral": false,
                   "skip_proration": false,
-                  "start_at": 1776179405,
+                  "start_at": 1778005457,
                   "status": "draft",
-                  "checkout": "718c3093-4c63-4778-962b-6d9193eea729",
-                  "price": "d82cbb66-b5bb-4581-b77a-4054206d8266",
-                  "subscription": "4d8835aa-ca0f-4121-be48-3013509fcfc4",
+                  "checkout": "cceedbe2-a620-4eb3-8b38-bdfec1a907d7",
+                  "price": "7155b5d9-fbc3-494e-86bd-e4de18c09885",
+                  "subscription": "e642efb6-3203-47cc-a08f-2fd2e6d211a6",
                   "variant": null,
-                  "created_at": 1776179405,
-                  "updated_at": 1776179405
+                  "created_at": 1778005457,
+                  "updated_at": 1778005457
                 },
                 "schema": {
                   "$ref": "#/components/schemas/period_response"

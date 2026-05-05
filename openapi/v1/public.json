@@ -1710,6 +1710,11 @@
         "allOf": [
           {
             "properties": {
+              "basis_amount": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Optional relative weighting input (in cents) for this component. Nil uses default weighting by quantity."
+              },
               "quantity": {
                 "type": "integer",
                 "description": "The quantity of this component in the bundle."
@@ -1733,18 +1738,13 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "type": "string",
-                "description": "The UUID of the bundle price."
+                "description": "The UUID of the bundle product."
               },
-              "price": {
+              "component_product": {
                 "type": "string",
-                "description": "The UUID of the component price."
-              },
-              "variant": {
-                "type": "string",
-                "nullable": true,
-                "description": "The UUID of the variant."
+                "description": "The UUID of the component product."
               }
             }
           }
@@ -1760,53 +1760,33 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/bundle_price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle price object."
+                    "$ref": "#/components/schemas/bundle_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle product object."
                   }
                 ]
               },
-              "price": {
+              "component_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated component product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated price object."
+                    "$ref": "#/components/schemas/component_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated component product object."
                   }
                 ]
               },
-              "product": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated product ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/product_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated product object."
-                  }
-                ]
-              },
-              "variant": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated variant ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/variant_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated variant object."
-                  }
-                ]
+              "current_version": {
+                "type": "boolean",
+                "description": "Whether the returned version is the current one on the bundle item."
               }
             }
           },
@@ -6191,6 +6171,13 @@
           },
           {
             "properties": {
+              "bundle_items": {
+                "type": "array",
+                "description": "A list of this product's bundle items.",
+                "items": {
+                  "$ref": "#/components/schemas/bundle_item_body"
+                }
+              },
               "commission_structure": {
                 "description": "The commission structure to use when calculating referral commissions for this specific product.",
                 "allOf": [
@@ -6274,6 +6261,19 @@
               "average_stars": {
                 "type": "string",
                 "description": "The average stars for this product based on published reviews."
+              },
+              "bundle_items": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of associated bundle item objects."
+                  }
+                ]
               },
               "commission_structure": {
                 "nullable": true,
@@ -8068,6 +8068,35 @@
           }
         ]
       },
+      "filter_body": {
+        "description": "A rule tree describing how to filter records. May be a single `rule_condition` or a `rule_group` combining multiple conditions and nested groups with `and` / `or`. The valid `attribute_name` and `operator_label` values for each resource come from the corresponding `GET /v1/<resource>/filter_schema` endpoint.\n",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/rule_condition"
+          },
+          {
+            "$ref": "#/components/schemas/rule_group"
+          }
+        ],
+        "example": {
+          "type": "group",
+          "combinator": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "attribute_name": "order_type",
+              "operator_label": "is",
+              "comparison_value": "checkout"
+            },
+            {
+              "type": "condition",
+              "attribute_name": "products.name",
+              "operator_label": "contains",
+              "comparison_value": "shirt"
+            }
+          ]
+        }
+      },
       "rule_schema_attribute": {
         "properties": {
           "key": {
@@ -8087,7 +8116,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The data type of the attribute. One of `numeric`, `string`, or `date`."
+            "description": "The data type of the attribute. One of `string`, `numeric`, `date`, `uuid`, or `boolean`."
           },
           "operators": {
             "type": "array",
@@ -11021,14 +11050,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c19b5ee4-fa59-46f0-b88d-e6eccda77361",
+                  "id": "5d3ba064-d0a1-4929-a6e3-c7bc99e7e920",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "8afca0a1-e2d0-440d-8550-827910e13b18",
-                  "created_at": 1776179374,
-                  "updated_at": 1776179374
+                  "license": "964af5ff-3fb0-4ed7-8aa4-5da2cc12ed02",
+                  "created_at": 1778005418,
+                  "updated_at": 1778005418
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11055,7 +11084,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "8afca0a1-e2d0-440d-8550-827910e13b18"
+                    "license_id": "964af5ff-3fb0-4ed7-8aa4-5da2cc12ed02"
                   }
                 }
               }
@@ -11088,14 +11117,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ea435e0f-e3a6-4744-a3f4-1f3e781848f4",
+                  "id": "eb86ef37-02eb-44d9-b39e-332474dd1eab",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "3c7ab3fc-1935-4b8d-9403-0b16db496634",
-                  "created_at": 1776179374,
-                  "updated_at": 1776179374
+                  "license": "861064df-a421-45c8-afc1-5b0588909bae",
+                  "created_at": 1778005419,
+                  "updated_at": 1778005419
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11128,14 +11157,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2d731ee4-68a6-4681-add6-d8542fb8ee84",
+                  "id": "5136f742-fa3f-46e6-8e63-defa34623da3",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "fc26b44b-c53a-4824-a772-c05e5ab54f05",
-                  "created_at": 1776179375,
-                  "updated_at": 1776179375
+                  "license": "d54c0154-789c-450f-9e24-7e0ab3c49d6b",
+                  "created_at": 1778005420,
+                  "updated_at": 1778005420
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11191,7 +11220,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3d2f00d5-e159-459a-b74f-a4d0fcd26e43",
+                  "id": "ac49c97e-7c14-4712-b580-0829126863bf",
                   "object": "activation",
                   "deleted": true
                 },
@@ -12789,14 +12818,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ca5a7f1d-9e97-4f02-b092-7dce91178b06",
+                  "id": "936d61d5-b1cc-4568-8ad9-44a582deb8a8",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1778771376,
+                  "expires_at": 1780597421,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1776179376,
-                  "updated_at": 1776179376
+                  "created_at": 1778005421,
+                  "updated_at": 1778005421
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -12821,7 +12850,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "A0B0CAFF",
+                    "affiliation_code": "25DA4F5D",
                     "url": "http://example.com"
                   }
                 }
@@ -12855,19 +12884,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b6819641-e21f-44f4-b286-18240bc11585",
+                  "id": "1869256e-2e89-453f-9afe-cd47d8919786",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "c80ad83d-a000-4fe7-85cf-07f0f21e3777",
+                  "key": "b286cc8f-8ed2-4790-887a-b7fed0a6f87c",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "400ead0a-2f24-42c7-a55f-5642734f0939",
-                  "product": "682aeac2-8201-40ec-b8d8-85d5811f85df",
+                  "price": "8724cb82-5905-4329-ba60-2afb5c1320ea",
+                  "product": "fca4f6ab-e391-4caa-9b08-d5910ead2186",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1776179376,
-                  "updated_at": 1776179376
+                  "created_at": 1778005422,
+                  "updated_at": 1778005422
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -12920,7 +12949,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bbba84e0-b4bc-4c01-a38d-3a370965b4fa",
+                  "id": "fe222d71-3e7f-45ca-9a36-a9aef33b373f",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -12931,11 +12960,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImM3MDQwYzNkLWU1MDktNDQxZC05NDg2LTU5NWM2ZjJkZDViNyIsImV4cCI6IjIwMjYtMDQtMTRUMTU6MjQ6MzcuNTA2WiIsInB1ciI6ImJsb2JfaWQifX0=--cce0a3fc48b6453f15934e5787462bb5800e69dc/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImMxMWQzNzRhLTFlYTQtNGI0Yy1hZmEyLTU2ZGZiNDYyYmRmZiIsImV4cCI6IjIwMjYtMDUtMDVUMTg6Mzg6NDMuMjQ5WiIsInB1ciI6ImJsb2JfaWQifX0=--7ef31f0e51bb823e8947fd5fbf2b103610964948/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1776180277,
-                  "created_at": 1776179377,
-                  "updated_at": 1776179377
+                  "url_expires_at": 1778006323,
+                  "created_at": 1778005422,
+                  "updated_at": 1778005422
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"

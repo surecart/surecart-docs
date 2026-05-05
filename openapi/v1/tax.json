@@ -1710,6 +1710,11 @@
         "allOf": [
           {
             "properties": {
+              "basis_amount": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Optional relative weighting input (in cents) for this component. Nil uses default weighting by quantity."
+              },
               "quantity": {
                 "type": "integer",
                 "description": "The quantity of this component in the bundle."
@@ -1733,18 +1738,13 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "type": "string",
-                "description": "The UUID of the bundle price."
+                "description": "The UUID of the bundle product."
               },
-              "price": {
+              "component_product": {
                 "type": "string",
-                "description": "The UUID of the component price."
-              },
-              "variant": {
-                "type": "string",
-                "nullable": true,
-                "description": "The UUID of the variant."
+                "description": "The UUID of the component product."
               }
             }
           }
@@ -1760,53 +1760,33 @@
           },
           {
             "properties": {
-              "bundle_price": {
+              "bundle_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated bundle product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/bundle_price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle price object."
+                    "$ref": "#/components/schemas/bundle_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated bundle product object."
                   }
                 ]
               },
-              "price": {
+              "component_product": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated price ID."
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated component product ID."
                   },
                   {
-                    "$ref": "#/components/schemas/price_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated price object."
+                    "$ref": "#/components/schemas/component_product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated component product object."
                   }
                 ]
               },
-              "product": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated product ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/product_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated product object."
-                  }
-                ]
-              },
-              "variant": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "description": "[Expandable](/api-reference/expanding-responses) – The associated variant ID."
-                  },
-                  {
-                    "$ref": "#/components/schemas/variant_response",
-                    "description": "[Expanded](/api-reference/expanding-responses) – The associated variant object."
-                  }
-                ]
+              "current_version": {
+                "type": "boolean",
+                "description": "Whether the returned version is the current one on the bundle item."
               }
             }
           },
@@ -6191,6 +6171,13 @@
           },
           {
             "properties": {
+              "bundle_items": {
+                "type": "array",
+                "description": "A list of this product's bundle items.",
+                "items": {
+                  "$ref": "#/components/schemas/bundle_item_body"
+                }
+              },
               "commission_structure": {
                 "description": "The commission structure to use when calculating referral commissions for this specific product.",
                 "allOf": [
@@ -6274,6 +6261,19 @@
               "average_stars": {
                 "type": "string",
                 "description": "The average stars for this product based on published reviews."
+              },
+              "bundle_items": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of associated bundle item objects."
+                  }
+                ]
               },
               "commission_structure": {
                 "nullable": true,
@@ -8068,6 +8068,35 @@
           }
         ]
       },
+      "filter_body": {
+        "description": "A rule tree describing how to filter records. May be a single `rule_condition` or a `rule_group` combining multiple conditions and nested groups with `and` / `or`. The valid `attribute_name` and `operator_label` values for each resource come from the corresponding `GET /v1/<resource>/filter_schema` endpoint.\n",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/rule_condition"
+          },
+          {
+            "$ref": "#/components/schemas/rule_group"
+          }
+        ],
+        "example": {
+          "type": "group",
+          "combinator": "and",
+          "conditions": [
+            {
+              "type": "condition",
+              "attribute_name": "order_type",
+              "operator_label": "is",
+              "comparison_value": "checkout"
+            },
+            {
+              "type": "condition",
+              "attribute_name": "products.name",
+              "operator_label": "contains",
+              "comparison_value": "shirt"
+            }
+          ]
+        }
+      },
       "rule_schema_attribute": {
         "properties": {
           "key": {
@@ -8087,7 +8116,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The data type of the attribute. One of `numeric`, `string`, or `date`."
+            "description": "The data type of the attribute. One of `string`, `numeric`, `date`, `uuid`, or `boolean`."
           },
           "operators": {
             "type": "array",
@@ -11070,14 +11099,14 @@
                   },
                   "data": [
                     {
-                      "id": "d701e3c9-2fe9-49fd-9f19-eb85d02a5426",
+                      "id": "3907866a-6452-48c1-afb2-ec2a8ad7f2d0",
                       "object": "tax_override",
                       "shipping": false,
                       "rate": 7.5,
-                      "product_collection": "bbf43045-6c5c-437c-aee1-8fc93f638897",
-                      "tax_zone": "29faeb75-a47c-451e-a481-1fea69c8bc76",
-                      "created_at": 1776179406,
-                      "updated_at": 1776179406
+                      "product_collection": "60661ec1-821a-48f3-9594-6f78da995f86",
+                      "tax_zone": "753db97d-b4e3-457a-ad0e-3d828c2f4dce",
+                      "created_at": 1778005458,
+                      "updated_at": 1778005458
                     }
                   ]
                 },
@@ -11103,14 +11132,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6e16f887-cfa6-4461-825d-f1952529555d",
+                  "id": "bb7d7aa7-91d6-4302-8c9f-a07e768d4563",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 10.0,
-                  "product_collection": "66b5f1d6-266f-48b2-be4a-d7ca5d7dc91e",
-                  "tax_zone": "3bcd64d4-b082-4cc5-9ac1-3534b9d6eccd",
-                  "created_at": 1776179406,
-                  "updated_at": 1776179406
+                  "product_collection": "a2826e63-70d5-468d-8ec1-ebf9d602d7b6",
+                  "tax_zone": "23cd2bae-0f93-46b8-be4c-0eb00ef57fa5",
+                  "created_at": 1778005458,
+                  "updated_at": 1778005458
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11135,8 +11164,8 @@
                 },
                 "example": {
                   "tax_override": {
-                    "tax_zone": "3bcd64d4-b082-4cc5-9ac1-3534b9d6eccd",
-                    "product_collection": "66b5f1d6-266f-48b2-be4a-d7ca5d7dc91e",
+                    "tax_zone": "23cd2bae-0f93-46b8-be4c-0eb00ef57fa5",
+                    "product_collection": "a2826e63-70d5-468d-8ec1-ebf9d602d7b6",
                     "rate": 10
                   }
                 }
@@ -11170,14 +11199,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ac3b0536-2938-4914-9192-ff1ade5b5967",
+                  "id": "fb33dccc-8ecf-4852-8e26-19f0ff0d3bd2",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 7.5,
-                  "product_collection": "f578c4d5-e0e3-4638-bbd7-8058fcf7ab2a",
-                  "tax_zone": "84ecb1da-7a0d-496b-a5a6-e63772916c78",
-                  "created_at": 1776179406,
-                  "updated_at": 1776179406
+                  "product_collection": "5d8e2d21-8572-45ad-9622-5e43c1ea2d94",
+                  "tax_zone": "96b13bed-9af1-4f41-b8c4-f801b05879e4",
+                  "created_at": 1778005458,
+                  "updated_at": 1778005458
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11201,14 +11230,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d383a77d-1129-4e88-85ae-5c337213deb8",
+                  "id": "abf39018-069f-4457-b604-f13c61344e2f",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 5.0,
-                  "product_collection": "62ca6569-3809-45c4-ae17-0e1ec2119275",
-                  "tax_zone": "f8dbe1ed-2b05-44fd-ae38-1c801fc77264",
-                  "created_at": 1776179406,
-                  "updated_at": 1776179406
+                  "product_collection": "618b5070-a55f-49f2-9c4b-39acf2f90031",
+                  "tax_zone": "ad28bb17-8157-492f-9ce7-2d6c9759b749",
+                  "created_at": 1778005458,
+                  "updated_at": 1778005458
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11254,7 +11283,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "040be8eb-5038-4cf2-a355-4b0e9dd6d318",
+                  "id": "806d8145-d788-4140-ab92-1a50faa1dca0",
                   "object": "tax_override",
                   "deleted": true
                 },
@@ -11281,7 +11310,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bb3daaa0-521e-44b8-8c71-3a9fee9f269b",
+                  "id": "22f88d1f-a6db-465d-ad29-2b9e3c521993",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11293,11 +11322,11 @@
                   "tax_enabled": false,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "dfe8273e-7aa7-47ed-a150-12a77b936c13",
+                  "address": "2a1da125-0595-4925-85e9-4cc0578598e0",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1776179407,
-                  "updated_at": 1776179407
+                  "created_at": 1778005458,
+                  "updated_at": 1778005458
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11321,7 +11350,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d298094a-12d2-4afc-93b7-fb6155c3a0d0",
+                  "id": "2bcc932d-977d-4c30-8d71-d73e8951985e",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11333,11 +11362,11 @@
                   "tax_enabled": true,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "694c5cd2-2e40-41aa-a0e0-90f9718754c4",
+                  "address": "f4dfb42a-3f9a-40fb-b507-ba6f49913805",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1776179407,
-                  "updated_at": 1776179407
+                  "created_at": 1778005459,
+                  "updated_at": 1778005459
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11426,14 +11455,14 @@
                   },
                   "data": [
                     {
-                      "id": "1b9ef838-9022-428a-956e-3171be2e8f4b",
+                      "id": "3b9efca3-087f-411b-b0e4-694336cc9a45",
                       "object": "tax_registration",
                       "label": null,
                       "manual_rate": 5.5,
                       "tax_identifier": null,
-                      "tax_zone": "d34f9bd7-2e40-4d7a-83bf-d242358eed5c",
-                      "created_at": 1776179407,
-                      "updated_at": 1776179407
+                      "tax_zone": "bc927e2b-b9ce-4feb-9d7c-64d81e1b2f64",
+                      "created_at": 1778005459,
+                      "updated_at": 1778005459
                     }
                   ]
                 },
@@ -11459,14 +11488,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "45a6914d-8c8e-4756-be8a-7b96101fdda6",
+                  "id": "b637f25c-71a0-48cb-ad5c-1c68e27c4b78",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 10.0,
                   "tax_identifier": null,
-                  "tax_zone": "a2a0be62-5d26-4c01-a233-be161bcf9d07",
-                  "created_at": 1776179407,
-                  "updated_at": 1776179407
+                  "tax_zone": "dde66273-acc7-456a-98c8-2548b486609f",
+                  "created_at": 1778005459,
+                  "updated_at": 1778005459
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11491,7 +11520,7 @@
                 },
                 "example": {
                   "tax_registration": {
-                    "tax_zone": "a2a0be62-5d26-4c01-a233-be161bcf9d07",
+                    "tax_zone": "dde66273-acc7-456a-98c8-2548b486609f",
                     "manual_rate": 10
                   }
                 }
@@ -11525,14 +11554,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5f865c12-8e03-41ad-a9e2-dc5470e924fd",
+                  "id": "42b49598-3d7a-482a-bb3f-f5001c7a8071",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_identifier": null,
-                  "tax_zone": "30247385-d71d-477e-ac85-222c667b89c7",
-                  "created_at": 1776179407,
-                  "updated_at": 1776179407
+                  "tax_zone": "e2ec8546-f392-471a-89d7-9e04947d4817",
+                  "created_at": 1778005459,
+                  "updated_at": 1778005459
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11556,14 +11585,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c3a997a8-3763-43d8-8f38-a9fcf16c0e6e",
+                  "id": "765cc92c-a8d8-485e-82e2-883ddaf3818e",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
-                  "tax_identifier": "ffcb84b0-10dc-45e3-8898-b5635a3b7652",
-                  "tax_zone": "bf835798-0787-4221-b36e-281269f22510",
-                  "created_at": 1776179407,
-                  "updated_at": 1776179407
+                  "tax_identifier": "1a1c7fc0-e43c-497a-85cf-862dfdda7f74",
+                  "tax_zone": "56e1edf1-d68c-4f2b-b2f6-96a01f5e2766",
+                  "created_at": 1778005459,
+                  "updated_at": 1778005459
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11612,7 +11641,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6c52cfca-9918-4885-8253-9f5262ba1a7e",
+                  "id": "ff1f9ac0-fb90-4e9d-8881-2b81946316d1",
                   "object": "tax_registration",
                   "deleted": true
                 },
