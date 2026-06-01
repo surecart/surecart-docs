@@ -8911,39 +8911,144 @@
           }
         ]
       },
+      "shipping_rate_amount_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount",
+          "min_amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "min_amount": {
+            "type": "integer"
+          },
+          "max_amount": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "shipping_rate_flat_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          }
+        }
+      },
+      "shipping_rate_weight_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount",
+          "min_weight",
+          "weight_unit"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "min_weight": {
+            "type": "number"
+          },
+          "max_weight": {
+            "type": "number",
+            "nullable": true
+          },
+          "weight_unit": {
+            "type": "string",
+            "enum": [
+              "lb",
+              "oz",
+              "kg",
+              "g"
+            ]
+          }
+        }
+      },
+      "shipping_rate_live_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "shipping_provider_id",
+          "service_tokens"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "shipping_provider_id": {
+            "type": "string"
+          },
+          "service_tokens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "carrier_account": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount_handling": {
+            "type": "integer",
+            "nullable": true
+          },
+          "percent_handling": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      },
       "shipping_rate_base": {
         "allOf": [
           {
             "properties": {
-              "amount": {
-                "type": "integer",
-                "description": "The amount in cents to be charged, represented as a whole integer. For example `9900` is equivalent to `$99`."
-              },
-              "rate_type": {
+              "calculatable_type": {
                 "type": "string",
-                "description": "The calculation strategy for this shipping rate – one of `amount`, `flat`, or `weight`. If `amount`, this shipping rate will be applicable to checkouts that have a `subtotal_amount` within the min/max amount range. If `flat`, this rate will be applicable to all line items. If `weight`, this rate will be applicable to line items that have a combined weight within the min/max weight range."
+                "enum": [
+                  "amount",
+                  "flat",
+                  "weight",
+                  "live"
+                ],
+                "description": "The kind of the nested calculatable."
               },
-              "min_amount": {
-                "type": "integer",
-                "description": "The minimum `subtotal_amount` of a checkout for this rate to apply."
-              },
-              "max_amount": {
-                "type": "integer",
-                "nullable": true,
-                "description": "The maximum `subtotal_amount` of a checkout for this rate to apply."
-              },
-              "min_weight": {
-                "type": "number",
-                "description": "The minimum combined `weight` of a line item for this rate to apply."
-              },
-              "max_weight": {
-                "type": "number",
-                "nullable": true,
-                "description": "The maximum combined `weight` of a line item for this rate to apply."
-              },
-              "weight_unit": {
-                "type": "string",
-                "description": "The weight unit for this shipping rate – one of `lb`, `oz`, `kg`, `g`."
+              "calculatable": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_amount_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_flat_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_weight_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_live_calculatable"
+                  }
+                ]
               }
             }
           },
@@ -8984,10 +9089,6 @@
           },
           {
             "properties": {
-              "currency": {
-                "type": "string",
-                "description": "Three-letter ISO currency code, in lowercase. This value will match the `Account` currency."
-              },
               "shipping_zone": {
                 "anyOf": [
                   {
@@ -11133,14 +11234,14 @@
                   },
                   "data": [
                     {
-                      "id": "5c53bd39-8cd3-4f16-b97d-f05198168ba8",
+                      "id": "16732970-37be-4243-aa2e-1217b7bb0714",
                       "object": "tax_override",
                       "shipping": false,
                       "rate": 7.5,
-                      "product_collection": "2284d395-0f72-4b01-a578-2eaccd3b646d",
-                      "tax_zone": "d7e79dd6-d17c-4b51-9a66-ad850b236860",
-                      "created_at": 1780299832,
-                      "updated_at": 1780299832
+                      "product_collection": "36c63479-4541-475b-9f08-4afa1e1aeed0",
+                      "tax_zone": "18ec8d85-38a9-4c19-89f8-fb3037bf9854",
+                      "created_at": 1780335183,
+                      "updated_at": 1780335183
                     }
                   ]
                 },
@@ -11166,14 +11267,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0b4335be-b194-4e2f-84c1-4ded1c1de962",
+                  "id": "211190f6-4a40-4bce-8159-fb2e52b6628d",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 10.0,
-                  "product_collection": "d6737610-e41b-474d-8478-55e35fc5cad0",
-                  "tax_zone": "1968503d-2e3b-4ca3-bf33-8efa2f2f1bae",
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "product_collection": "b95c269d-727c-4335-9207-f5d0214a318b",
+                  "tax_zone": "d5fa64a6-de82-4ca4-ab2d-59182ac91f79",
+                  "created_at": 1780335184,
+                  "updated_at": 1780335184
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11198,8 +11299,8 @@
                 },
                 "example": {
                   "tax_override": {
-                    "tax_zone": "1968503d-2e3b-4ca3-bf33-8efa2f2f1bae",
-                    "product_collection": "d6737610-e41b-474d-8478-55e35fc5cad0",
+                    "tax_zone": "d5fa64a6-de82-4ca4-ab2d-59182ac91f79",
+                    "product_collection": "b95c269d-727c-4335-9207-f5d0214a318b",
                     "rate": 10
                   }
                 }
@@ -11233,14 +11334,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0c8f2d2c-678e-4a7f-9963-752ad5f3eda8",
+                  "id": "2fd47192-baea-4dc8-815d-3774258dcdcb",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 7.5,
-                  "product_collection": "682de931-d535-4380-8e15-dd37fa1d1462",
-                  "tax_zone": "ac50454a-9033-419e-901e-19410043843d",
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "product_collection": "aa367431-d63e-4a41-aee7-d11c93b52281",
+                  "tax_zone": "5d3e27c3-8666-403b-979e-b34dfdd3ee32",
+                  "created_at": 1780335184,
+                  "updated_at": 1780335184
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11264,14 +11365,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9b140aec-8040-4594-84e4-cc2493e215b0",
+                  "id": "a84bbbf7-89af-4726-bab6-fc308c11ad5c",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 5.0,
-                  "product_collection": "befd0dcf-0f6f-4375-be52-c73d66c67df2",
-                  "tax_zone": "161e6c2e-5f44-4345-afb9-35856051d3c6",
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "product_collection": "5c4c4ac3-47a7-4012-9a65-427d43f59223",
+                  "tax_zone": "8d78054c-1d5a-4272-875a-eada8e5826a9",
+                  "created_at": 1780335184,
+                  "updated_at": 1780335184
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11317,7 +11418,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1c81cad6-f5fa-4ab7-9a7a-f1cd91a1bff7",
+                  "id": "fff77f2b-56ba-40f2-aba1-81ff25cc71e8",
                   "object": "tax_override",
                   "deleted": true
                 },
@@ -11344,7 +11445,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "990f0f9a-a867-489b-bc9e-b17dfcacdacf",
+                  "id": "35754394-1e95-49e7-b7d3-7bc75b5764d0",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11356,11 +11457,11 @@
                   "tax_enabled": false,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "ca1c1225-9333-4849-8c1d-2f892bca4902",
+                  "address": "66cbd190-8262-4316-88ba-1bd34bb4acd3",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "created_at": 1780335184,
+                  "updated_at": 1780335184
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11384,7 +11485,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d4d6b698-3cc8-432c-9a4c-172b15d6e90c",
+                  "id": "b2a93352-09a5-4ca7-a8e2-851de76f14fb",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11396,11 +11497,11 @@
                   "tax_enabled": true,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "eb144d80-574e-44b6-aebd-22d0b9b49e28",
+                  "address": "52c673a3-4a54-480e-bb97-cb23035aa243",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "created_at": 1780335184,
+                  "updated_at": 1780335184
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11489,14 +11590,14 @@
                   },
                   "data": [
                     {
-                      "id": "b52f557d-ed80-44f5-9f81-2c61185af7c5",
+                      "id": "b6b374a2-1369-49e8-9ad5-491d792a04d6",
                       "object": "tax_registration",
                       "label": null,
                       "manual_rate": 5.5,
                       "tax_identifier": null,
-                      "tax_zone": "440e0a6d-343a-4369-a36f-4b224ea7532e",
-                      "created_at": 1780299832,
-                      "updated_at": 1780299832
+                      "tax_zone": "47c517b3-0bdb-4eb4-a3d1-184a4877a25e",
+                      "created_at": 1780335185,
+                      "updated_at": 1780335185
                     }
                   ]
                 },
@@ -11522,14 +11623,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8e61f8aa-2374-4168-91c8-bb2bf3897aab",
+                  "id": "12070d3e-72c6-4f90-9cfd-17f6f251dc0f",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 10.0,
                   "tax_identifier": null,
-                  "tax_zone": "7be54a07-b537-44b1-adb1-6222659af955",
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "tax_zone": "b8dbe346-4547-4d21-b287-8e734c1c97d4",
+                  "created_at": 1780335185,
+                  "updated_at": 1780335185
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11554,7 +11655,7 @@
                 },
                 "example": {
                   "tax_registration": {
-                    "tax_zone": "7be54a07-b537-44b1-adb1-6222659af955",
+                    "tax_zone": "b8dbe346-4547-4d21-b287-8e734c1c97d4",
                     "manual_rate": 10
                   }
                 }
@@ -11588,14 +11689,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "48750e26-3c58-4b90-8365-7672d7b08390",
+                  "id": "101c6ec1-5a36-427b-a8e9-f1e225c6e237",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_identifier": null,
-                  "tax_zone": "0300cc0e-5f7d-416b-8c29-255dd6bc8a3a",
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "tax_zone": "da012efb-4ce9-46c0-b4ed-c41624b5ba81",
+                  "created_at": 1780335185,
+                  "updated_at": 1780335185
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11619,14 +11720,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d7f666d8-cf49-4a05-9d4b-c84ac9e2fe77",
+                  "id": "471b03be-650a-42a3-923b-29bed98c58a9",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
-                  "tax_identifier": "ca08983e-9969-43c5-a06d-2b821c070ada",
-                  "tax_zone": "1ad294f4-ad9e-4a1f-b37f-1b582e55d193",
-                  "created_at": 1780299832,
-                  "updated_at": 1780299832
+                  "tax_identifier": "f818ec42-ce53-4383-bf99-5381c62cd8f0",
+                  "tax_zone": "6f5a582f-d814-46bc-a742-d1242182867a",
+                  "created_at": 1780335185,
+                  "updated_at": 1780335185
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11675,7 +11776,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e89b3181-48dd-41f9-8ab0-aa6c04cd07bb",
+                  "id": "10c5fb3e-73cc-42ae-bd58-fb93c001e019",
                   "object": "tax_registration",
                   "deleted": true
                 },

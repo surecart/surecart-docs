@@ -8911,39 +8911,144 @@
           }
         ]
       },
+      "shipping_rate_amount_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount",
+          "min_amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "min_amount": {
+            "type": "integer"
+          },
+          "max_amount": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "shipping_rate_flat_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          }
+        }
+      },
+      "shipping_rate_weight_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount",
+          "min_weight",
+          "weight_unit"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "min_weight": {
+            "type": "number"
+          },
+          "max_weight": {
+            "type": "number",
+            "nullable": true
+          },
+          "weight_unit": {
+            "type": "string",
+            "enum": [
+              "lb",
+              "oz",
+              "kg",
+              "g"
+            ]
+          }
+        }
+      },
+      "shipping_rate_live_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "shipping_provider_id",
+          "service_tokens"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "shipping_provider_id": {
+            "type": "string"
+          },
+          "service_tokens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "carrier_account": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount_handling": {
+            "type": "integer",
+            "nullable": true
+          },
+          "percent_handling": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      },
       "shipping_rate_base": {
         "allOf": [
           {
             "properties": {
-              "amount": {
-                "type": "integer",
-                "description": "The amount in cents to be charged, represented as a whole integer. For example `9900` is equivalent to `$99`."
-              },
-              "rate_type": {
+              "calculatable_type": {
                 "type": "string",
-                "description": "The calculation strategy for this shipping rate – one of `amount`, `flat`, or `weight`. If `amount`, this shipping rate will be applicable to checkouts that have a `subtotal_amount` within the min/max amount range. If `flat`, this rate will be applicable to all line items. If `weight`, this rate will be applicable to line items that have a combined weight within the min/max weight range."
+                "enum": [
+                  "amount",
+                  "flat",
+                  "weight",
+                  "live"
+                ],
+                "description": "The kind of the nested calculatable."
               },
-              "min_amount": {
-                "type": "integer",
-                "description": "The minimum `subtotal_amount` of a checkout for this rate to apply."
-              },
-              "max_amount": {
-                "type": "integer",
-                "nullable": true,
-                "description": "The maximum `subtotal_amount` of a checkout for this rate to apply."
-              },
-              "min_weight": {
-                "type": "number",
-                "description": "The minimum combined `weight` of a line item for this rate to apply."
-              },
-              "max_weight": {
-                "type": "number",
-                "nullable": true,
-                "description": "The maximum combined `weight` of a line item for this rate to apply."
-              },
-              "weight_unit": {
-                "type": "string",
-                "description": "The weight unit for this shipping rate – one of `lb`, `oz`, `kg`, `g`."
+              "calculatable": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_amount_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_flat_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_weight_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_live_calculatable"
+                  }
+                ]
               }
             }
           },
@@ -8984,10 +9089,6 @@
           },
           {
             "properties": {
-              "currency": {
-                "type": "string",
-                "description": "Three-letter ISO currency code, in lowercase. This value will match the `Account` currency."
-              },
               "shipping_zone": {
                 "anyOf": [
                   {
@@ -11148,17 +11249,17 @@
                   },
                   "data": [
                     {
-                      "id": "870323a1-4a64-443c-8b30-655c0db86385",
+                      "id": "27fcb04a-0073-4064-a6e1-1f8b92816e42",
                       "object": "balance_transaction",
                       "amount": 2000,
                       "currency": "usd",
                       "ending_balance_amount": 0,
                       "transaction_type": "adjustment",
-                      "balance": "cfc18b89-6ab4-49bf-ae76-8fae07ca7f67",
-                      "customer": "a65d881c-9d12-4cc7-8c24-0624fb8469db",
+                      "balance": "2dd1dfaf-8972-4c04-8e95-db43d56eacbd",
+                      "customer": "4a0d8af0-addd-4b54-8c3f-80f50de85c83",
                       "checkout": null,
-                      "created_at": 1780299740,
-                      "updated_at": 1780299740
+                      "created_at": 1780335050,
+                      "updated_at": 1780335050
                     }
                   ]
                 },
@@ -11184,17 +11285,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9685c608-af8f-4714-b34a-1c7b99548b33",
+                  "id": "a9017703-1c87-45a2-8598-a84cdf098d15",
                   "object": "balance_transaction",
                   "amount": 5000,
                   "currency": "usd",
                   "ending_balance_amount": 5000,
                   "transaction_type": "adjustment",
-                  "balance": "43d5cbfb-78c2-485f-bd19-780053df08ee",
-                  "customer": "29a759b5-89ea-4f33-b8e2-b48359744b12",
+                  "balance": "1f6a6f5f-5bcd-4f3d-ad6d-0c3b3a5e6fdc",
+                  "customer": "f38e0f9e-7aad-46de-ad80-f0ae3b2cec18",
                   "checkout": null,
-                  "created_at": 1780299740,
-                  "updated_at": 1780299740
+                  "created_at": 1780335050,
+                  "updated_at": 1780335050
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -11221,7 +11322,7 @@
                   "balance_transaction": {
                     "amount": 5000,
                     "currency": "usd",
-                    "customer": "29a759b5-89ea-4f33-b8e2-b48359744b12"
+                    "customer": "f38e0f9e-7aad-46de-ad80-f0ae3b2cec18"
                   }
                 }
               }
@@ -11254,17 +11355,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c1463824-fb82-4821-9847-47ca0a0c4bb0",
+                  "id": "4b976bc5-67b7-4b71-a493-afdfe032ccfb",
                   "object": "balance_transaction",
                   "amount": 2000,
                   "currency": "usd",
                   "ending_balance_amount": 0,
                   "transaction_type": "adjustment",
-                  "balance": "2b9340ac-7fbd-44c7-9e70-68cf58b93621",
-                  "customer": "7397ad76-ebcb-4a0d-81c8-ab6c9d91138b",
+                  "balance": "6c517aed-1571-4987-a484-68faca720c5f",
+                  "customer": "893f49a9-9c67-4ade-af67-f7d40ad7f694",
                   "checkout": null,
-                  "created_at": 1780299740,
-                  "updated_at": 1780299740
+                  "created_at": 1780335050,
+                  "updated_at": 1780335050
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -11354,13 +11455,13 @@
                   },
                   "data": [
                     {
-                      "id": "e288c22d-995a-4608-b191-53c8e67217d3",
+                      "id": "73c4a1f7-6723-4362-ab31-beac98f1eac8",
                       "object": "balance",
                       "amount": 0,
                       "currency": "usd",
-                      "customer": "a72a3700-f041-4e1e-a962-4e4ee669db54",
-                      "created_at": 1780299740,
-                      "updated_at": 1780299740
+                      "customer": "a4ab9d3d-d712-4b95-a64f-c38a2811f9d2",
+                      "created_at": 1780335050,
+                      "updated_at": 1780335050
                     }
                   ]
                 },
@@ -11387,7 +11488,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cf0c947a-488b-43c2-a6a1-43574bf5a5ef",
+                  "id": "4eb67ed0-9402-46c5-a947-b6fcae39d830",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": null,
@@ -11396,13 +11497,13 @@
                   "payment_failure_enabled": true,
                   "purchase_enabled": true,
                   "refund_enabled": true,
-                  "reply_to_email": "reply_to@bailey-cruickshank.example",
+                  "reply_to_email": "to.reply@rosenbaum-welch.example",
                   "subscription_cancellation_enabled": false,
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1780299752,
-                  "updated_at": 1780299752
+                  "created_at": 1780335068,
+                  "updated_at": 1780335068
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11426,7 +11527,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6d5b7d23-237f-4d50-af2e-bfb9e0b5a976",
+                  "id": "d825fea4-417e-4fdb-8d31-5021974e1b55",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": "Support Team",
@@ -11440,8 +11541,8 @@
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1780299752,
-                  "updated_at": 1780299752
+                  "created_at": 1780335068,
+                  "updated_at": 1780335068
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11490,7 +11591,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7d99a3ff-f19d-4d16-9932-959234334249",
+                  "id": "17f43d13-9d02-47bc-8c98-4fc313ba5916",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11502,8 +11603,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1780299752,
-                  "updated_at": 1780299752
+                  "created_at": 1780335068,
+                  "updated_at": 1780335068
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -11527,7 +11628,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a5c1cbd9-0983-4fa3-a204-d6437b6c47dd",
+                  "id": "34d9e8d9-38d3-40a1-93f2-18d4d462b36a",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11539,8 +11640,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1780299752,
-                  "updated_at": 1780299752
+                  "created_at": 1780335068,
+                  "updated_at": 1780335068
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -11892,7 +11993,7 @@
                   },
                   "data": [
                     {
-                      "id": "2edabc38-f251-4750-b7fc-5c7caddaebad",
+                      "id": "4821cf9a-fafc-4e40-8fc3-63cce25a903a",
                       "object": "customer",
                       "affiliation_expires_at": null,
                       "billing_matches_shipping": true,
@@ -11905,14 +12006,14 @@
                       "phone": null,
                       "unsubscribed": false,
                       "tax_enabled": true,
-                      "portal_url": "http://app.example.com/portal_redirect/customers/2edabc38-f251-4750-b7fc-5c7caddaebad",
+                      "portal_url": "http://app.example.com/portal_redirect/customers/4821cf9a-fafc-4e40-8fc3-63cce25a903a",
                       "affiliation": null,
-                      "billing_address": "20f523da-9556-432c-b9c9-0d0713978487",
+                      "billing_address": "6be7a305-715e-44df-9efc-edf3503365ca",
                       "default_payment_method": null,
                       "shipping_address": null,
                       "tax_identifier": null,
-                      "created_at": 1780299753,
-                      "updated_at": 1780299753
+                      "created_at": 1780335069,
+                      "updated_at": 1780335069
                     }
                   ]
                 },
@@ -11938,7 +12039,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1291b93b-1843-4ffe-9c3e-4437d17334f6",
+                  "id": "28abbcd7-a4bd-4ced-a7dd-bb5673645392",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -11951,14 +12052,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/1291b93b-1843-4ffe-9c3e-4437d17334f6",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/28abbcd7-a4bd-4ced-a7dd-bb5673645392",
                   "affiliation": null,
                   "billing_address": null,
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1780299754,
-                  "updated_at": 1780299754
+                  "created_at": 1780335071,
+                  "updated_at": 1780335071
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -12017,7 +12118,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "101148ec-fd84-4c33-829f-861fd2e8c6e3",
+                  "id": "6f2437ba-073a-4271-b863-2b7ba098e44e",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -12030,14 +12131,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/101148ec-fd84-4c33-829f-861fd2e8c6e3",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/6f2437ba-073a-4271-b863-2b7ba098e44e",
                   "affiliation": null,
-                  "billing_address": "a4226105-1698-4907-8359-f9df146bffe3",
+                  "billing_address": "6817d1c1-2db9-48ec-a237-10fa0a220f67",
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1780299754,
-                  "updated_at": 1780299754
+                  "created_at": 1780335071,
+                  "updated_at": 1780335071
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -12079,7 +12180,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6963093e-7d3b-4832-9e14-884b152dd15d",
+                  "id": "845cf724-1350-4201-8c0d-ea14d49b1a40",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -12092,14 +12193,14 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/6963093e-7d3b-4832-9e14-884b152dd15d",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/845cf724-1350-4201-8c0d-ea14d49b1a40",
                   "affiliation": null,
-                  "billing_address": "31ea40ba-194e-455b-bca8-a576ce79e084",
+                  "billing_address": "1cb42ae7-1508-444a-8efc-06f6d376c82b",
                   "default_payment_method": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1780299754,
-                  "updated_at": 1780299755
+                  "created_at": 1780335072,
+                  "updated_at": 1780335073
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -12155,7 +12256,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7979b6da-e0d9-4d2a-ae77-774a5d407e74",
+                  "id": "cc1ce03f-bf6f-405a-bd09-be95a24c1464",
                   "object": "customer",
                   "deleted": true
                 },
@@ -12211,7 +12312,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d10d4dac-a4ce-4591-ae76-362aa988fdec",
+                  "id": "d44d1906-7c51-434f-9608-cfcda866398d",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -12222,11 +12323,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImQ0MGE4NDljLWUzYWEtNDA5Ny1iMGVjLTRkNGZmNDAxMTAxZCIsImV4cCI6IjIwMjYtMDYtMDFUMDc6NTc6MzcuMjA5WiIsInB1ciI6ImJsb2JfaWQifX0=--ac1f4c13d5dcf8e5e4f6912d4e500c04243fcfe9/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjJiZjM4OTM4LTAzYTEtNDY2NC1iMzNjLWE0ZGRkNjExODBiZCIsImV4cCI6IjIwMjYtMDYtMDFUMTc6NDY6MTYuMDM0WiIsInB1ciI6ImJsb2JfaWQifX0=--6b1e576c23a064bc95af371f81827690ceb7aa90/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1780300657,
-                  "created_at": 1780299756,
-                  "updated_at": 1780299756
+                  "url_expires_at": 1780335976,
+                  "created_at": 1780335074,
+                  "updated_at": 1780335074
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"
@@ -12252,13 +12353,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a92efdf2-74ad-474b-be6e-954b99661f5c",
+                  "id": "b04eb54b-8c1e-4fcf-b609-51ccfd41c612",
                   "object": "verification_code",
                   "email": "test@example.com",
                   "verified": false,
                   "verified_at": null,
-                  "created_at": 1780299836,
-                  "updated_at": 1780299836
+                  "created_at": 1780335190,
+                  "updated_at": 1780335190
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -12307,13 +12408,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3be019a2-55f6-425a-b16e-94cef34760f6",
+                  "id": "d2ada22d-88fd-4c34-a93d-fb5c208ba737",
                   "object": "verification_code",
                   "email": "test-1@example.com",
                   "verified": true,
-                  "verified_at": 1780299836,
-                  "created_at": 1780299836,
-                  "updated_at": 1780299836
+                  "verified_at": 1780335190,
+                  "created_at": 1780335190,
+                  "updated_at": 1780335190
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -12338,7 +12439,7 @@
                 },
                 "example": {
                   "verification_code": {
-                    "code": 578246,
+                    "code": 690283,
                     "email": "test-1@example.com"
                   }
                 }

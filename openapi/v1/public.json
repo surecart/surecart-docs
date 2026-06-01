@@ -8911,39 +8911,144 @@
           }
         ]
       },
+      "shipping_rate_amount_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount",
+          "min_amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "min_amount": {
+            "type": "integer"
+          },
+          "max_amount": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "shipping_rate_flat_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          }
+        }
+      },
+      "shipping_rate_weight_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount",
+          "min_weight",
+          "weight_unit"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "min_weight": {
+            "type": "number"
+          },
+          "max_weight": {
+            "type": "number",
+            "nullable": true
+          },
+          "weight_unit": {
+            "type": "string",
+            "enum": [
+              "lb",
+              "oz",
+              "kg",
+              "g"
+            ]
+          }
+        }
+      },
+      "shipping_rate_live_calculatable": {
+        "type": "object",
+        "required": [
+          "currency",
+          "shipping_provider_id",
+          "service_tokens"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "shipping_provider_id": {
+            "type": "string"
+          },
+          "service_tokens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "carrier_account": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount_handling": {
+            "type": "integer",
+            "nullable": true
+          },
+          "percent_handling": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      },
       "shipping_rate_base": {
         "allOf": [
           {
             "properties": {
-              "amount": {
-                "type": "integer",
-                "description": "The amount in cents to be charged, represented as a whole integer. For example `9900` is equivalent to `$99`."
-              },
-              "rate_type": {
+              "calculatable_type": {
                 "type": "string",
-                "description": "The calculation strategy for this shipping rate – one of `amount`, `flat`, or `weight`. If `amount`, this shipping rate will be applicable to checkouts that have a `subtotal_amount` within the min/max amount range. If `flat`, this rate will be applicable to all line items. If `weight`, this rate will be applicable to line items that have a combined weight within the min/max weight range."
+                "enum": [
+                  "amount",
+                  "flat",
+                  "weight",
+                  "live"
+                ],
+                "description": "The kind of the nested calculatable."
               },
-              "min_amount": {
-                "type": "integer",
-                "description": "The minimum `subtotal_amount` of a checkout for this rate to apply."
-              },
-              "max_amount": {
-                "type": "integer",
-                "nullable": true,
-                "description": "The maximum `subtotal_amount` of a checkout for this rate to apply."
-              },
-              "min_weight": {
-                "type": "number",
-                "description": "The minimum combined `weight` of a line item for this rate to apply."
-              },
-              "max_weight": {
-                "type": "number",
-                "nullable": true,
-                "description": "The maximum combined `weight` of a line item for this rate to apply."
-              },
-              "weight_unit": {
-                "type": "string",
-                "description": "The weight unit for this shipping rate – one of `lb`, `oz`, `kg`, `g`."
+              "calculatable": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_amount_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_flat_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_weight_calculatable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_rate_live_calculatable"
+                  }
+                ]
               }
             }
           },
@@ -8984,10 +9089,6 @@
           },
           {
             "properties": {
-              "currency": {
-                "type": "string",
-                "description": "Three-letter ISO currency code, in lowercase. This value will match the `Account` currency."
-              },
               "shipping_zone": {
                 "anyOf": [
                   {
@@ -11084,14 +11185,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4e48d5d8-c6bc-428a-ac9c-3d33132bf149",
+                  "id": "f60ff9d9-6c39-478c-8e4f-8a65e09c0862",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "656a54b4-335d-4ddf-b798-42f79426a6d3",
-                  "created_at": 1780299792,
-                  "updated_at": 1780299792
+                  "license": "1ed2ebc3-7a1d-4cfb-8a96-9a2de5cddd0f",
+                  "created_at": 1780335127,
+                  "updated_at": 1780335127
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11118,7 +11219,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "656a54b4-335d-4ddf-b798-42f79426a6d3"
+                    "license_id": "1ed2ebc3-7a1d-4cfb-8a96-9a2de5cddd0f"
                   }
                 }
               }
@@ -11151,14 +11252,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "eb77ca86-a8f1-4584-88b9-fe778c2a417f",
+                  "id": "218d1ad5-c23b-47ca-87e5-55bbce236a9a",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "00ff5550-7167-40d8-a97c-b743e88db246",
-                  "created_at": 1780299793,
-                  "updated_at": 1780299793
+                  "license": "e1094689-c56f-4aca-9400-d953d7aef3e1",
+                  "created_at": 1780335128,
+                  "updated_at": 1780335128
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11191,14 +11292,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2ae14e9f-f3ca-4588-b531-b5d2a8bf2967",
+                  "id": "24ae8aa6-9f08-4cdb-ae4a-d7f8f5ae3082",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "6f761f8f-f262-4d7b-b6a9-cd3434b8393f",
-                  "created_at": 1780299794,
-                  "updated_at": 1780299794
+                  "license": "d4853a51-6b80-4e9d-b322-4d6a7e3c37e5",
+                  "created_at": 1780335129,
+                  "updated_at": 1780335129
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11254,7 +11355,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c8de1721-3f7c-44cc-9612-c0c6f5ec1580",
+                  "id": "6fa4930e-0657-4ec0-8242-94fec10dce07",
                   "object": "activation",
                   "deleted": true
                 },
@@ -12852,14 +12953,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "98daea18-0034-463e-b053-e8102c1c1416",
+                  "id": "1982a340-8ba8-4aa8-93c9-afd55bce2492",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1782891795,
+                  "expires_at": 1782927131,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1780299795,
-                  "updated_at": 1780299795
+                  "created_at": 1780335131,
+                  "updated_at": 1780335131
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -12884,7 +12985,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "BD331321",
+                    "affiliation_code": "81BF2EDF",
                     "url": "http://example.com"
                   }
                 }
@@ -12918,19 +13019,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "db09a048-2836-4c9d-a116-8a7e657bc77c",
+                  "id": "215992f6-2167-421e-80ec-03990c7c210a",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "9ef7aa9b-ce53-4bd6-aa35-b6497c0eba40",
+                  "key": "0ff233d2-0506-4a23-8d04-3f202efd9f9a",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "3d107ef2-1d2e-4241-96f5-64a0caa6446f",
-                  "product": "92e5d6f2-e5c9-4297-8066-7043be24b825",
+                  "price": "1a264049-e377-4a9b-8c92-ae3334627cf9",
+                  "product": "62eb7a27-24c1-49f0-a2e7-74b43cb5115d",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1780299796,
-                  "updated_at": 1780299796
+                  "created_at": 1780335132,
+                  "updated_at": 1780335132
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -12983,7 +13084,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "27d1c5fc-82a4-4f70-a4ed-2f7ea0f93585",
+                  "id": "6093fa2c-e583-4311-a84c-c095755ee0e5",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -12994,11 +13095,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjZkMzEzOWMzLWIyYTUtNGI3My04YjVkLWM1N2Q4ZGZhZGZkNSIsImV4cCI6IjIwMjYtMDYtMDFUMDc6NTg6MTcuMTk3WiIsInB1ciI6ImJsb2JfaWQifX0=--99b4183e3bf72980725b6676117f60eb3b0148ef/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImNkMDE1YjUzLTg1N2ItNGU3NC04YTY2LWMyMzIxNmJhNTdkYyIsImV4cCI6IjIwMjYtMDYtMDFUMTc6NDc6MTMuNjY3WiIsInB1ciI6ImJsb2JfaWQifX0=--48197e431af62e03c0e6095c84b26b7bf928c0e1/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1780300697,
-                  "created_at": 1780299796,
-                  "updated_at": 1780299796
+                  "url_expires_at": 1780336033,
+                  "created_at": 1780335132,
+                  "updated_at": 1780335132
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"
