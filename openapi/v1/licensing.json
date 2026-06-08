@@ -8686,6 +8686,92 @@
           }
         ]
       },
+      "shipping_choice_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "properties": {
+              "amount": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The amount in cents for this shipping choice. For example `9900` is equivalent to `$99`."
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true,
+                "description": "The three-letter currency code for this shipping choice."
+              },
+              "live": {
+                "type": "boolean",
+                "description": "Whether this shipping choice was quoted live from a carrier."
+              },
+              "carrier_quotes": {
+                "type": "array",
+                "description": "The carrier quotes backing this shipping choice.",
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/model_identifiers"
+                    },
+                    {
+                      "properties": {
+                        "external_rate_id": {
+                          "type": "string",
+                          "description": "The carrier's identifier for the quoted rate."
+                        },
+                        "shipping_provider_id": {
+                          "type": "string",
+                          "description": "The UUID of the shipping provider that produced this quote."
+                        },
+                        "rate": {
+                          "description": "The quoted carrier rate.",
+                          "allOf": [
+                            {
+                              "$ref": "#/components/schemas/shipment_rate"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/model_timestamps"
+                    }
+                  ]
+                }
+              },
+              "checkout": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated checkout ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/checkout_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated checkout object."
+                  }
+                ]
+              },
+              "shipping_method": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated shipping method ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_method_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated shipping method object."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
       "shipping_fee_base": {
         "properties": {
           "amount": {
@@ -8937,6 +9023,40 @@
             "$ref": "#/components/schemas/model_timestamps"
           }
         ]
+      },
+      "carrier_account_response": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "carrier_account"
+          },
+          "carrier": {
+            "type": "string",
+            "description": "The carrier token for this account (e.g. `usps`, `fedex`)."
+          },
+          "carrier_name": {
+            "type": "string",
+            "description": "A human-readable name for the carrier (e.g. `USPS`, `FedEx`)."
+          },
+          "service_levels": {
+            "type": "array",
+            "description": "The service levels offered by this carrier account.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "token": {
+                  "type": "string",
+                  "description": "The service level token (e.g. `usps_priority`). Use this to select a service level."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "A human-readable name for the service level (e.g. `Priority Mail`)."
+                }
+              }
+            }
+          }
+        }
       },
       "shipping_rate_amount_calculatable": {
         "type": "object",
@@ -11108,6 +11228,10 @@
       "description": "A shipment represents a package being sent via a shipping provider (e.g. Shippo) with rate quoting, label purchasing, and tracking."
     },
     {
+      "name": "Shipping Choices",
+      "description": "A shipping choice represents a shipping option presented at checkout, including any live carrier quotes backing it."
+    },
+    {
       "name": "Shipping Methods",
       "description": "Shipping methods represent the different speeds/classes of shipping that a store offers – i.e. `Express`, `Ground`, etc."
     },
@@ -11264,14 +11388,14 @@
                   },
                   "data": [
                     {
-                      "id": "dd92898b-41f7-4588-a1ac-b6fa2d203212",
+                      "id": "5fba889a-bbc5-407e-b6f5-12641a93f2d8",
                       "object": "activation",
                       "counted": true,
                       "name": null,
                       "fingerprint": "example.com",
-                      "license": "12139726-4e9a-4680-9cf6-35cfed351d7c",
-                      "created_at": 1780348791,
-                      "updated_at": 1780348791
+                      "license": "401bed6a-c9c2-4aeb-ac66-9d059325e4eb",
+                      "created_at": 1780925334,
+                      "updated_at": 1780925334
                     }
                   ]
                 },
@@ -11297,14 +11421,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c465c2c4-d2d7-4001-b748-81ab5ca05a77",
+                  "id": "e74caa9a-44e3-470d-bd87-d57e35ad4bb3",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "ca76cc26-63ff-41be-9e72-f15cae30158d",
-                  "created_at": 1780348792,
-                  "updated_at": 1780348792
+                  "license": "7d6f60b0-2ba6-4302-b3a7-9c70f6af67b9",
+                  "created_at": 1780925337,
+                  "updated_at": 1780925337
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11331,7 +11455,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "ca76cc26-63ff-41be-9e72-f15cae30158d"
+                    "license_id": "7d6f60b0-2ba6-4302-b3a7-9c70f6af67b9"
                   }
                 }
               }
@@ -11364,14 +11488,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2b556f70-07c2-43ae-8ada-f69b73ba93f9",
+                  "id": "7c77d907-f101-4723-a48e-644a83c8618a",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "01cf0295-9b91-4944-bb40-ebc654e85700",
-                  "created_at": 1780348794,
-                  "updated_at": 1780348794
+                  "license": "8d4ca7f4-652b-4948-ae60-4c853f2b1c3f",
+                  "created_at": 1780925339,
+                  "updated_at": 1780925339
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11404,14 +11528,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "67a7e619-8ad4-4be9-b565-31b67e6e88c9",
+                  "id": "3f72ed21-65ac-4b84-97ce-f83ab262c270",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "16b9a96b-8d90-4a0b-aff9-8fe3c5cd11ff",
-                  "created_at": 1780348795,
-                  "updated_at": 1780348795
+                  "license": "21141ba8-70fe-4a8f-9a23-22e485783837",
+                  "created_at": 1780925340,
+                  "updated_at": 1780925340
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11467,7 +11591,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3e545873-062f-41a9-a8a3-580676f19a6a",
+                  "id": "aa96755f-2d5b-4f3d-921c-c820eb8dc2b1",
                   "object": "activation",
                   "deleted": true
                 },
@@ -11598,17 +11722,17 @@
                   },
                   "data": [
                     {
-                      "id": "2283c727-f03e-4c55-8af5-cda74e3cd5f0",
+                      "id": "73e7e972-6d35-4873-a0c1-8f427e7f9801",
                       "object": "license",
                       "activations_count": 0,
                       "activation_limit": null,
-                      "key": "a087a443-61f7-48da-b92b-1373c794812d",
+                      "key": "05b6a711-1883-4c82-b4ff-657b6b018230",
                       "revokes_at": null,
                       "status": "inactive",
-                      "customer": "63abd6e1-3474-442a-ab9a-6623299dd787",
-                      "purchase": "d25937be-1899-4364-abb2-acfbc999677e",
-                      "created_at": 1780348853,
-                      "updated_at": 1780348853
+                      "customer": "224f69d3-fc47-4263-ba9d-8ebe1f96fd2e",
+                      "purchase": "a9be3756-b7d5-4f42-8d54-eca43324ca5f",
+                      "created_at": 1780925462,
+                      "updated_at": 1780925462
                     }
                   ]
                 },
@@ -11634,17 +11758,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "28ac0f99-7959-436f-8528-11f722275cad",
+                  "id": "d277ad0b-90e6-45f0-bff3-a926c23a37c0",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
                   "key": "abc-123-def-456",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "3945291a-a4ff-49f6-b659-476a58a728da",
-                  "purchase": "686cbf76-9bdd-4bef-a219-14c14edeae8d",
-                  "created_at": 1780348855,
-                  "updated_at": 1780348855
+                  "customer": "7007ed84-9628-4b59-b248-8db4e3caddf7",
+                  "purchase": "c1ba7d60-42b1-49cf-9c0c-6aeba5f0f8ee",
+                  "created_at": 1780925466,
+                  "updated_at": 1780925466
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -11670,7 +11794,7 @@
                 "example": {
                   "license": {
                     "key": "abc-123-def-456",
-                    "purchase": "686cbf76-9bdd-4bef-a219-14c14edeae8d"
+                    "purchase": "c1ba7d60-42b1-49cf-9c0c-6aeba5f0f8ee"
                   }
                 }
               }
@@ -11703,17 +11827,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d81e3f1e-fc8e-41cf-8641-ed3d72bcfeec",
+                  "id": "99afa7f2-4d46-4702-a64c-994800682380",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "4d8ddfb2-4125-45b1-a243-ef4c0a168c64",
+                  "key": "db1d0ec1-e42d-47c4-9669-060fe6a9d491",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "31710c4f-d429-4f6c-8373-77f1f692cc45",
-                  "purchase": "4c9c6839-4a37-498b-beff-9648e2a3ef26",
-                  "created_at": 1780348856,
-                  "updated_at": 1780348856
+                  "customer": "a31f3075-a1da-448a-bcdd-85db3ff1d49e",
+                  "purchase": "e690e21c-1d8a-45de-a4d2-dc01ed408df5",
+                  "created_at": 1780925467,
+                  "updated_at": 1780925467
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -11746,17 +11870,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "501f9831-b1b9-4357-b65c-1f55d337b40e",
+                  "id": "65bcbeb0-e2d1-4575-ae42-3d3c19df74d6",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": 10,
-                  "key": "46c8a42a-6ff3-4e7f-bcd7-4b45d51288ca",
+                  "key": "896f298f-606d-4295-a5ce-be497dd10777",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "a6a59769-c12e-4b87-bbfb-c6cbf2419074",
-                  "purchase": "28c272e9-30de-4d53-a330-280e76d682f3",
-                  "created_at": 1780348857,
-                  "updated_at": 1780348858
+                  "customer": "c7149b1b-4b3f-40fe-a601-a78217ebfd7e",
+                  "purchase": "617f84df-2cb7-42ba-b9a8-7a05c61de43e",
+                  "created_at": 1780925469,
+                  "updated_at": 1780925469
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -11812,7 +11936,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a68aeb04-5d28-4642-a76e-d1bdd5f6169e",
+                  "id": "96332f7c-0b44-4d92-a5bf-3927f91e5564",
                   "object": "license",
                   "deleted": true
                 },

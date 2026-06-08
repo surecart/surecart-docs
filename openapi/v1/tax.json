@@ -8686,6 +8686,92 @@
           }
         ]
       },
+      "shipping_choice_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "properties": {
+              "amount": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The amount in cents for this shipping choice. For example `9900` is equivalent to `$99`."
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true,
+                "description": "The three-letter currency code for this shipping choice."
+              },
+              "live": {
+                "type": "boolean",
+                "description": "Whether this shipping choice was quoted live from a carrier."
+              },
+              "carrier_quotes": {
+                "type": "array",
+                "description": "The carrier quotes backing this shipping choice.",
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/model_identifiers"
+                    },
+                    {
+                      "properties": {
+                        "external_rate_id": {
+                          "type": "string",
+                          "description": "The carrier's identifier for the quoted rate."
+                        },
+                        "shipping_provider_id": {
+                          "type": "string",
+                          "description": "The UUID of the shipping provider that produced this quote."
+                        },
+                        "rate": {
+                          "description": "The quoted carrier rate.",
+                          "allOf": [
+                            {
+                              "$ref": "#/components/schemas/shipment_rate"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/model_timestamps"
+                    }
+                  ]
+                }
+              },
+              "checkout": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated checkout ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/checkout_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated checkout object."
+                  }
+                ]
+              },
+              "shipping_method": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated shipping method ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_method_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated shipping method object."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
       "shipping_fee_base": {
         "properties": {
           "amount": {
@@ -8937,6 +9023,40 @@
             "$ref": "#/components/schemas/model_timestamps"
           }
         ]
+      },
+      "carrier_account_response": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "carrier_account"
+          },
+          "carrier": {
+            "type": "string",
+            "description": "The carrier token for this account (e.g. `usps`, `fedex`)."
+          },
+          "carrier_name": {
+            "type": "string",
+            "description": "A human-readable name for the carrier (e.g. `USPS`, `FedEx`)."
+          },
+          "service_levels": {
+            "type": "array",
+            "description": "The service levels offered by this carrier account.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "token": {
+                  "type": "string",
+                  "description": "The service level token (e.g. `usps_priority`). Use this to select a service level."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "A human-readable name for the service level (e.g. `Priority Mail`)."
+                }
+              }
+            }
+          }
+        }
       },
       "shipping_rate_amount_calculatable": {
         "type": "object",
@@ -11108,6 +11228,10 @@
       "description": "A shipment represents a package being sent via a shipping provider (e.g. Shippo) with rate quoting, label purchasing, and tracking."
     },
     {
+      "name": "Shipping Choices",
+      "description": "A shipping choice represents a shipping option presented at checkout, including any live carrier quotes backing it."
+    },
+    {
       "name": "Shipping Methods",
       "description": "Shipping methods represent the different speeds/classes of shipping that a store offers – i.e. `Express`, `Ground`, etc."
     },
@@ -11261,14 +11385,14 @@
                   },
                   "data": [
                     {
-                      "id": "0461ace1-fe5d-4baa-9a2e-eb4b05f6f7f0",
+                      "id": "d4c1a434-1f93-4aa7-83c5-9c02dc67dc76",
                       "object": "tax_override",
                       "shipping": false,
                       "rate": 7.5,
-                      "product_collection": "01bddc0e-63a0-4157-abbb-9cd5cb76e01f",
-                      "tax_zone": "239bacaa-b9d4-478d-9a88-8d8a9e296f30",
-                      "created_at": 1780348956,
-                      "updated_at": 1780348956
+                      "product_collection": "b5852f37-0c11-441b-9a5a-50fc7929d100",
+                      "tax_zone": "e60fa1b4-13e6-49de-8acb-f11fb54217ec",
+                      "created_at": 1780925661,
+                      "updated_at": 1780925661
                     }
                   ]
                 },
@@ -11294,14 +11418,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3a006ae8-fe45-4a43-ac52-78299d6ce9dc",
+                  "id": "6cfb339e-6755-40fa-bb48-1f7183ee4b95",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 10.0,
-                  "product_collection": "f933d490-5687-43c3-a892-a944eceb232f",
-                  "tax_zone": "20325bdb-3134-4280-a5b3-c75e037c24c2",
-                  "created_at": 1780348956,
-                  "updated_at": 1780348956
+                  "product_collection": "48a93bd0-4362-4668-880d-2a34a08c6aec",
+                  "tax_zone": "2f181354-622b-42c6-839f-f071d6393dbb",
+                  "created_at": 1780925661,
+                  "updated_at": 1780925661
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11326,8 +11450,8 @@
                 },
                 "example": {
                   "tax_override": {
-                    "tax_zone": "20325bdb-3134-4280-a5b3-c75e037c24c2",
-                    "product_collection": "f933d490-5687-43c3-a892-a944eceb232f",
+                    "tax_zone": "2f181354-622b-42c6-839f-f071d6393dbb",
+                    "product_collection": "48a93bd0-4362-4668-880d-2a34a08c6aec",
                     "rate": 10
                   }
                 }
@@ -11361,14 +11485,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "baa4d6e4-0802-4bb2-8f5c-2952569f48ad",
+                  "id": "aeaa470d-6332-4656-bbf8-6280604d850c",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 7.5,
-                  "product_collection": "e9daeb9d-d293-4f95-ab50-d2882ac3ca5e",
-                  "tax_zone": "5cbd3c79-f9ff-4c3c-9754-074f07fa1f08",
-                  "created_at": 1780348956,
-                  "updated_at": 1780348956
+                  "product_collection": "c8e3d074-b643-4c47-b245-fb3535a80237",
+                  "tax_zone": "94cd24ab-304e-4ebd-afbc-9b9a4bbd3d1b",
+                  "created_at": 1780925661,
+                  "updated_at": 1780925661
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11392,14 +11516,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "028ed748-d188-4b95-8184-f4a819a32a52",
+                  "id": "7b90e469-a257-4151-a396-bfeb547de3fe",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 5.0,
-                  "product_collection": "f4f451fa-b669-4d0b-aa83-96443517201e",
-                  "tax_zone": "28876a13-2dc7-4600-8628-4466c15ac471",
-                  "created_at": 1780348957,
-                  "updated_at": 1780348957
+                  "product_collection": "5cf37fbc-70b6-4c02-baa0-c006e263f866",
+                  "tax_zone": "1154669f-e483-46e9-bd3c-d460d259b103",
+                  "created_at": 1780925662,
+                  "updated_at": 1780925662
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11445,7 +11569,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1cfd373e-90b1-4d0f-b56d-d539011639e1",
+                  "id": "08595f98-5fd0-430c-a3c0-d955f2437ed8",
                   "object": "tax_override",
                   "deleted": true
                 },
@@ -11472,7 +11596,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f667cbaf-451e-4ede-9257-aff40bbc0aa9",
+                  "id": "344d5b69-b187-4e7e-affc-79cb14f74940",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11484,11 +11608,11 @@
                   "tax_enabled": false,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "ef17a615-9c69-45c5-aba6-cf6119382cde",
+                  "address": "a1f0322d-ac1b-4a12-ad72-61b29dbd2704",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1780348957,
-                  "updated_at": 1780348957
+                  "created_at": 1780925662,
+                  "updated_at": 1780925662
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11512,7 +11636,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "666ab070-cb51-41bb-aedb-8a3efd485ed7",
+                  "id": "155f7ca2-631d-462e-8bd1-140216b4f36f",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11524,11 +11648,11 @@
                   "tax_enabled": true,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "03be68a2-eeb8-4d0a-8c43-d4836aac3ad8",
+                  "address": "3c13801e-3857-4744-a545-0f602f9711af",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1780348957,
-                  "updated_at": 1780348957
+                  "created_at": 1780925663,
+                  "updated_at": 1780925663
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11617,14 +11741,14 @@
                   },
                   "data": [
                     {
-                      "id": "884da3e0-761b-4e95-966d-6ea2f863d275",
+                      "id": "77cc8067-9174-4b8a-8734-b8979b0dc08c",
                       "object": "tax_registration",
                       "label": null,
                       "manual_rate": 5.5,
                       "tax_identifier": null,
-                      "tax_zone": "ea00b933-3834-478b-ac42-83ee59ceb583",
-                      "created_at": 1780348957,
-                      "updated_at": 1780348957
+                      "tax_zone": "f6b3f903-cc8e-4b3d-bf01-d9c953416de6",
+                      "created_at": 1780925663,
+                      "updated_at": 1780925663
                     }
                   ]
                 },
@@ -11650,14 +11774,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "09b20322-ceef-4668-a85c-bf53e4b86a48",
+                  "id": "0c489aae-df40-45c1-a73f-5376897b4c0a",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 10.0,
                   "tax_identifier": null,
-                  "tax_zone": "72ce1e01-e9f0-4532-bc5c-887a414d6f2a",
-                  "created_at": 1780348957,
-                  "updated_at": 1780348957
+                  "tax_zone": "f36b73c4-0739-405f-a332-53da68b13083",
+                  "created_at": 1780925663,
+                  "updated_at": 1780925663
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11682,7 +11806,7 @@
                 },
                 "example": {
                   "tax_registration": {
-                    "tax_zone": "72ce1e01-e9f0-4532-bc5c-887a414d6f2a",
+                    "tax_zone": "f36b73c4-0739-405f-a332-53da68b13083",
                     "manual_rate": 10
                   }
                 }
@@ -11716,14 +11840,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "dfdbfddf-1ce5-43d4-a205-6af214adc170",
+                  "id": "0f86df7f-e414-4a2d-8c1d-3d7f92340a21",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_identifier": null,
-                  "tax_zone": "0d3f34cb-420b-47c8-bd8f-d59a493f44a0",
-                  "created_at": 1780348958,
-                  "updated_at": 1780348958
+                  "tax_zone": "cb365e06-0d06-4492-bfbf-fc75b38d7743",
+                  "created_at": 1780925664,
+                  "updated_at": 1780925664
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11747,14 +11871,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2ea64734-6533-4feb-842e-547d00a75c90",
+                  "id": "cc693544-1fcf-472d-a447-0054b21afe0b",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
-                  "tax_identifier": "0349510a-af6f-4f66-9c65-e35961f7726e",
-                  "tax_zone": "c8c2fb06-8e59-4008-b4bb-0aa2ce4f599c",
-                  "created_at": 1780348958,
-                  "updated_at": 1780348958
+                  "tax_identifier": "6e44e9c7-9b57-4e73-bdda-082943ef83fb",
+                  "tax_zone": "e794a078-aebf-4463-b6f8-bf847161794a",
+                  "created_at": 1780925665,
+                  "updated_at": 1780925665
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11803,7 +11927,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8d83fbf8-6f8d-4fe9-8937-2eddc65bcaa8",
+                  "id": "a326cee6-2263-4aba-a154-687ba202c47a",
                   "object": "tax_registration",
                   "deleted": true
                 },
