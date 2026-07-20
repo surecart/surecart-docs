@@ -1,0 +1,136 @@
+---
+title: "Checkout Line Items"
+description: "Customize checkout order summary line items with CSS variables and CSS parts"
+icon: "list"
+---
+
+The checkout order summary renders each line item with a web component (`sc-line-items`). Unlike the [Slide-Out Cart](https://surecart.com/docs/slide-out-cart/), it doesn't have per-element blocks in the editor — you customize it with CSS instead, using the two mechanisms described in [Styling the Checkout](/documentation/styling/checkout): CSS variables and CSS parts.
+
+<Note>
+  Internal class names inside the component's shadow DOM aren't reachable from
+  your CSS. Only the variables and parts documented below are supported hooks.
+</Note>
+
+Add your CSS under **Appearance → Customize → Additional CSS**, or in your theme's stylesheet. Scope it to the checkout so the cart and other forms aren't affected:
+
+```css
+/* Line items inside the checkout form only */
+sc-checkout sc-line-items {
+  --sc-line-item-title-color: #1a1a1a;
+}
+```
+
+## CSS Variables
+
+### Layout & image
+
+| Variable                                       | Default | Controls                                                                       |
+| ---------------------------------------------- | ------- | ------------------------------------------------------------------------------ |
+| `--sc-product-line-item-line-gap`              | `6px`   | Vertical gap between text lines (title, description, details)                  |
+| `--sc-product-line-item-image-size`            | `65px`  | Product image width and height                                                 |
+| `--sc-product-line-item-mobile-image-display`  | `none`  | Set to `block` to keep the image visible on narrow layouts (under 380px wide)  |
+
+### Text colors
+
+Defaults reference the global palette from [Styling the Checkout](/documentation/styling/checkout) (for example, `--sc-input-help-text-color` resolves to `--sc-color-gray-500`).
+
+| Variable                      | Controls                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `--sc-line-item-title-color`  | Product title (falls back to `--sc-input-label-color`)                          |
+| `--sc-input-label-color`      | Titles, prices, bundle item names and quantities                                |
+| `--sc-input-help-text-color`  | Muted text: compare-at (strikethrough) price, remove link, price description    |
+| `--sc-price-label-color`      | Description line under the title (falls back to the help text color)            |
+| `--sc-color-gray-500`         | Variant options, line item note, "+N more" toggle                               |
+| `--sc-color-gray-700`         | Toggle hover color                                                              |
+| `--sc-input-error-text-color` | Purchasable status message                                                      |
+
+<Warning>
+  `--sc-font-size-*` and `--sc-input-*` variables are shared with other
+  checkout elements such as inputs and labels. Scope them to `sc-line-items` —
+  not `:root` — unless you intend a global change.
+</Warning>
+
+### Typography
+
+| Variable                      | Controls                                       |
+| ----------------------------- | ---------------------------------------------- |
+| `--sc-font-sans`              | Font family for the whole line item            |
+| `--sc-font-size-medium`       | Title and price size                           |
+| `--sc-font-size-small`        | Details, compare-at price, price description   |
+| `--sc-price-label-font-size`  | Description line size                          |
+| `--sc-font-weight-semibold`   | Title and price weight                         |
+
+### Bundle details
+
+| Variable                                 | Default | Controls                                                                         |
+| ---------------------------------------- | ------- | -------------------------------------------------------------------------------- |
+| `--sc-line-item-details-collapse-lines`  | `2`     | Lines shown before the bundle details region collapses behind a "+N more" toggle |
+
+### Borders & shadows
+
+| Variable                  | Controls                                     |
+| ------------------------- | -------------------------------------------- |
+| `--sc-input-border-color` | Image border, image placeholder background   |
+| `--sc-input-box-shadow`   | Image shadow                                 |
+
+## CSS Parts
+
+`sc-line-items` exposes each element of a line item as a [CSS part](/documentation/styling/checkout#css-parts), so you can target them directly with `::part()`. The full list is also available under "Shadow Parts" in the [Components Documentation](https://components.surecart.com).
+
+| Part                                                                                                       | Element                                          |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `line-item`                                                                                                 | The whole line item row                          |
+| `line-item__image` / `line-item__placeholder-image`                                                         | Product image / placeholder                      |
+| `line-item__text`                                                                                           | Text column (title and description)              |
+| `line-item__title`                                                                                          | Product title                                    |
+| `line-item__description`                                                                                    | Description line (price name, interval)          |
+| `line-item__price` / `line-item__price-amount`                                                              | Price column / amount                            |
+| `line-item__price-scratch`                                                                                  | Compare-at (strikethrough) price                 |
+| `line-item__price-description`                                                                              | Text under the price                             |
+| `line-item__static-quantity`                                                                                | Read-only quantity ("× 2")                       |
+| `line-item__quantity`, `line-item__quantity-plus`, `line-item__quantity-minus`, `line-item__quantity-input` | Quantity selector                                |
+| `line-item__remove-icon`                                                                                    | Remove icon                                      |
+| `line-item__trial-fees`                                                                                     | Trial and fees line                              |
+| `line-item__details`                                                                                        | Collapsible details region (bundle components)   |
+| `line-item__details-component`                                                                              | A single bundle component row                    |
+| `line-item__details-variant`                                                                                | Variant options within a bundle component row    |
+| `line-item__details-toggle`                                                                                 | "+N more" / "Show less" toggle                   |
+| `line-item__note`                                                                                           | Line item note                                   |
+
+Example:
+
+```css
+sc-line-items::part(line-item__title) {
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+sc-line-items::part(line-item__image) {
+  border-radius: 8px;
+}
+sc-line-items::part(line-item__details-variant) {
+  color: #6b7280;
+}
+```
+
+## Example: match your cart styling
+
+```css
+sc-checkout sc-line-items {
+  /* Variant text color (the same variable family the cart uses) */
+  --sc-color-gray-500: #6b7280;
+  /* Darker product titles */
+  --sc-line-item-title-color: #111827;
+  /* Bigger image, kept visible on mobile */
+  --sc-product-line-item-image-size: 80px;
+  --sc-product-line-item-mobile-image-display: block;
+  /* Show 3 detail lines before collapsing */
+  --sc-line-item-details-collapse-lines: 3;
+}
+```
+
+## Notes
+
+- Bundle row quantity and name text has no dedicated part — style it through `line-item__details-component` (color is inherited), or with the variables above.
+- Behavior settings (removable, editable, show all bundle items, separator character) are block settings on the **Line Items** block in the checkout editor, not CSS.
+- The order confirmation and customer dashboard render line items with the same component but don't expose its parts — use CSS variables on those surfaces.
