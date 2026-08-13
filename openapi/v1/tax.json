@@ -5276,7 +5276,7 @@
           "dimensions": {
             "type": "object",
             "nullable": true,
-            "description": "The physical dimensions of this parcel template.",
+            "description": "The physical dimensions of this parcel template. Populated from the carrier's own preset when `carrier_parcel_template_token` resolves to a fixed-size package, and required otherwise.",
             "properties": {
               "length": {
                 "type": "number",
@@ -5304,6 +5304,16 @@
           "weight_unit": {
             "type": "string",
             "description": "The weight unit for this parcel template – one of `lb`, `oz`, `kg`, `g`."
+          },
+          "carrier_parcel_template_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`). When set, dimensions are populated from the carrier's own preset unless it allows custom dimensions, and shipments using this parcel template are quoted for that carrier only. Set to `null` to turn this back into a plain parcel template."
+          },
+          "shipping_provider": {
+            "type": "string",
+            "nullable": true,
+            "description": "The UUID of the shipping provider to resolve `carrier_parcel_template_token` against. Required when `carrier_parcel_template_token` is set. Carrier availability differs between test and live mode providers, and a shipment always re-resolves the token against its own provider."
           }
         }
       },
@@ -5320,6 +5330,29 @@
               "default": {
                 "type": "boolean",
                 "description": "Whether or not this parcel template is the account's default."
+              },
+              "carrier_token": {
+                "type": "string",
+                "nullable": true,
+                "description": "The token of the carrier that provides this template's carrier parcel template, if any (e.g. `fedex`)."
+              },
+              "carrier_name": {
+                "type": "string",
+                "nullable": true,
+                "description": "The display name of the carrier that provides this template's carrier parcel template, if any (e.g. `FedEx`)."
+              },
+              "shipping_provider": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated shipping provider ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_provider_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated shipping provider object."
+                  }
+                ]
               }
             }
           },
@@ -8428,7 +8461,7 @@
           "dimensions": {
             "type": "object",
             "nullable": true,
-            "description": "The dimensions of the parcel.",
+            "description": "The dimensions of the parcel. Defaults to the parcel template's dimensions when `parcel_template` is set and no dimensions are given, and to the carrier's own preset when `carrier_parcel_template_token` resolves to a fixed-size package.",
             "properties": {
               "length": {
                 "type": "number",
@@ -8447,6 +8480,11 @@
                 "description": "The unit for dimensions – one of `in`, `cm`, `ft`, `m`, `mm`, `yd`."
               }
             }
+          },
+          "carrier_parcel_template_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
           }
         }
       },
@@ -8579,7 +8617,7 @@
               "carrier": {
                 "type": "string",
                 "nullable": true,
-                "description": "The shipping carrier for this shipment."
+                "description": "The shipping carrier of the selected rate."
               },
               "carrier_messages": {
                 "type": "array",
@@ -9104,6 +9142,52 @@
                 }
               }
             }
+          }
+        }
+      },
+      "carrier_parcel_template_response": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "carrier_parcel_template"
+          },
+          "carrier_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of the carrier that provides this parcel template (e.g. `usps`, `fedex`), matching the carrier account's `carrier`. Null when the carrier is not connected to this shipping provider."
+          },
+          "carrier_name": {
+            "type": "string",
+            "description": "The display name of the carrier that provides this parcel template (e.g. `USPS`, `FedEx`)."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the carrier parcel template (e.g. `FedEx® Small Box (S1)`)."
+          },
+          "token": {
+            "type": "string",
+            "description": "The unique string representation of the carrier parcel template. Use this to select it."
+          },
+          "length": {
+            "type": "string",
+            "description": "The length of the package, in units specified by `distance_unit`."
+          },
+          "width": {
+            "type": "string",
+            "description": "The width of the package, in units specified by `distance_unit`."
+          },
+          "height": {
+            "type": "string",
+            "description": "The height of the package, in units specified by `distance_unit`."
+          },
+          "distance_unit": {
+            "type": "string",
+            "description": "The measure unit used for length, width, and height – one of `cm`, `in`, `ft`, `m`, `mm`, `yd`."
+          },
+          "is_variable_dimensions": {
+            "type": "boolean",
+            "description": "True if the carrier parcel template allows custom dimensions, such as USPS Softpack."
           }
         }
       },
@@ -11434,14 +11518,14 @@
                   },
                   "data": [
                     {
-                      "id": "7538138c-500b-46c7-9798-cd89cc2994dd",
+                      "id": "8136a0cb-1646-4e59-a4ba-77ec1cacfa9d",
                       "object": "tax_override",
                       "shipping": false,
                       "rate": 7.5,
-                      "product_collection": "24170a0f-8b51-49ec-bafa-662ee7476fbf",
-                      "tax_zone": "fe9a4a50-f247-4c19-bcff-32b4d1400a05",
-                      "created_at": 1786444859,
-                      "updated_at": 1786444859
+                      "product_collection": "dcd99141-0b24-4b84-9bde-24250c8b4c46",
+                      "tax_zone": "997b5ad5-6d9c-438a-a137-7eb83a2b893e",
+                      "created_at": 1786630034,
+                      "updated_at": 1786630034
                     }
                   ]
                 },
@@ -11467,14 +11551,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "813c0ad2-4013-4608-86b7-13721526b619",
+                  "id": "aeebd0c4-979f-4df1-9c3a-535da273bf5a",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 10.0,
-                  "product_collection": "0f36fb46-6141-4824-b56f-1f72a6214fd6",
-                  "tax_zone": "8b62c48c-0f7f-49a8-8754-df42ed93d08b",
-                  "created_at": 1786444859,
-                  "updated_at": 1786444859
+                  "product_collection": "c6288e4e-520d-40fd-a89d-b6324d5a10a1",
+                  "tax_zone": "170dd1dc-ffd5-4a8c-b2db-ed5359eeba53",
+                  "created_at": 1786630034,
+                  "updated_at": 1786630034
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11499,8 +11583,8 @@
                 },
                 "example": {
                   "tax_override": {
-                    "tax_zone": "8b62c48c-0f7f-49a8-8754-df42ed93d08b",
-                    "product_collection": "0f36fb46-6141-4824-b56f-1f72a6214fd6",
+                    "tax_zone": "170dd1dc-ffd5-4a8c-b2db-ed5359eeba53",
+                    "product_collection": "c6288e4e-520d-40fd-a89d-b6324d5a10a1",
                     "rate": 10
                   }
                 }
@@ -11534,14 +11618,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "566e8c03-957f-45b0-a824-b3f584e8c548",
+                  "id": "180b1f27-1dd2-4808-ae34-893de5823c82",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 7.5,
-                  "product_collection": "0f66ee8a-9a6c-4540-959a-d9291f2d06c3",
-                  "tax_zone": "07488e4c-fe1c-46cb-8818-2943bbccc429",
-                  "created_at": 1786444859,
-                  "updated_at": 1786444859
+                  "product_collection": "4eebcee3-a092-4ab3-9e00-749b96234fec",
+                  "tax_zone": "44f54bf6-06d1-405d-9abd-9aed36142321",
+                  "created_at": 1786630034,
+                  "updated_at": 1786630034
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11565,14 +11649,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a2035569-85ca-4ac8-b546-fbd3b7ef256d",
+                  "id": "9ac08d04-249b-40e4-a246-e0e08e4211c7",
                   "object": "tax_override",
                   "shipping": false,
                   "rate": 5.0,
-                  "product_collection": "7a199c7d-afec-4722-9821-fd9bfa0498a0",
-                  "tax_zone": "6444bd95-e1b5-496a-b26c-400768ff066f",
-                  "created_at": 1786444860,
-                  "updated_at": 1786444860
+                  "product_collection": "4cf0a2ec-63cd-4e43-a2d2-b18f1da89d3e",
+                  "tax_zone": "5179985d-231a-44ea-b7f3-7dffb36f2ef3",
+                  "created_at": 1786630034,
+                  "updated_at": 1786630034
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11618,7 +11702,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "57f552f5-01b5-47de-9da9-508df7b75ed0",
+                  "id": "e22ce562-e283-4390-a069-284166a4dccf",
                   "object": "tax_override",
                   "deleted": true
                 },
@@ -11645,7 +11729,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "88b35a6d-bff3-40e7-b78f-30de2f4fbaf7",
+                  "id": "fdcd5702-3f93-4d52-8ec1-4f072f8a9c32",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11657,11 +11741,11 @@
                   "tax_enabled": false,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "ad99b3cb-ac5f-4283-9348-f21f481e5cf7",
+                  "address": "2407445d-744a-439d-9210-fd8069d617cc",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1786444860,
-                  "updated_at": 1786444860
+                  "created_at": 1786630035,
+                  "updated_at": 1786630035
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11685,7 +11769,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8acede28-6521-4196-83f8-75826de7b34d",
+                  "id": "6c18ebed-d8ad-4177-851d-9f4a21299959",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -11697,11 +11781,11 @@
                   "tax_enabled": true,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "890d9645-c641-4368-bee4-f5db3f9889f1",
+                  "address": "b61de8a4-54e8-4933-a346-6f6d1753c33e",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1786444860,
-                  "updated_at": 1786444860
+                  "created_at": 1786630035,
+                  "updated_at": 1786630035
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -11790,14 +11874,14 @@
                   },
                   "data": [
                     {
-                      "id": "4f18837a-865e-47b6-8fda-1541abfac958",
+                      "id": "c30dcf82-58aa-4a51-bc99-2b954a899e39",
                       "object": "tax_registration",
                       "label": null,
                       "manual_rate": 5.5,
                       "tax_identifier": null,
-                      "tax_zone": "693972d7-6fce-4b46-9158-4c830816e397",
-                      "created_at": 1786444860,
-                      "updated_at": 1786444860
+                      "tax_zone": "20c2b7b5-6f90-440b-b87b-394ea2dda5de",
+                      "created_at": 1786630035,
+                      "updated_at": 1786630035
                     }
                   ]
                 },
@@ -11823,14 +11907,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8a5dc0c5-8c9b-4244-941f-3a8ea6826da9",
+                  "id": "b409f484-162a-40ee-8fb9-5c1403caa761",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 10.0,
                   "tax_identifier": null,
-                  "tax_zone": "09e0120f-11c5-4f9e-83e4-887e3db0e753",
-                  "created_at": 1786444860,
-                  "updated_at": 1786444860
+                  "tax_zone": "760d3550-a072-4ad2-9edd-1772573b5ef8",
+                  "created_at": 1786630035,
+                  "updated_at": 1786630035
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11855,7 +11939,7 @@
                 },
                 "example": {
                   "tax_registration": {
-                    "tax_zone": "09e0120f-11c5-4f9e-83e4-887e3db0e753",
+                    "tax_zone": "760d3550-a072-4ad2-9edd-1772573b5ef8",
                     "manual_rate": 10
                   }
                 }
@@ -11889,14 +11973,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bff437a0-e3ee-4346-a1de-45ed818a9431",
+                  "id": "30e99f34-f510-4577-ac62-567e475dcde6",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_identifier": null,
-                  "tax_zone": "ad999bfb-41b3-44f9-b087-9e83f215758f",
-                  "created_at": 1786444861,
-                  "updated_at": 1786444861
+                  "tax_zone": "70fe8b76-bbf4-4b36-9548-8f787bacce95",
+                  "created_at": 1786630035,
+                  "updated_at": 1786630035
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11920,14 +12004,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cab2c71c-9121-4df5-90f0-15ff4895c504",
+                  "id": "314012f7-2fb0-4507-8bd3-a5ede7f673a4",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
-                  "tax_identifier": "23f58bf7-4cd8-4bdf-bbda-9848b2730415",
-                  "tax_zone": "d9cd1f30-6124-448c-8a19-71fa00347f59",
-                  "created_at": 1786444861,
-                  "updated_at": 1786444861
+                  "tax_identifier": "a1918047-da36-4e69-9ee0-d15e69efde56",
+                  "tax_zone": "39291763-7c7d-4c76-a537-0f90aa62dbf8",
+                  "created_at": 1786630035,
+                  "updated_at": 1786630035
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -11976,7 +12060,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8d206b19-e4d9-4304-a03d-342708ad72e4",
+                  "id": "a097a4d5-936a-4392-8caf-c057851dee2f",
                   "object": "tax_registration",
                   "deleted": true
                 },

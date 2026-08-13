@@ -5276,7 +5276,7 @@
           "dimensions": {
             "type": "object",
             "nullable": true,
-            "description": "The physical dimensions of this parcel template.",
+            "description": "The physical dimensions of this parcel template. Populated from the carrier's own preset when `carrier_parcel_template_token` resolves to a fixed-size package, and required otherwise.",
             "properties": {
               "length": {
                 "type": "number",
@@ -5304,6 +5304,16 @@
           "weight_unit": {
             "type": "string",
             "description": "The weight unit for this parcel template – one of `lb`, `oz`, `kg`, `g`."
+          },
+          "carrier_parcel_template_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`). When set, dimensions are populated from the carrier's own preset unless it allows custom dimensions, and shipments using this parcel template are quoted for that carrier only. Set to `null` to turn this back into a plain parcel template."
+          },
+          "shipping_provider": {
+            "type": "string",
+            "nullable": true,
+            "description": "The UUID of the shipping provider to resolve `carrier_parcel_template_token` against. Required when `carrier_parcel_template_token` is set. Carrier availability differs between test and live mode providers, and a shipment always re-resolves the token against its own provider."
           }
         }
       },
@@ -5320,6 +5330,29 @@
               "default": {
                 "type": "boolean",
                 "description": "Whether or not this parcel template is the account's default."
+              },
+              "carrier_token": {
+                "type": "string",
+                "nullable": true,
+                "description": "The token of the carrier that provides this template's carrier parcel template, if any (e.g. `fedex`)."
+              },
+              "carrier_name": {
+                "type": "string",
+                "nullable": true,
+                "description": "The display name of the carrier that provides this template's carrier parcel template, if any (e.g. `FedEx`)."
+              },
+              "shipping_provider": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated shipping provider ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_provider_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated shipping provider object."
+                  }
+                ]
               }
             }
           },
@@ -8428,7 +8461,7 @@
           "dimensions": {
             "type": "object",
             "nullable": true,
-            "description": "The dimensions of the parcel.",
+            "description": "The dimensions of the parcel. Defaults to the parcel template's dimensions when `parcel_template` is set and no dimensions are given, and to the carrier's own preset when `carrier_parcel_template_token` resolves to a fixed-size package.",
             "properties": {
               "length": {
                 "type": "number",
@@ -8447,6 +8480,11 @@
                 "description": "The unit for dimensions – one of `in`, `cm`, `ft`, `m`, `mm`, `yd`."
               }
             }
+          },
+          "carrier_parcel_template_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
           }
         }
       },
@@ -8579,7 +8617,7 @@
               "carrier": {
                 "type": "string",
                 "nullable": true,
-                "description": "The shipping carrier for this shipment."
+                "description": "The shipping carrier of the selected rate."
               },
               "carrier_messages": {
                 "type": "array",
@@ -9104,6 +9142,52 @@
                 }
               }
             }
+          }
+        }
+      },
+      "carrier_parcel_template_response": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "carrier_parcel_template"
+          },
+          "carrier_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of the carrier that provides this parcel template (e.g. `usps`, `fedex`), matching the carrier account's `carrier`. Null when the carrier is not connected to this shipping provider."
+          },
+          "carrier_name": {
+            "type": "string",
+            "description": "The display name of the carrier that provides this parcel template (e.g. `USPS`, `FedEx`)."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the carrier parcel template (e.g. `FedEx® Small Box (S1)`)."
+          },
+          "token": {
+            "type": "string",
+            "description": "The unique string representation of the carrier parcel template. Use this to select it."
+          },
+          "length": {
+            "type": "string",
+            "description": "The length of the package, in units specified by `distance_unit`."
+          },
+          "width": {
+            "type": "string",
+            "description": "The width of the package, in units specified by `distance_unit`."
+          },
+          "height": {
+            "type": "string",
+            "description": "The height of the package, in units specified by `distance_unit`."
+          },
+          "distance_unit": {
+            "type": "string",
+            "description": "The measure unit used for length, width, and height – one of `cm`, `in`, `ft`, `m`, `mm`, `yd`."
+          },
+          "is_variable_dimensions": {
+            "type": "boolean",
+            "description": "True if the carrier parcel template allows custom dimensions, such as USPS Softpack."
           }
         }
       },
@@ -11434,16 +11518,16 @@
                   },
                   "data": [
                     {
-                      "id": "27c7383c-64c1-4851-9afb-69d31b2dcefe",
+                      "id": "6dbf0a12-491f-4ba5-bcd6-bfa9ce58c2ef",
                       "object": "cancellation_act",
                       "comment": null,
                       "coupon_applied": false,
                       "preserved": false,
-                      "performed_at": 1786444718,
-                      "cancellation_reason": "4f9226c7-c037-4951-b07b-5909f479cc08",
-                      "subscription": "68182be9-20c0-4ff3-99cc-6ff360327746",
-                      "created_at": 1786444718,
-                      "updated_at": 1786444718
+                      "performed_at": 1786629914,
+                      "cancellation_reason": "438493d4-3d59-4ff8-a281-27dcd504da45",
+                      "subscription": "a93b9431-0c81-4ad6-970f-1a259b16a313",
+                      "created_at": 1786629914,
+                      "updated_at": 1786629914
                     }
                   ]
                 },
@@ -11480,16 +11564,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "73e63d3e-7996-43fd-a2be-3e3525f8a5fd",
+                  "id": "619b9c0b-d94b-490e-9e3a-70b6ed2b9f62",
                   "object": "cancellation_act",
                   "comment": null,
                   "coupon_applied": false,
                   "preserved": false,
-                  "performed_at": 1786444718,
-                  "cancellation_reason": "577a40c5-e035-44b7-b7a5-e9986f0e8abe",
-                  "subscription": "60f14dab-d729-45e4-a312-d5e9391fae0e",
-                  "created_at": 1786444718,
-                  "updated_at": 1786444718
+                  "performed_at": 1786629914,
+                  "cancellation_reason": "b0dfd37f-c551-4209-9527-965ec7e65b1a",
+                  "subscription": "a4e44d1c-bac8-408f-a4a8-4109f085e8b6",
+                  "created_at": 1786629914,
+                  "updated_at": 1786629914
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_act_response"
@@ -11555,7 +11639,7 @@
                   },
                   "data": [
                     {
-                      "id": "a563e189-4638-4edb-81a8-1173dba4b129",
+                      "id": "202bd8c8-1e3b-437c-9246-9048eaaa9a3b",
                       "object": "cancellation_reason",
                       "archived": false,
                       "archived_at": null,
@@ -11565,8 +11649,8 @@
                       "label": "Too expensive",
                       "position": 0,
                       "discarded_at": null,
-                      "created_at": 1786444718,
-                      "updated_at": 1786444718
+                      "created_at": 1786629914,
+                      "updated_at": 1786629914
                     }
                   ]
                 },
@@ -11592,7 +11676,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "94b652c2-8d64-43a0-8b7a-90ab3814f557",
+                  "id": "4ca539d6-ed26-4b73-a5ad-c96b49f250ac",
                   "object": "cancellation_reason",
                   "archived": false,
                   "archived_at": null,
@@ -11602,8 +11686,8 @@
                   "label": "Switching to competitor",
                   "position": 1,
                   "discarded_at": null,
-                  "created_at": 1786444718,
-                  "updated_at": 1786444718
+                  "created_at": 1786629914,
+                  "updated_at": 1786629914
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_reason_response"
@@ -11661,7 +11745,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "11bf7216-64ae-4f13-a612-11dcf242c10b",
+                  "id": "ebfbb9f0-7150-4dff-a442-df960ded3531",
                   "object": "cancellation_reason",
                   "archived": false,
                   "archived_at": null,
@@ -11671,8 +11755,8 @@
                   "label": "Too expensive",
                   "position": 0,
                   "discarded_at": null,
-                  "created_at": 1786444719,
-                  "updated_at": 1786444719
+                  "created_at": 1786629914,
+                  "updated_at": 1786629914
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_reason_response"
@@ -11705,7 +11789,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6a416072-5c1a-4fd5-af4f-0da1b31ff9d7",
+                  "id": "30d5bca0-98b4-440e-a392-5360d650e064",
                   "object": "cancellation_reason",
                   "archived": false,
                   "archived_at": null,
@@ -11715,8 +11799,8 @@
                   "label": "Too expensive",
                   "position": 0,
                   "discarded_at": null,
-                  "created_at": 1786444719,
-                  "updated_at": 1786444719
+                  "created_at": 1786629915,
+                  "updated_at": 1786629915
                 },
                 "schema": {
                   "$ref": "#/components/schemas/cancellation_reason_response"
@@ -11772,7 +11856,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "36b6572e-41d6-4529-98e8-056abf9f7167",
+                  "id": "092f5098-2a32-4d15-980c-7edfe0ab162a",
                   "object": "cancellation_reason",
                   "deleted": true
                 },
@@ -11852,10 +11936,10 @@
                   },
                   "data": [
                     {
-                      "id": "81df0112-0089-4897-8d8b-db7df64e6eb4",
+                      "id": "aa2a90d8-c6e3-4dca-82df-748aad2e79e9",
                       "object": "period",
                       "ad_hoc_amount": null,
-                      "end_at": 1789123185,
+                      "end_at": 1789308369,
                       "next_payment_retry_at": null,
                       "payment_retry_count": 0,
                       "payoff": false,
@@ -11864,20 +11948,20 @@
                       "renewal_reminder_sent_at": null,
                       "restoral": false,
                       "skip_proration": false,
-                      "start_at": 1786444785,
+                      "start_at": 1786629969,
                       "status": "paid",
-                      "checkout": "a5fa4598-e1e1-4e43-9ae4-4f02794d55a3",
-                      "price": "899b777e-9763-4a89-8430-0a6fe56d063f",
-                      "subscription": "11ac5890-3ce9-4093-8f08-9c0de54f7b5e",
+                      "checkout": "4f14eb59-d38a-4986-a243-a5a5f98b93c7",
+                      "price": "a4717a36-815a-4e94-a0df-23a3270f148a",
+                      "subscription": "035078af-ae07-4d97-8a66-f354eeecb72d",
                       "variant": null,
-                      "created_at": 1786444785,
-                      "updated_at": 1786444785
+                      "created_at": 1786629969,
+                      "updated_at": 1786629969
                     },
                     {
-                      "id": "db7aeccb-5d5a-4fdf-8838-0abcfd95f6d4",
+                      "id": "41ffdafd-d1f0-47cc-b723-eb9492c4ee89",
                       "object": "period",
                       "ad_hoc_amount": null,
-                      "end_at": 1789123185,
+                      "end_at": 1789308369,
                       "next_payment_retry_at": null,
                       "payment_retry_count": 0,
                       "payoff": false,
@@ -11886,14 +11970,14 @@
                       "renewal_reminder_sent_at": null,
                       "restoral": false,
                       "skip_proration": false,
-                      "start_at": 1786444785,
+                      "start_at": 1786629969,
                       "status": "paid",
-                      "checkout": "93e4bc96-47b0-433c-a075-a80bed5dba63",
-                      "price": "899b777e-9763-4a89-8430-0a6fe56d063f",
-                      "subscription": "11ac5890-3ce9-4093-8f08-9c0de54f7b5e",
+                      "checkout": "22e35638-5510-42c6-9983-eccdf10523b6",
+                      "price": "a4717a36-815a-4e94-a0df-23a3270f148a",
+                      "subscription": "035078af-ae07-4d97-8a66-f354eeecb72d",
                       "variant": null,
-                      "created_at": 1786444785,
-                      "updated_at": 1786444785
+                      "created_at": 1786629969,
+                      "updated_at": 1786629969
                     }
                   ]
                 },
@@ -11930,10 +12014,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7c295d6a-40a0-4227-b30a-f1780c254b2c",
+                  "id": "f1a6782e-da65-4963-bd2c-b99c74a49c8f",
                   "object": "period",
                   "ad_hoc_amount": null,
-                  "end_at": 1786448386,
+                  "end_at": 1786633570,
                   "next_payment_retry_at": null,
                   "payment_retry_count": 0,
                   "payoff": false,
@@ -11942,14 +12026,14 @@
                   "renewal_reminder_sent_at": null,
                   "restoral": false,
                   "skip_proration": false,
-                  "start_at": 1786444786,
+                  "start_at": 1786629970,
                   "status": "paid",
-                  "checkout": "e63219c2-90b3-4a67-b8c7-405c9ee7e5a6",
-                  "price": "cfbd43f8-aa23-417d-88c9-2e2402f83e88",
-                  "subscription": "0fb178e9-f80f-4f3e-8c5a-e7fb1f976d20",
+                  "checkout": "e1590bd5-81b7-41a5-9756-a16d9dc3328f",
+                  "price": "cefac770-0168-4940-a8af-1fa34c570ace",
+                  "subscription": "04ac9839-1969-47a9-bd36-9499b8b264b5",
                   "variant": null,
-                  "created_at": 1786444786,
-                  "updated_at": 1786444786
+                  "created_at": 1786629970,
+                  "updated_at": 1786629970
                 },
                 "schema": {
                   "$ref": "#/components/schemas/period_response"
@@ -11974,7 +12058,7 @@
                 },
                 "example": {
                   "period": {
-                    "end_at": 1786448386
+                    "end_at": 1786633570
                   }
                 }
               }
@@ -12007,10 +12091,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "88b41d56-8c9a-41b3-8467-1bc785b0233b",
+                  "id": "51ef59bc-8a5b-45c5-a9e1-f782d8bac455",
                   "object": "period",
                   "ad_hoc_amount": null,
-                  "end_at": 1789123186,
+                  "end_at": 1789308370,
                   "next_payment_retry_at": null,
                   "payment_retry_count": 0,
                   "payoff": false,
@@ -12019,14 +12103,14 @@
                   "renewal_reminder_sent_at": null,
                   "restoral": false,
                   "skip_proration": false,
-                  "start_at": 1786444786,
+                  "start_at": 1786629970,
                   "status": "payment_failed",
-                  "checkout": "3720d857-8b85-429b-8000-877dbd3e05cd",
-                  "price": "af10445d-9927-437e-a5ce-1a2783e27af8",
-                  "subscription": "a61665a7-fe49-4c67-a68f-02b9ee9b8fff",
+                  "checkout": "bab914a1-32b3-4c60-b9c7-c1a7b54fce42",
+                  "price": "f3f7b66c-b48d-4b88-b413-f5ebc84cfe30",
+                  "subscription": "674c41fc-4b57-43d1-81a0-69aa1d510123",
                   "variant": null,
-                  "created_at": 1786444786,
-                  "updated_at": 1786444786
+                  "created_at": 1786629970,
+                  "updated_at": 1786629970
                 },
                 "schema": {
                   "$ref": "#/components/schemas/period_response"
@@ -12051,7 +12135,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e24f2d3a-7557-49fb-8a71-494ecbb6937c",
+                  "id": "819eef40-b353-4f8a-818a-cd153f8f56e3",
                   "object": "subscription_protocol",
                   "bypass_duplicate_trials": false,
                   "cancel_behavior": "pending",
@@ -12076,9 +12160,9 @@
                   "require_upfront_payment_method": true,
                   "revoke_purchases_on_past_due": false,
                   "upgrade_behavior": "immediate",
-                  "preservation_coupon": "e5af8c70-a882-45db-80a6-fc11425b51ea",
-                  "created_at": 1786444850,
-                  "updated_at": 1786444850
+                  "preservation_coupon": "b5a5b17e-28c1-424c-a772-de10e6e526fe",
+                  "created_at": 1786630027,
+                  "updated_at": 1786630027
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_protocol_response"
@@ -12102,7 +12186,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3613dc84-42f5-4e01-b00d-8bbddcb1ad75",
+                  "id": "2356493c-371c-421c-a754-299da06a59cd",
                   "object": "subscription_protocol",
                   "bypass_duplicate_trials": false,
                   "cancel_behavior": "pending",
@@ -12127,9 +12211,9 @@
                   "require_upfront_payment_method": true,
                   "revoke_purchases_on_past_due": false,
                   "upgrade_behavior": "immediate",
-                  "preservation_coupon": "904a81e5-0790-4aa6-8e96-4e4714e3ee95",
-                  "created_at": 1786444850,
-                  "updated_at": 1786444851
+                  "preservation_coupon": "efae7833-b3fe-46e0-a1fa-1ea2a4b4f20c",
+                  "created_at": 1786630027,
+                  "updated_at": 1786630027
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_protocol_response"
@@ -12342,14 +12426,14 @@
                   },
                   "data": [
                     {
-                      "id": "9e0d1c63-fbda-48f3-aef1-80408bbf6224",
+                      "id": "e7646b10-c677-47e0-9813-d23be4fbada9",
                       "object": "subscription",
                       "ad_hoc_amount": null,
                       "affiliation_expires_at": null,
                       "cancel_at_period_end": false,
                       "currency": "usd",
-                      "current_period_end_at": 1789123251,
-                      "current_period_start_at": 1786444851,
+                      "current_period_end_at": 1789308427,
+                      "current_period_start_at": 1786630027,
                       "ended_at": null,
                       "finite": false,
                       "last_renewal_reminder_sent_at": null,
@@ -12358,7 +12442,7 @@
                       "metadata": {},
                       "pending_update": {},
                       "price_readonly": false,
-                      "portal_url": "http://app.example.com/portal_redirect/subscriptions/9e0d1c63-fbda-48f3-aef1-80408bbf6224",
+                      "portal_url": "http://app.example.com/portal_redirect/subscriptions/e7646b10-c677-47e0-9813-d23be4fbada9",
                       "quantity": 1,
                       "remaining_period_count": null,
                       "restart_on_completed": false,
@@ -12371,17 +12455,17 @@
                       "variant_options": null,
                       "affiliation": null,
                       "current_cancellation_act": null,
-                      "current_period": "10205bbc-d70c-428f-aae6-5b22fec0e455",
-                      "customer": "8f4280e1-0e1b-4dc7-84bb-072e191242d2",
+                      "current_period": "504dffe9-532d-46ec-9c21-5413fad80a28",
+                      "customer": "87c0e87f-c462-4ec9-a0b9-49a5e0728536",
                       "discount": null,
                       "manual_payment_method": null,
-                      "payment_method": "97c99cf0-c305-4516-97ff-04cdc16035ff",
-                      "price": "df8e423c-bcef-4629-aa3a-fc38f35aefaf",
-                      "purchase": "dc7373bf-d5bb-40d0-aa01-f61189f16141",
+                      "payment_method": "890c61a4-0b7d-4229-b4a2-b7863530b516",
+                      "price": "6a1d4882-48d2-4de2-82f7-4038ab540163",
+                      "purchase": "dde4ebd6-4fe7-4b54-9b3c-d5a03ad14495",
                       "shipping_method": null,
                       "variant": null,
-                      "created_at": 1786444851,
-                      "updated_at": 1786444851
+                      "created_at": 1786630027,
+                      "updated_at": 1786630027
                     }
                   ]
                 },
@@ -12574,14 +12658,14 @@
                   },
                   "data": [
                     {
-                      "id": "ab67fd2c-aab9-45a0-bf6f-928c468e4215",
+                      "id": "3877b8cd-2a61-47c6-a486-c71aa4c22692",
                       "object": "subscription",
                       "ad_hoc_amount": null,
                       "affiliation_expires_at": null,
                       "cancel_at_period_end": false,
                       "currency": "usd",
-                      "current_period_end_at": 1789123251,
-                      "current_period_start_at": 1786444851,
+                      "current_period_end_at": 1789308428,
+                      "current_period_start_at": 1786630028,
                       "ended_at": null,
                       "finite": false,
                       "last_renewal_reminder_sent_at": null,
@@ -12590,7 +12674,7 @@
                       "metadata": {},
                       "pending_update": {},
                       "price_readonly": false,
-                      "portal_url": "http://app.example.com/portal_redirect/subscriptions/ab67fd2c-aab9-45a0-bf6f-928c468e4215",
+                      "portal_url": "http://app.example.com/portal_redirect/subscriptions/3877b8cd-2a61-47c6-a486-c71aa4c22692",
                       "quantity": 1,
                       "remaining_period_count": null,
                       "restart_on_completed": false,
@@ -12603,17 +12687,17 @@
                       "variant_options": null,
                       "affiliation": null,
                       "current_cancellation_act": null,
-                      "current_period": "c76cd533-9f19-4694-a6b8-7de489526484",
-                      "customer": "1848566f-56c8-491b-9ced-eafc18743172",
+                      "current_period": "5ffa3d9e-4a49-4a99-871d-9aa1024f172a",
+                      "customer": "29cda025-de14-4463-82c2-0980fb374310",
                       "discount": null,
                       "manual_payment_method": null,
-                      "payment_method": "670da2a3-2d02-4f6a-84ea-9a6eec274779",
-                      "price": "fef30865-46ca-4470-80ae-302ab3a59b89",
-                      "purchase": "3d7c3103-bc1b-4fbb-ad6a-61d47aaa58aa",
+                      "payment_method": "e3041522-33c5-48f7-81fb-c1620cb17e57",
+                      "price": "56d200b1-b94a-4362-8332-85201c306139",
+                      "purchase": "69450c8a-aace-468e-bca9-a331352b63c0",
                       "shipping_method": null,
                       "variant": null,
-                      "created_at": 1786444851,
-                      "updated_at": 1786444851
+                      "created_at": 1786630028,
+                      "updated_at": 1786630028
                     }
                   ]
                 },
@@ -12639,14 +12723,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "967989d5-2627-4c20-9b9b-9b16eb142a65",
+                  "id": "34f51ce6-8b24-48df-be94-52a5352a7087",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1789123252,
-                  "current_period_start_at": 1786444852,
+                  "current_period_end_at": 1789308428,
+                  "current_period_start_at": 1786630028,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12655,7 +12739,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/967989d5-2627-4c20-9b9b-9b16eb142a65",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/34f51ce6-8b24-48df-be94-52a5352a7087",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12668,17 +12752,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "1559befb-b83c-4f90-8a0e-f601de0a0d00",
-                  "customer": "0848325b-bdbe-4ef3-8cf4-4985a6563d72",
+                  "current_period": "1f8159bb-e48b-446b-b003-847fc534d5be",
+                  "customer": "7c41a1b4-dcc5-4f04-843d-b48e1f4896a6",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "344b518d-6dfd-41c3-836c-fc18b45db957",
-                  "price": "60a94496-85be-4b8b-b891-c4182f423a25",
-                  "purchase": "66cf4a14-44b8-48f1-88d8-3be6849bb506",
+                  "payment_method": "8f971d06-06cd-4f38-96fe-2eefc9e704f7",
+                  "price": "9558ccca-8cf7-444f-9500-19488b98bd62",
+                  "purchase": "04f13d2e-ab46-4364-814e-9f0956b8b502",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444852,
-                  "updated_at": 1786444852
+                  "created_at": 1786630028,
+                  "updated_at": 1786630028
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12703,9 +12787,9 @@
                 },
                 "example": {
                   "subscription": {
-                    "customer": "0848325b-bdbe-4ef3-8cf4-4985a6563d72",
-                    "price": "60a94496-85be-4b8b-b891-c4182f423a25",
-                    "payment_method": "344b518d-6dfd-41c3-836c-fc18b45db957"
+                    "customer": "7c41a1b4-dcc5-4f04-843d-b48e1f4896a6",
+                    "price": "9558ccca-8cf7-444f-9500-19488b98bd62",
+                    "payment_method": "8f971d06-06cd-4f38-96fe-2eefc9e704f7"
                   }
                 }
               }
@@ -12738,14 +12822,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d14f57bc-c82c-4ee6-afe1-cb7e0e9c5d3b",
+                  "id": "90521a4c-6aae-4bf8-9a5c-02ff3b58f9d6",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1789123253,
-                  "current_period_start_at": 1786444853,
+                  "current_period_end_at": 1789308429,
+                  "current_period_start_at": 1786630029,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12754,7 +12838,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/d14f57bc-c82c-4ee6-afe1-cb7e0e9c5d3b",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/90521a4c-6aae-4bf8-9a5c-02ff3b58f9d6",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12767,17 +12851,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "869c5d0f-69c5-4249-a2af-0a8a01f22b5a",
-                  "customer": "ec0fef87-18fb-44f6-95ce-4c00fa74097c",
+                  "current_period": "fd39cead-d65c-4d7d-be41-5f6eb048ad78",
+                  "customer": "45f58fe0-4e16-456a-8ca9-d35efa08d830",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "9f16ef64-3708-4571-b3ca-8e63d4d3ef91",
-                  "price": "d51a19bb-c5b5-4b67-a172-ec974cbf4eab",
-                  "purchase": "d1fd5846-6bf3-4f59-ba6c-b495f8f0e868",
+                  "payment_method": "3d1cea06-9821-4d37-b059-ee792ec02314",
+                  "price": "45e7f013-433b-456c-afa7-7b278ca925bf",
+                  "purchase": "a8a7ba72-7357-4555-afd3-3874ba39e9c6",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444853,
-                  "updated_at": 1786444853
+                  "created_at": 1786630029,
+                  "updated_at": 1786630029
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12838,14 +12922,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e7c3c64d-d4a6-463b-9643-a6c49a5b8340",
+                  "id": "0d581154-50d6-4aa6-9284-ad10ae9617e7",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1789123253,
-                  "current_period_start_at": 1786444853,
+                  "current_period_end_at": 1789308429,
+                  "current_period_start_at": 1786630029,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12854,7 +12938,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/e7c3c64d-d4a6-463b-9643-a6c49a5b8340",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/0d581154-50d6-4aa6-9284-ad10ae9617e7",
                   "quantity": 2,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -12867,17 +12951,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "93d0f64b-b476-4b11-a3a6-9adec02dcfe0",
-                  "customer": "40bb357f-482b-4d6b-bc1a-1dd737f19844",
+                  "current_period": "d9376d8c-3cc7-4572-9ff3-081b927b0c10",
+                  "customer": "b487bcd9-be6c-4f32-a926-a2a4406b5513",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "5a484fdb-83f6-46c9-86e3-1594c2a234b5",
-                  "price": "fa1598eb-b102-499c-b676-b55b10ba90f1",
-                  "purchase": "cb329f8b-da81-4d39-957d-91ebef3c4a16",
+                  "payment_method": "7b95d671-d427-4317-8b97-6896c9b7cadb",
+                  "price": "610ddd06-b9ca-400e-af0f-4e4b821608e2",
+                  "purchase": "0bcee72b-8b78-43f3-b9da-ce32fb2a7866",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444853,
-                  "updated_at": 1786444853
+                  "created_at": 1786630029,
+                  "updated_at": 1786630029
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -12964,14 +13048,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d9909f6c-6e9b-4473-8544-7964a095d7c4",
+                  "id": "de702c76-e9f4-43f1-b965-d34a673f1e64",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": true,
                   "currency": "usd",
-                  "current_period_end_at": 1789123254,
-                  "current_period_start_at": 1786444854,
+                  "current_period_end_at": 1789308430,
+                  "current_period_start_at": 1786630030,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -12980,11 +13064,11 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/d9909f6c-6e9b-4473-8544-7964a095d7c4",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/de702c76-e9f4-43f1-b965-d34a673f1e64",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
-                  "restore_at": 1791715254,
+                  "restore_at": 1791900430,
                   "subtotal_amount": 2900,
                   "status": "active",
                   "tax_enabled": false,
@@ -12992,18 +13076,18 @@
                   "trial_start_at": null,
                   "variant_options": null,
                   "affiliation": null,
-                  "current_cancellation_act": "a87f07b3-995d-495f-af88-3c2d9cb4c039",
-                  "current_period": "9565fe2c-5377-473a-adcd-3c988c61a00c",
-                  "customer": "780f00e0-5c64-4c22-b765-599ad0f75b14",
+                  "current_cancellation_act": "a44c8a12-de38-43d8-8c02-6390710e4891",
+                  "current_period": "4f757e27-5572-44b3-b03f-5becb4ebb27b",
+                  "customer": "fc7827e9-4748-4a8c-ba6e-aa431c22ca12",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "1b117228-b20d-44ed-87a4-2644f294efb7",
-                  "price": "286919bc-eb15-42ec-abaf-a8a27c8c3e48",
-                  "purchase": "af026f61-672d-4aa2-bc2a-5a189036fefa",
+                  "payment_method": "9d58b799-ec1e-4144-b783-e25ce2f2edf5",
+                  "price": "71b8c641-3d63-43ca-b6dd-0dac8a638d1d",
+                  "purchase": "156d84c3-1b35-43ee-88cc-7444bceacb95",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444854,
-                  "updated_at": 1786444854
+                  "created_at": 1786630030,
+                  "updated_at": 1786630030
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -13028,7 +13112,7 @@
                 },
                 "example": {
                   "subscription": {
-                    "restore_at": "2026-10-11 10:40:54 UTC"
+                    "restore_at": "2026-10-13 14:07:10 UTC"
                   }
                 }
               }
@@ -13061,15 +13145,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "750bd712-aff4-4a12-8efc-dedde36564d0",
+                  "id": "fc9f43f1-4faf-4f81-9864-6f418ac8656e",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1789123255,
-                  "current_period_start_at": 1786444855,
-                  "ended_at": 1786444855,
+                  "current_period_end_at": 1789308430,
+                  "current_period_start_at": 1786630030,
+                  "ended_at": 1786630030,
                   "finite": true,
                   "last_renewal_reminder_sent_at": null,
                   "live_mode": true,
@@ -13077,7 +13161,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": true,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/750bd712-aff4-4a12-8efc-dedde36564d0",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/fc9f43f1-4faf-4f81-9864-6f418ac8656e",
                   "quantity": 1,
                   "remaining_period_count": 5,
                   "restart_on_completed": false,
@@ -13090,17 +13174,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "22b20c6c-8838-4f96-860b-90be30d0c636",
-                  "customer": "59935938-30fd-4dd4-bc52-acc270bf0285",
+                  "current_period": "70f8fe1b-ff6d-4c55-86ca-03947913f201",
+                  "customer": "ccb58916-eca0-45ce-9693-6ad9ac07df47",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "a8593a39-466d-411d-9dc3-1bb233ca2bfc",
-                  "price": "a5330e3d-bb1e-4f2a-aeba-ce57211358ac",
-                  "purchase": "6c3fe5ff-2347-4572-b78f-1f975634a6a5",
+                  "payment_method": "3d0371ee-2231-4db8-87b7-cb3b8e92199d",
+                  "price": "99a621db-fd90-4e3a-9ff0-bd135b6c908a",
+                  "purchase": "b0d5b49d-8c6f-45d2-8716-6fdcb6c3fc51",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444855,
-                  "updated_at": 1786444855
+                  "created_at": 1786630030,
+                  "updated_at": 1786630030
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -13135,14 +13219,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0bf12e88-9415-4ea6-8126-d5f32ce592ef",
+                  "id": "1ab4c503-cae1-4b25-96ae-56a5a5923b7e",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1786444855,
-                  "current_period_start_at": 1786444855,
+                  "current_period_end_at": 1786630031,
+                  "current_period_start_at": 1786630031,
                   "ended_at": null,
                   "finite": true,
                   "last_renewal_reminder_sent_at": null,
@@ -13151,7 +13235,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": true,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/0bf12e88-9415-4ea6-8126-d5f32ce592ef",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/1ab4c503-cae1-4b25-96ae-56a5a5923b7e",
                   "quantity": 1,
                   "remaining_period_count": 5,
                   "restart_on_completed": false,
@@ -13164,17 +13248,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "501c1ea2-b701-44a7-aa24-e14d0f24efe4",
-                  "customer": "167b566b-c373-437a-82c1-d1abce57b5a7",
+                  "current_period": "fdc0cac9-3f2f-477b-8f59-172c4fdff7c4",
+                  "customer": "81bd0faf-3c77-41fe-b26a-3849de773887",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "40f3a27a-7a18-480b-a7d9-becfd8334ee7",
-                  "price": "4a61dc0f-0298-4c6f-98da-4f55beab692b",
-                  "purchase": "3318c2f9-d562-4945-bb85-b1cc2adcc1f0",
+                  "payment_method": "7c3efc0b-6c43-4e58-98d6-711b9e65e067",
+                  "price": "99a17c92-2a00-4c41-8b19-72522d8c8e02",
+                  "purchase": "eabb93d2-2f57-4f03-9419-4918b8c29431",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444855,
-                  "updated_at": 1786444855
+                  "created_at": 1786630031,
+                  "updated_at": 1786630031
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -13229,14 +13313,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "26006c74-8474-4a83-84b2-18bbc7fa907d",
+                  "id": "84b85d4a-7cbd-44b5-b344-add92d69175f",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1789123256,
-                  "current_period_start_at": 1786444856,
+                  "current_period_end_at": 1789308431,
+                  "current_period_start_at": 1786630031,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -13245,7 +13329,7 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/26006c74-8474-4a83-84b2-18bbc7fa907d",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/84b85d4a-7cbd-44b5-b344-add92d69175f",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
@@ -13257,18 +13341,18 @@
                   "trial_start_at": null,
                   "variant_options": null,
                   "affiliation": null,
-                  "current_cancellation_act": "9f60de9a-fc87-48ca-9c71-07912fc68a79",
-                  "current_period": "9b25c9be-51b5-4f5a-a25d-3e918d4b1af6",
-                  "customer": "e659d5a5-bec4-4445-9781-797cd46b95bd",
+                  "current_cancellation_act": "296e9084-191e-46d4-973e-8c1089f27f06",
+                  "current_period": "29ded30a-5832-42f5-8f7b-5d6979705ea3",
+                  "customer": "369417e0-9e3a-4217-a41b-f6c5cfe8573e",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "96870ffc-9eb3-4f98-9893-8955d9af696e",
-                  "price": "a18096c0-83ef-4c72-a1d5-8f08bf9e34b9",
-                  "purchase": "bb75a698-dd9c-4fe7-94fe-f06f801847c6",
+                  "payment_method": "ce6c30eb-c90a-42b1-8210-7ea0556d260d",
+                  "price": "8dd039e7-ffaa-4988-abf1-2b76e69ddad3",
+                  "purchase": "692c953a-d624-4d9c-9bf0-e537fe9185df",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444856,
-                  "updated_at": 1786444856
+                  "created_at": 1786630031,
+                  "updated_at": 1786630032
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -13314,14 +13398,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b97ba07b-dd9a-4c34-9646-4bf72a177ab6",
+                  "id": "6cbe75f1-13a8-467a-9d61-6f46b2255ef9",
                   "object": "subscription",
                   "ad_hoc_amount": null,
                   "affiliation_expires_at": null,
                   "cancel_at_period_end": false,
                   "currency": "usd",
-                  "current_period_end_at": 1789123257,
-                  "current_period_start_at": 1786444857,
+                  "current_period_end_at": 1789308432,
+                  "current_period_start_at": 1786630032,
                   "ended_at": null,
                   "finite": false,
                   "last_renewal_reminder_sent_at": null,
@@ -13330,11 +13414,11 @@
                   "metadata": {},
                   "pending_update": {},
                   "price_readonly": false,
-                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/b97ba07b-dd9a-4c34-9646-4bf72a177ab6",
+                  "portal_url": "http://app.example.com/portal_redirect/subscriptions/6cbe75f1-13a8-467a-9d61-6f46b2255ef9",
                   "quantity": 1,
                   "remaining_period_count": null,
                   "restart_on_completed": false,
-                  "restore_at": 1786444857,
+                  "restore_at": 1786630032,
                   "subtotal_amount": 2900,
                   "status": "active",
                   "tax_enabled": false,
@@ -13343,17 +13427,17 @@
                   "variant_options": null,
                   "affiliation": null,
                   "current_cancellation_act": null,
-                  "current_period": "1926dda6-da13-40d9-a618-ef6f37a0d57a",
-                  "customer": "23f6e460-27ee-43d4-b4cc-6e78e7c8d4af",
+                  "current_period": "6cfa1603-1353-48ca-8c0b-6f6bdbb42607",
+                  "customer": "46c1597d-7a63-48ae-82d2-b0d0ad286f6a",
                   "discount": null,
                   "manual_payment_method": null,
-                  "payment_method": "04d47550-3a5a-477a-9864-f49d16c345f7",
-                  "price": "534f22e2-c5e4-43fb-84ae-64bd72c04744",
-                  "purchase": "31743a35-acce-4650-93ce-88746b6e7d6c",
+                  "payment_method": "fb5476b2-01fa-4d7a-ba5e-b61ca3d3d612",
+                  "price": "0fe3aaad-e86b-4f8f-a284-ae0d73a4693a",
+                  "purchase": "405f4533-ca8b-4cc6-836f-bb1645892fe2",
                   "shipping_method": null,
                   "variant": null,
-                  "created_at": 1786444856,
-                  "updated_at": 1786444857
+                  "created_at": 1786630032,
+                  "updated_at": 1786630032
                 },
                 "schema": {
                   "$ref": "#/components/schemas/subscription_response"
@@ -13435,10 +13519,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fadc6e0c-b740-44c4-8557-0c5f4ebea284",
+                  "id": "6d899a18-7fbc-453b-a46a-7645e7a02a07",
                   "object": "period",
                   "ad_hoc_amount": null,
-                  "end_at": 1789123258,
+                  "end_at": 1789308433,
                   "next_payment_retry_at": null,
                   "payment_retry_count": 0,
                   "payoff": false,
@@ -13447,14 +13531,14 @@
                   "renewal_reminder_sent_at": null,
                   "restoral": false,
                   "skip_proration": false,
-                  "start_at": 1786444858,
+                  "start_at": 1786630033,
                   "status": "draft",
-                  "checkout": "af7d5e19-7780-4fc0-bbe0-8eb0328b66c6",
-                  "price": "44c25668-62ba-4689-b641-3bfc689d9c8d",
-                  "subscription": "3f854287-b3d0-45f8-a21e-a61b9ce9c541",
+                  "checkout": "a1fdce0d-06a7-4c9a-b253-f48fc726af90",
+                  "price": "295c1f67-62a8-462d-83b3-f17bc6821b2a",
+                  "subscription": "a811bb85-c3d0-4cea-b935-bd801cf31480",
                   "variant": null,
-                  "created_at": 1786444858,
-                  "updated_at": 1786444858
+                  "created_at": 1786630033,
+                  "updated_at": 1786630033
                 },
                 "schema": {
                   "$ref": "#/components/schemas/period_response"

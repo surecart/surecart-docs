@@ -5276,7 +5276,7 @@
           "dimensions": {
             "type": "object",
             "nullable": true,
-            "description": "The physical dimensions of this parcel template.",
+            "description": "The physical dimensions of this parcel template. Populated from the carrier's own preset when `carrier_parcel_template_token` resolves to a fixed-size package, and required otherwise.",
             "properties": {
               "length": {
                 "type": "number",
@@ -5304,6 +5304,16 @@
           "weight_unit": {
             "type": "string",
             "description": "The weight unit for this parcel template – one of `lb`, `oz`, `kg`, `g`."
+          },
+          "carrier_parcel_template_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`). When set, dimensions are populated from the carrier's own preset unless it allows custom dimensions, and shipments using this parcel template are quoted for that carrier only. Set to `null` to turn this back into a plain parcel template."
+          },
+          "shipping_provider": {
+            "type": "string",
+            "nullable": true,
+            "description": "The UUID of the shipping provider to resolve `carrier_parcel_template_token` against. Required when `carrier_parcel_template_token` is set. Carrier availability differs between test and live mode providers, and a shipment always re-resolves the token against its own provider."
           }
         }
       },
@@ -5320,6 +5330,29 @@
               "default": {
                 "type": "boolean",
                 "description": "Whether or not this parcel template is the account's default."
+              },
+              "carrier_token": {
+                "type": "string",
+                "nullable": true,
+                "description": "The token of the carrier that provides this template's carrier parcel template, if any (e.g. `fedex`)."
+              },
+              "carrier_name": {
+                "type": "string",
+                "nullable": true,
+                "description": "The display name of the carrier that provides this template's carrier parcel template, if any (e.g. `FedEx`)."
+              },
+              "shipping_provider": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated shipping provider ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/shipping_provider_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated shipping provider object."
+                  }
+                ]
               }
             }
           },
@@ -8428,7 +8461,7 @@
           "dimensions": {
             "type": "object",
             "nullable": true,
-            "description": "The dimensions of the parcel.",
+            "description": "The dimensions of the parcel. Defaults to the parcel template's dimensions when `parcel_template` is set and no dimensions are given, and to the carrier's own preset when `carrier_parcel_template_token` resolves to a fixed-size package.",
             "properties": {
               "length": {
                 "type": "number",
@@ -8447,6 +8480,11 @@
                 "description": "The unit for dimensions – one of `in`, `cm`, `ft`, `m`, `mm`, `yd`."
               }
             }
+          },
+          "carrier_parcel_template_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
           }
         }
       },
@@ -8579,7 +8617,7 @@
               "carrier": {
                 "type": "string",
                 "nullable": true,
-                "description": "The shipping carrier for this shipment."
+                "description": "The shipping carrier of the selected rate."
               },
               "carrier_messages": {
                 "type": "array",
@@ -9104,6 +9142,52 @@
                 }
               }
             }
+          }
+        }
+      },
+      "carrier_parcel_template_response": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "carrier_parcel_template"
+          },
+          "carrier_token": {
+            "type": "string",
+            "nullable": true,
+            "description": "The token of the carrier that provides this parcel template (e.g. `usps`, `fedex`), matching the carrier account's `carrier`. Null when the carrier is not connected to this shipping provider."
+          },
+          "carrier_name": {
+            "type": "string",
+            "description": "The display name of the carrier that provides this parcel template (e.g. `USPS`, `FedEx`)."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the carrier parcel template (e.g. `FedEx® Small Box (S1)`)."
+          },
+          "token": {
+            "type": "string",
+            "description": "The unique string representation of the carrier parcel template. Use this to select it."
+          },
+          "length": {
+            "type": "string",
+            "description": "The length of the package, in units specified by `distance_unit`."
+          },
+          "width": {
+            "type": "string",
+            "description": "The width of the package, in units specified by `distance_unit`."
+          },
+          "height": {
+            "type": "string",
+            "description": "The height of the package, in units specified by `distance_unit`."
+          },
+          "distance_unit": {
+            "type": "string",
+            "description": "The measure unit used for length, width, and height – one of `cm`, `in`, `ft`, `m`, `mm`, `yd`."
+          },
+          "is_variable_dimensions": {
+            "type": "boolean",
+            "description": "True if the carrier parcel template allows custom dimensions, such as USPS Softpack."
           }
         }
       },
@@ -11385,14 +11469,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "11afbbfd-aecf-427d-a742-3758d07798f6",
+                  "id": "bda96354-19f4-4379-bb63-57666e6d53e9",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "c518c579-ef93-4dee-8810-f49743802901",
-                  "created_at": 1786444795,
-                  "updated_at": 1786444795
+                  "license": "9e9e5d28-469e-4d41-90df-48785fc6b599",
+                  "created_at": 1786629978,
+                  "updated_at": 1786629978
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11419,7 +11503,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "c518c579-ef93-4dee-8810-f49743802901"
+                    "license_id": "9e9e5d28-469e-4d41-90df-48785fc6b599"
                   }
                 }
               }
@@ -11452,14 +11536,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ecc5c6ef-731a-47ca-a6cd-c0b296afe6c6",
+                  "id": "6421afa5-6493-467a-97ed-5e1077ab3198",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "98df8073-a048-415c-b67e-4187fa4d9588",
-                  "created_at": 1786444796,
-                  "updated_at": 1786444796
+                  "license": "aa344365-6125-4c61-a900-c51d23a91443",
+                  "created_at": 1786629979,
+                  "updated_at": 1786629979
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11492,14 +11576,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c689387a-f22c-4dbf-8624-a0faca7abdd6",
+                  "id": "c09bd43e-7f1c-46f1-b614-35fa0c449348",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "c54abd87-d040-4af5-9aa4-af67865d1e00",
-                  "created_at": 1786444798,
-                  "updated_at": 1786444798
+                  "license": "0b03ebb7-6af5-464d-8e77-6c623bc3c174",
+                  "created_at": 1786629980,
+                  "updated_at": 1786629980
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11555,7 +11639,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cb88e671-4d63-43b5-bf85-bcf4f5632ca1",
+                  "id": "74e35443-917f-4c6f-9e2e-b068180340a7",
                   "object": "activation",
                   "deleted": true
                 },
@@ -13153,14 +13237,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "93d50661-c834-4fed-a905-b01e9fa525aa",
+                  "id": "62c850b7-197a-4502-87f1-a3fe3e41250c",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1789036800,
+                  "expires_at": 1789221982,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1786444800,
-                  "updated_at": 1786444800
+                  "created_at": 1786629982,
+                  "updated_at": 1786629982
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -13185,7 +13269,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "2B771224",
+                    "affiliation_code": "A6910AC6",
                     "url": "http://example.com"
                   }
                 }
@@ -13219,19 +13303,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7f4984a8-ea83-443a-a99b-50732df4cd32",
+                  "id": "48664cd9-d67b-4fe3-8301-48dd9f1f3e4f",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "6e54eed0-8005-4fce-ae4b-377a1d0bfd5c",
+                  "key": "102dd591-91b8-4def-8301-2d2b7d0d0c00",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "5c6f56ef-9a57-45b1-816f-83d39d51b4c9",
-                  "product": "6a60973f-58dd-4246-a14f-d27b2c39f1a4",
+                  "price": "e6e46820-0c18-4e35-a932-9545cd9bd38f",
+                  "product": "bba7584e-a645-4e2d-b64b-a73963f9e7bc",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1786444801,
-                  "updated_at": 1786444801
+                  "created_at": 1786629983,
+                  "updated_at": 1786629983
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -13284,7 +13368,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ca5cb854-7330-4d4d-9d2c-87a68d3d8431",
+                  "id": "4bfc9094-abe1-4843-96d6-d9ed1c78d104",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -13295,11 +13379,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImNmNDJmNDI5LWMwMmYtNGFjMS04ZDg2LWQ0NzhiYTY5MGRhYyIsImV4cCI6IjIwMjYtMDgtMTFUMTA6NTU6MDIuNzEwWiIsInB1ciI6ImJsb2JfaWQifX0=--8044b1341fa5c827efbee14983ecdcd819c57d20/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjZhOTM1MzQ2LTA3NTQtNGRhYS1hNWI1LTNkNWI4ZmM2YmQ0OCIsImV4cCI6IjIwMjYtMDgtMTNUMTQ6MjE6MjUuMTM4WiIsInB1ciI6ImJsb2JfaWQifX0=--bb9b084559f44da033eb8744a0055f97f9d16010/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1786445702,
-                  "created_at": 1786444801,
-                  "updated_at": 1786444801
+                  "url_expires_at": 1786630885,
+                  "created_at": 1786629984,
+                  "updated_at": 1786629984
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"
