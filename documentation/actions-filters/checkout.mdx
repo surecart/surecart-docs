@@ -214,7 +214,7 @@ add_filter( 'surecart/payments/mode', function( $mode ) {
 
 ## JavaScript Filters
 
-SureCart provides JavaScript filters using the WordPress hooks system (`wp.hooks`) to customize the Stripe Payment Element. These filters allow you to modify payment method order, wallet visibility, legal terms display, and billing fields.
+SureCart provides JavaScript filters using the WordPress hooks system (`wp.hooks`) to customize the Stripe Payment Element. These filters allow you to modify payment method order, wallet visibility, legal terms display, billing fields, and the underlying Elements configuration.
 
 <Note>
   These filters use the
@@ -329,6 +329,42 @@ wp.hooks.addFilter(
 ```
 
 See the [Stripe fields documentation](https://docs.stripe.com/js/elements_object/create_payment_element#payment_element_create-options-fields) for all available options.
+
+### Elements Configuration
+
+Use `surecart_stripe_payment_element_elements_config` to modify the [Elements group options](https://docs.stripe.com/js/elements_object/create_without_intent) that wrap the Payment Element. This is a lower-level filter than the ones above: it receives the entire configuration object SureCart builds, including `mode`, `amount`, `currency`, `setupFutureUsage`, and `appearance`.
+
+It is also where you control which payment methods Stripe offers, with `excludedPaymentMethodTypes` or `paymentMethodTypes`. See [Hide a Payment Method for Specific Products](#hide-a-payment-method-for-specific-products).
+
+Always return a complete configuration object. Spread the original config and override only the keys you need:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_elements_config",
+  "my-customization",
+  (config, checkout) => {
+    return {
+      ...config,
+      appearance: {
+        ...config.appearance,
+        theme: "night",
+      },
+    };
+  }
+);
+```
+
+<Warning>
+  SureCart re-applies this configuration with
+  [`elements.update()`](https://docs.stripe.com/js/elements_object/update) every
+  time the checkout changes, such as when a coupon is applied or the total
+  updates. Stripe accepts only a subset of options on update, so `fonts`,
+  `loader`, `customerOptions`, and `paymentMethodCreation` apply when the element
+  is first created and are ignored on subsequent updates. `mode`, `amount`,
+  `currency`, `setupFutureUsage`, `captureMethod`, `paymentMethodTypes`,
+  `excludedPaymentMethodTypes`, `paymentMethodConfiguration`, `appearance`, and
+  `locale` apply in both cases.
+</Warning>
 
 ### Address Countries
 
@@ -683,6 +719,52 @@ wp.hooks.addFilter(
   }
 );
 ```
+
+### Hide a Payment Method for Specific Products
+
+Use `excludedPaymentMethodTypes` to remove individual payment methods while leaving the rest of Stripe's automatic payment methods intact. This example hides Klarna when a specific product is in the cart:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_elements_config",
+  "my-customization",
+  (config, checkout) => {
+    const hasRestrictedProduct = checkout?.line_items?.data?.some(
+      (item) => item.price?.product?.id === "your_product_id"
+    );
+
+    if (!hasRestrictedProduct) {
+      return config;
+    }
+
+    return {
+      ...config,
+      excludedPaymentMethodTypes: ["klarna"],
+    };
+  }
+);
+```
+
+The filter re-runs whenever line items change, so you can swap the condition for anything on the checkout. Testing `item.price?.recurring_interval` instead, for example, hides the method only for subscriptions.
+
+<Note>
+  Use the payment method's Stripe API identifier, not its display name. Klarna is
+  `klarna`, Afterpay and Clearpay share `afterpay_clearpay`, and Cash App Pay is
+  `cashapp`. See Stripe's [payment method
+  types](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type)
+  for the full list.
+</Note>
+
+To declare what to keep instead of what to remove, set `paymentMethodTypes: ["card", "link"]` in the same place.
+
+<Warning>
+  `paymentMethodTypes` is an allowlist that replaces Stripe's automatic payment
+  methods entirely. You must list every method you want to keep, each one must be
+  enabled in your Stripe dashboard, and each must be valid for the checkout's
+  currency, amount, and mode — otherwise it is dropped without a visible error.
+  Prefer `excludedPaymentMethodTypes` when you only need to remove one or two
+  methods.
+</Warning>
 
 <ModifyingTemplates />
 
