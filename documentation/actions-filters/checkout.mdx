@@ -745,7 +745,7 @@ wp.hooks.addFilter(
 );
 ```
 
-The filter re-runs whenever line items change, so you can swap the condition for anything on the checkout. Testing `item.price?.recurring_interval` instead, for example, hides the method only for subscriptions.
+The filter re-runs whenever line items change, so you can swap the condition for anything on the checkout. Testing `item.price?.recurring_interval` instead, for example, hides the method only for subscriptions. When the condition stops matching, returning `config` unchanged shows the method again.
 
 <Note>
   Use the payment method's Stripe API identifier, not its display name. Klarna is
@@ -762,8 +762,11 @@ To declare what to keep instead of what to remove, set `paymentMethodTypes: ["ca
   methods entirely. You must list every method you want to keep, each one must be
   enabled in your Stripe dashboard, and each must be valid for the checkout's
   currency, amount, and mode — otherwise it is dropped without a visible error.
-  Prefer `excludedPaymentMethodTypes` when you only need to remove one or two
-  methods.
+  If your filter stops returning it, the previous list stays until the page
+  reloads, so return it on every call rather than only when a condition matches. Apple Pay and Google Pay
+  count as `card`, so they still show; hide them with [Wallet
+  Visibility](#wallet-visibility). Prefer `excludedPaymentMethodTypes` when you
+  only need to remove one or two methods.
 </Warning>
 
 <ModifyingTemplates />
