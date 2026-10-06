@@ -752,19 +752,43 @@ The filter re-runs whenever line items change, so you can swap the condition for
   `klarna`, Afterpay and Clearpay share `afterpay_clearpay`, and Cash App Pay is
   `cashapp`. See Stripe's [payment method
   types](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type)
-  for the full list.
+  for the full list. Link can't be excluded this way. Stripe rejects `link` as
+  an excluded type, so hide it with [Wallet Visibility](#wallet-visibility)
+  instead.
 </Note>
 
-To declare what to keep instead of what to remove, set `paymentMethodTypes: ["card", "link"]` in the same place.
+To declare what to keep instead of what to remove, use `paymentMethodTypes`. This example allows only cards for subscriptions:
+
+```javascript
+wp.hooks.addFilter(
+  "surecart_stripe_payment_element_elements_config",
+  "my-customization",
+  (config, checkout) => {
+    const hasSubscription = checkout?.line_items?.data?.some(
+      (item) => item.price?.recurring_interval
+    );
+
+    if (!hasSubscription) {
+      return config;
+    }
+
+    return {
+      ...config,
+      paymentMethodTypes: ["card"],
+    };
+  }
+);
+```
 
 <Warning>
   `paymentMethodTypes` is an allowlist that replaces Stripe's automatic payment
-  methods entirely. You must list every method you want to keep, each one must be
-  enabled in your Stripe dashboard, and each must be valid for the checkout's
-  currency, amount, and mode — otherwise it is dropped without a visible error.
-  If your filter stops returning it, the previous list stays until the page
-  reloads, so return it on every call rather than only when a condition matches. Apple Pay and Google Pay
-  count as `card`, so they still show; hide them with [Wallet
+  methods entirely, so every method you leave out is hidden. Each one you list
+  must be enabled in your Stripe dashboard. Stripe doesn't accept
+  `paymentMethodTypes` and `excludedPaymentMethodTypes` together. When your
+  filter sets both, SureCart sends only `paymentMethodTypes`. Switching the
+  allowlist on or off reloads the Payment Element, which clears any payment
+  details the customer already entered. Apple Pay and Google Pay count as
+  `card`, so they still show; hide them with [Wallet
   Visibility](#wallet-visibility). Prefer `excludedPaymentMethodTypes` when you
   only need to remove one or two methods.
 </Warning>
