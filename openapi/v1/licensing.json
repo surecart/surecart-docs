@@ -3406,6 +3406,32 @@
                   }
                 ]
               },
+              "default_saved_list": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated saved list ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/saved_list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated saved list object."
+                  }
+                ]
+              },
+              "saved_lists": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of this customer's saved lists, including the default one."
+                  }
+                ]
+              },
               "licenses": {
                 "nullable": true,
                 "anyOf": [
@@ -8327,6 +8353,251 @@
           }
         }
       },
+      "saved_item_base": {
+        "properties": {
+          "ad_hoc_amount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The amount to use for this item when the associated price is `ad_hoc=true`."
+          },
+          "bundle_component_variants": {
+            "type": "object",
+            "description": "A hash mapping bundle component product UUIDs (keys) to the selected variant UUIDs (values). Picks may be incomplete while saved; every component with variants needs one when the item moves into a checkout."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "A custom note for this item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The quantity saved. Saving the same product, price, variant and bundle picks again adds to this quantity."
+          }
+        }
+      },
+      "saved_item_body": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/saved_item_base"
+          },
+          {
+            "properties": {
+              "price": {
+                "type": "string",
+                "description": "The UUID of the price. The price's current version is pinned."
+              },
+              "product": {
+                "type": "string",
+                "description": "The UUID of the product. Required when creating an item; `price` and `variant` must belong to it."
+              },
+              "saved_list": {
+                "type": "string",
+                "description": "The UUID of the saved list. Required when creating an item. Updating it moves the item to another list of the same customer."
+              },
+              "variant": {
+                "type": "string",
+                "description": "The UUID of the variant. The variant's current version is pinned."
+              }
+            }
+          }
+        ]
+      },
+      "saved_item_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "$ref": "#/components/schemas/saved_item_base"
+          },
+          {
+            "properties": {
+              "live_mode": {
+                "type": "boolean",
+                "description": "Set to true if this item belongs to a live mode customer."
+              },
+              "price": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated price ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/price_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated price object."
+                  }
+                ]
+              },
+              "price_changed": {
+                "type": "boolean",
+                "description": "Set to true when the price has a newer version than the one pinned when the item was saved."
+              },
+              "product": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated product ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated product object."
+                  }
+                ]
+              },
+              "purchasable_status": {
+                "type": "string",
+                "description": "Whether this item can move into a checkout and, if not, why. Possible values are `price_missing`, `price_gone`, `price_old_version`, `variant_missing`, `variant_gone`, `variant_old_version`, `out_of_stock`, `exceeds_purchase_limit`, or `purchasable`. For a bundle, the status of the first blocking component is reported."
+              },
+              "saved_list": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated saved list ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/saved_list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated saved list object."
+                  }
+                ]
+              },
+              "variant": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated variant ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/variant_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated variant object."
+                  }
+                ]
+              },
+              "variant_changed": {
+                "type": "boolean",
+                "description": "Set to true when the variant has a newer version than the one pinned when the item was saved."
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "line_item_to_saved_item_body": {
+        "properties": {
+          "saved_list": {
+            "type": "string",
+            "description": "The UUID of the saved list to move the line item into. Required; it must belong to the checkout's customer."
+          }
+        }
+      },
+      "saved_item_to_line_item_body": {
+        "properties": {
+          "bundle_component_variants": {
+            "type": "object",
+            "description": "Bundle component variant picks that fill in or replace the saved picks."
+          },
+          "checkout": {
+            "type": "string",
+            "description": "The UUID of the checkout to move the item into. It must be an unpaid checkout of the saved list's customer."
+          },
+          "price": {
+            "type": "string",
+            "description": "The UUID of a price that fills in or replaces the saved price."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "A quantity that replaces the saved quantity."
+          },
+          "variant": {
+            "type": "string",
+            "description": "The UUID of a variant that fills in or replaces the saved variant."
+          }
+        }
+      },
+      "saved_list_body": {
+        "allOf": [
+          {
+            "properties": {
+              "customer": {
+                "type": "string",
+                "description": "The UUID of the customer this list belongs to. Only used when creating a list."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the list. The default list can't be renamed."
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_metadata"
+          }
+        ]
+      },
+      "saved_list_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "properties": {
+              "customer": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated customer ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/customer_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated customer object."
+                  }
+                ]
+              },
+              "default": {
+                "type": "boolean",
+                "description": "Whether this is the customer's default list. Every customer has exactly one, and it can't be renamed or deleted."
+              },
+              "live_mode": {
+                "type": "boolean",
+                "description": "Set to true if this list belongs to a live mode customer."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the list. The default list has a fixed name."
+              },
+              "saved_items": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of associated saved item objects."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_metadata"
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "saved_list_to_line_items_body": {
+        "properties": {
+          "checkout": {
+            "type": "string",
+            "description": "The UUID of the checkout to move every item of the list into. It must be an unpaid checkout of the list's customer."
+          }
+        }
+      },
       "list_response": {
         "type": "object",
         "properties": {
@@ -11409,6 +11680,14 @@
       "description": "A review protocol represents the review settings for an account."
     },
     {
+      "name": "Saved Items",
+      "description": "A saved item represents a product that a customer wants to purchase later. It can be moved into a checkout as a line item, and a line item can be saved for later as a saved item."
+    },
+    {
+      "name": "Saved Lists",
+      "description": "A saved list represents a customer's collection of saved items, such as a wishlist. Each customer has a default list, and all items in a list can be moved into a checkout at once."
+    },
+    {
       "name": "Shipments",
       "description": "A shipment represents a package being sent via a shipping provider (e.g. Shippo) with rate quoting, label purchasing, and tracking."
     },
@@ -11569,14 +11848,14 @@
                   },
                   "data": [
                     {
-                      "id": "407c523e-e86d-4588-a33b-7e2d7631fab3",
+                      "id": "e54a8ffe-432c-4908-8668-33e6a992925b",
                       "object": "activation",
                       "counted": true,
                       "name": null,
                       "fingerprint": "example.com",
-                      "license": "c75fded7-933e-4675-9189-09a22e855e0f",
-                      "created_at": 1792137055,
-                      "updated_at": 1792137055
+                      "license": "a3367380-ccfe-4db8-8360-7f953c0f5e4c",
+                      "created_at": 1792401256,
+                      "updated_at": 1792401256
                     }
                   ]
                 },
@@ -11602,14 +11881,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "12142530-00f3-4e53-a766-3c7263ef6369",
+                  "id": "eff4a4c3-55d7-4b27-904a-ccddd2b025c7",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "3e58560c-2cdf-4ef9-a5ba-9942aea1310c",
-                  "created_at": 1792137056,
-                  "updated_at": 1792137056
+                  "license": "fd76196f-3728-49c3-919b-bb8d58e69871",
+                  "created_at": 1792401258,
+                  "updated_at": 1792401258
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11636,7 +11915,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "3e58560c-2cdf-4ef9-a5ba-9942aea1310c"
+                    "license_id": "fd76196f-3728-49c3-919b-bb8d58e69871"
                   }
                 }
               }
@@ -11669,14 +11948,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1bfd4414-1e89-4d1e-9ee3-0f52f9fb4c90",
+                  "id": "fe8ae5a7-cb08-4e64-bbb6-58b627c0a611",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "307d9a10-da81-405f-9613-95b9db92e0a2",
-                  "created_at": 1792137057,
-                  "updated_at": 1792137057
+                  "license": "c8424f53-ed41-4b54-90b4-a2fa0d68a8b4",
+                  "created_at": 1792401259,
+                  "updated_at": 1792401259
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11709,14 +11988,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5c169368-868a-4b4c-9da4-04456fb6503e",
+                  "id": "48b1dc72-9e30-4537-8f4d-a1c24b0faac6",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "c8008d4c-d9bb-4e1b-9ffa-fa44c5068e04",
-                  "created_at": 1792137058,
-                  "updated_at": 1792137058
+                  "license": "37f030f1-f203-41a0-bfc2-80efbc369a84",
+                  "created_at": 1792401260,
+                  "updated_at": 1792401260
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11772,7 +12051,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "680a681d-6da2-4dd4-95ed-6527d196f412",
+                  "id": "365e2fbe-d97e-4dfc-a285-a3ea1225569e",
                   "object": "activation",
                   "deleted": true
                 },
@@ -11903,17 +12182,17 @@
                   },
                   "data": [
                     {
-                      "id": "6ce58263-7534-4018-95da-0dc9205547fe",
+                      "id": "db550b18-3d7e-4fc0-9b1e-9146c6985759",
                       "object": "license",
                       "activations_count": 0,
                       "activation_limit": null,
-                      "key": "5e7d1649-0831-468e-bac9-b1198f029aff",
+                      "key": "8a2ef046-f869-4631-b1ea-acd69660ad43",
                       "revokes_at": null,
                       "status": "inactive",
-                      "customer": "620371cd-c142-4d76-a552-619964ed0340",
-                      "purchase": "d293a299-c197-443f-92a7-385b6f79b281",
-                      "created_at": 1792137117,
-                      "updated_at": 1792137117
+                      "customer": "40987a4f-5a8f-4013-a78b-e30bf14593da",
+                      "purchase": "09238809-a4c9-4d13-b4cd-6bf80cda1496",
+                      "created_at": 1792401310,
+                      "updated_at": 1792401310
                     }
                   ]
                 },
@@ -11939,17 +12218,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "640a2378-1ca6-4920-9d54-f11c109475fe",
+                  "id": "9319c4c8-f4b7-47a4-a41a-cfc66895f756",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
                   "key": "abc-123-def-456",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "f12d86ca-f090-48dd-a87a-2f7170e4577c",
-                  "purchase": "e2c3a6cc-07a5-4db5-9df5-7c60a864987f",
-                  "created_at": 1792137119,
-                  "updated_at": 1792137119
+                  "customer": "ae424993-a95e-4042-8499-823642961651",
+                  "purchase": "7c29c4a4-a406-4e86-9734-3d75b5af89db",
+                  "created_at": 1792401312,
+                  "updated_at": 1792401312
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -11975,7 +12254,7 @@
                 "example": {
                   "license": {
                     "key": "abc-123-def-456",
-                    "purchase": "e2c3a6cc-07a5-4db5-9df5-7c60a864987f"
+                    "purchase": "7c29c4a4-a406-4e86-9734-3d75b5af89db"
                   }
                 }
               }
@@ -12008,17 +12287,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "683df486-e7d2-4e7a-a121-dbf053462642",
+                  "id": "5726247f-f463-471c-a0f7-c10775bfa5aa",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "b5a7949e-7c93-44c9-9635-a7bfcce4d112",
+                  "key": "464ceb0f-a67e-4c80-98c6-b425a8fa8028",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "0ba65123-96c7-4f3f-9d16-6964e901da97",
-                  "purchase": "27ff46d3-42b5-4499-8a5c-73840d65e5d2",
-                  "created_at": 1792137120,
-                  "updated_at": 1792137120
+                  "customer": "3a08b305-35bf-4bbe-9e75-278970eba721",
+                  "purchase": "0fefc870-2f8b-4db0-8e17-bfc382058464",
+                  "created_at": 1792401313,
+                  "updated_at": 1792401313
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12051,17 +12330,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "970b4d5e-26fd-4233-8304-d2e355a68a5f",
+                  "id": "32ec436d-c25b-4d69-a6cf-1fb828fa0c95",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": 10,
-                  "key": "9e47bfe7-8128-4f21-8d35-68cd0ff21b75",
+                  "key": "c0c0ab28-9e97-401d-a3bc-61f96c64b80e",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "cd871e2b-6f84-4f31-9926-bd9f5c1973a1",
-                  "purchase": "97147904-cc07-4028-a47e-8480966cb4fa",
-                  "created_at": 1792137121,
-                  "updated_at": 1792137121
+                  "customer": "496cd5d9-f221-489d-9081-c000be8444da",
+                  "purchase": "a7048403-3e03-403f-b9e2-21daa8982bb8",
+                  "created_at": 1792401314,
+                  "updated_at": 1792401314
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12117,7 +12396,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5283d34f-66b9-4b3c-b009-865d980a45ee",
+                  "id": "2f78cf85-8881-4dfa-b494-d06552053692",
                   "object": "license",
                   "deleted": true
                 },

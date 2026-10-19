@@ -3406,6 +3406,32 @@
                   }
                 ]
               },
+              "default_saved_list": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated saved list ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/saved_list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated saved list object."
+                  }
+                ]
+              },
+              "saved_lists": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of this customer's saved lists, including the default one."
+                  }
+                ]
+              },
               "licenses": {
                 "nullable": true,
                 "anyOf": [
@@ -8327,6 +8353,251 @@
           }
         }
       },
+      "saved_item_base": {
+        "properties": {
+          "ad_hoc_amount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The amount to use for this item when the associated price is `ad_hoc=true`."
+          },
+          "bundle_component_variants": {
+            "type": "object",
+            "description": "A hash mapping bundle component product UUIDs (keys) to the selected variant UUIDs (values). Picks may be incomplete while saved; every component with variants needs one when the item moves into a checkout."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "A custom note for this item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The quantity saved. Saving the same product, price, variant and bundle picks again adds to this quantity."
+          }
+        }
+      },
+      "saved_item_body": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/saved_item_base"
+          },
+          {
+            "properties": {
+              "price": {
+                "type": "string",
+                "description": "The UUID of the price. The price's current version is pinned."
+              },
+              "product": {
+                "type": "string",
+                "description": "The UUID of the product. Required when creating an item; `price` and `variant` must belong to it."
+              },
+              "saved_list": {
+                "type": "string",
+                "description": "The UUID of the saved list. Required when creating an item. Updating it moves the item to another list of the same customer."
+              },
+              "variant": {
+                "type": "string",
+                "description": "The UUID of the variant. The variant's current version is pinned."
+              }
+            }
+          }
+        ]
+      },
+      "saved_item_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "$ref": "#/components/schemas/saved_item_base"
+          },
+          {
+            "properties": {
+              "live_mode": {
+                "type": "boolean",
+                "description": "Set to true if this item belongs to a live mode customer."
+              },
+              "price": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated price ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/price_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated price object."
+                  }
+                ]
+              },
+              "price_changed": {
+                "type": "boolean",
+                "description": "Set to true when the price has a newer version than the one pinned when the item was saved."
+              },
+              "product": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated product ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated product object."
+                  }
+                ]
+              },
+              "purchasable_status": {
+                "type": "string",
+                "description": "Whether this item can move into a checkout and, if not, why. Possible values are `price_missing`, `price_gone`, `price_old_version`, `variant_missing`, `variant_gone`, `variant_old_version`, `out_of_stock`, `exceeds_purchase_limit`, or `purchasable`. For a bundle, the status of the first blocking component is reported."
+              },
+              "saved_list": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated saved list ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/saved_list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated saved list object."
+                  }
+                ]
+              },
+              "variant": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated variant ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/variant_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated variant object."
+                  }
+                ]
+              },
+              "variant_changed": {
+                "type": "boolean",
+                "description": "Set to true when the variant has a newer version than the one pinned when the item was saved."
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "line_item_to_saved_item_body": {
+        "properties": {
+          "saved_list": {
+            "type": "string",
+            "description": "The UUID of the saved list to move the line item into. Required; it must belong to the checkout's customer."
+          }
+        }
+      },
+      "saved_item_to_line_item_body": {
+        "properties": {
+          "bundle_component_variants": {
+            "type": "object",
+            "description": "Bundle component variant picks that fill in or replace the saved picks."
+          },
+          "checkout": {
+            "type": "string",
+            "description": "The UUID of the checkout to move the item into. It must be an unpaid checkout of the saved list's customer."
+          },
+          "price": {
+            "type": "string",
+            "description": "The UUID of a price that fills in or replaces the saved price."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "A quantity that replaces the saved quantity."
+          },
+          "variant": {
+            "type": "string",
+            "description": "The UUID of a variant that fills in or replaces the saved variant."
+          }
+        }
+      },
+      "saved_list_body": {
+        "allOf": [
+          {
+            "properties": {
+              "customer": {
+                "type": "string",
+                "description": "The UUID of the customer this list belongs to. Only used when creating a list."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the list. The default list can't be renamed."
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_metadata"
+          }
+        ]
+      },
+      "saved_list_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "properties": {
+              "customer": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated customer ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/customer_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated customer object."
+                  }
+                ]
+              },
+              "default": {
+                "type": "boolean",
+                "description": "Whether this is the customer's default list. Every customer has exactly one, and it can't be renamed or deleted."
+              },
+              "live_mode": {
+                "type": "boolean",
+                "description": "Set to true if this list belongs to a live mode customer."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the list. The default list has a fixed name."
+              },
+              "saved_items": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of associated saved item objects."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_metadata"
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "saved_list_to_line_items_body": {
+        "properties": {
+          "checkout": {
+            "type": "string",
+            "description": "The UUID of the checkout to move every item of the list into. It must be an unpaid checkout of the list's customer."
+          }
+        }
+      },
       "list_response": {
         "type": "object",
         "properties": {
@@ -11409,6 +11680,14 @@
       "description": "A review protocol represents the review settings for an account."
     },
     {
+      "name": "Saved Items",
+      "description": "A saved item represents a product that a customer wants to purchase later. It can be moved into a checkout as a line item, and a line item can be saved for later as a saved item."
+    },
+    {
+      "name": "Saved Lists",
+      "description": "A saved list represents a customer's collection of saved items, such as a wishlist. Each customer has a default list, and all items in a list can be moved into a checkout at once."
+    },
+    {
       "name": "Shipments",
       "description": "A shipment represents a package being sent via a shipping provider (e.g. Shippo) with rate quoting, label purchasing, and tracking."
     },
@@ -11581,17 +11860,17 @@
                   },
                   "data": [
                     {
-                      "id": "bc08c554-ea6c-47c2-88b5-5ecb6b4a1d6f",
+                      "id": "0c7d9353-8d3e-40d9-97b1-88b9ff80a581",
                       "object": "balance_transaction",
                       "amount": 2000,
                       "currency": "usd",
                       "ending_balance_amount": 0,
                       "transaction_type": "adjustment",
-                      "balance": "788bf3e7-9029-46e7-a9f1-238769e4891c",
-                      "customer": "c466f41f-54a8-4ea9-b948-472bffb4e69c",
+                      "balance": "25586aa0-8d23-434e-9b0f-0a94c9e323c2",
+                      "customer": "006ed25d-c9ad-4031-a282-a83fe0af50cc",
                       "checkout": null,
-                      "created_at": 1792137064,
-                      "updated_at": 1792137064
+                      "created_at": 1792401266,
+                      "updated_at": 1792401266
                     }
                   ]
                 },
@@ -11617,17 +11896,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ba8c4cde-06e8-42ae-b54a-d9cc66a5ddb9",
+                  "id": "45967138-e745-4e07-be10-06ad9f8b8995",
                   "object": "balance_transaction",
                   "amount": 5000,
                   "currency": "usd",
                   "ending_balance_amount": 5000,
                   "transaction_type": "adjustment",
-                  "balance": "0d946ef4-0228-48c0-9131-eb61c9af5240",
-                  "customer": "17a74d87-30c4-4e59-8338-b92c86f36b75",
+                  "balance": "d3df9a02-5c2c-4c17-ac46-c9b744484bd0",
+                  "customer": "c0040a27-a69d-422b-8682-ffabaabe2ed9",
                   "checkout": null,
-                  "created_at": 1792137065,
-                  "updated_at": 1792137065
+                  "created_at": 1792401266,
+                  "updated_at": 1792401266
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -11654,7 +11933,7 @@
                   "balance_transaction": {
                     "amount": 5000,
                     "currency": "usd",
-                    "customer": "17a74d87-30c4-4e59-8338-b92c86f36b75"
+                    "customer": "c0040a27-a69d-422b-8682-ffabaabe2ed9"
                   }
                 }
               }
@@ -11687,17 +11966,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3231f7b4-700f-4dc9-8ab9-d5ced67aafa3",
+                  "id": "64c81b92-a0b0-46c5-b908-f7ea8ce92a72",
                   "object": "balance_transaction",
                   "amount": 2000,
                   "currency": "usd",
                   "ending_balance_amount": 0,
                   "transaction_type": "adjustment",
-                  "balance": "4bf71b26-dd4e-46a1-85af-dcef9cf04c6b",
-                  "customer": "78d10cfa-dd9c-40e0-a897-ead4d93f6bb2",
+                  "balance": "8ab4838b-5373-4eb1-b00b-7cf4632d551a",
+                  "customer": "1ad7fbe7-0e25-4f51-9973-1ab52642c014",
                   "checkout": null,
-                  "created_at": 1792137065,
-                  "updated_at": 1792137065
+                  "created_at": 1792401266,
+                  "updated_at": 1792401266
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -11787,13 +12066,13 @@
                   },
                   "data": [
                     {
-                      "id": "ac75f28f-ffea-42da-a72e-a49034242be9",
+                      "id": "a62a6994-5c5a-41f9-b933-e342f03f6639",
                       "object": "balance",
                       "amount": 0,
                       "currency": "usd",
-                      "customer": "4fe3c0e4-4b19-4b5a-afc8-c5dbea9a7552",
-                      "created_at": 1792137065,
-                      "updated_at": 1792137065
+                      "customer": "6354e0ca-33ff-4388-aebe-cd26093045c7",
+                      "created_at": 1792401266,
+                      "updated_at": 1792401266
                     }
                   ]
                 },
@@ -11820,7 +12099,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c609ee9e-d85b-44df-80f6-4d9380147e1c",
+                  "id": "4c0b74ac-644b-4263-b84d-e7a606a6333f",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": null,
@@ -11829,13 +12108,13 @@
                   "payment_failure_enabled": true,
                   "purchase_enabled": true,
                   "refund_enabled": true,
-                  "reply_to_email": "reply_to@lindgren.example",
+                  "reply_to_email": "reply.to@hegmann.test",
                   "subscription_cancellation_enabled": false,
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1792137083,
-                  "updated_at": 1792137083
+                  "created_at": 1792401282,
+                  "updated_at": 1792401282
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11859,7 +12138,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a7047cb9-8025-4ac2-b423-9efb62ed8770",
+                  "id": "d51a7018-b416-4e9d-a322-c0c232bfe1f9",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": "Support Team",
@@ -11873,8 +12152,8 @@
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1792137083,
-                  "updated_at": 1792137083
+                  "created_at": 1792401282,
+                  "updated_at": 1792401282
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -11923,7 +12202,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "dfc4dcdf-363c-429d-b1c0-f99245eac0f2",
+                  "id": "52ba842c-bf96-40db-98a7-fc2ed0340bee",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11935,8 +12214,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1792137083,
-                  "updated_at": 1792137083
+                  "created_at": 1792401282,
+                  "updated_at": 1792401282
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -11960,7 +12239,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "37ab524d-518a-4b38-928e-cfdfb835c01a",
+                  "id": "1e2ed8cc-5e6a-43ee-b518-276481c10dcd",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -11972,8 +12251,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1792137083,
-                  "updated_at": 1792137083
+                  "created_at": 1792401282,
+                  "updated_at": 1792401282
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -12362,7 +12641,7 @@
                   },
                   "data": [
                     {
-                      "id": "991f9c39-c161-4961-a45b-102752c288a7",
+                      "id": "1a2c2864-085c-43c4-aec5-ccf536751d7b",
                       "object": "customer",
                       "affiliation_expires_at": null,
                       "billing_matches_shipping": true,
@@ -12375,14 +12654,15 @@
                       "phone": null,
                       "unsubscribed": false,
                       "tax_enabled": true,
-                      "portal_url": "http://app.example.com/portal_redirect/customers/991f9c39-c161-4961-a45b-102752c288a7",
+                      "portal_url": "http://app.example.com/portal_redirect/customers/1a2c2864-085c-43c4-aec5-ccf536751d7b",
                       "affiliation": null,
-                      "billing_address": "61df7a6f-bf50-4af6-85f4-d0aa469936df",
+                      "billing_address": "28d1dc4f-cad3-424a-b0b2-f7e3a0051c72",
                       "default_payment_method": null,
+                      "default_saved_list": null,
                       "shipping_address": null,
                       "tax_identifier": null,
-                      "created_at": 1792137084,
-                      "updated_at": 1792137084
+                      "created_at": 1792401283,
+                      "updated_at": 1792401283
                     }
                   ]
                 },
@@ -12408,7 +12688,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b40f1351-a638-4ac8-952a-b0f41d09e02e",
+                  "id": "3ea4c3f3-a9df-4499-aaea-2dd3f8479e6b",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -12421,14 +12701,15 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/b40f1351-a638-4ac8-952a-b0f41d09e02e",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/3ea4c3f3-a9df-4499-aaea-2dd3f8479e6b",
                   "affiliation": null,
                   "billing_address": null,
                   "default_payment_method": null,
+                  "default_saved_list": "de65b8df-ac83-4aa6-8b88-027d8e67e521",
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1792137086,
-                  "updated_at": 1792137086
+                  "created_at": 1792401285,
+                  "updated_at": 1792401285
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -12487,7 +12768,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "46cf5594-cf09-4583-9d28-5ddeeeaf9266",
+                  "id": "88fce699-8970-49c4-bdb7-c80f6b988a62",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -12500,14 +12781,15 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/46cf5594-cf09-4583-9d28-5ddeeeaf9266",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/88fce699-8970-49c4-bdb7-c80f6b988a62",
                   "affiliation": null,
-                  "billing_address": "c509d4e9-5e9e-4284-98df-05dbb4281c97",
+                  "billing_address": "b905d796-4039-410c-8da7-e823adff2cc7",
                   "default_payment_method": null,
+                  "default_saved_list": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1792137086,
-                  "updated_at": 1792137086
+                  "created_at": 1792401285,
+                  "updated_at": 1792401285
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -12549,7 +12831,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0acb0b76-636c-48d6-97f5-6a541a7b5e16",
+                  "id": "2c6b147b-764c-4f0e-b4c6-7ad79dd829b5",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -12562,14 +12844,15 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/0acb0b76-636c-48d6-97f5-6a541a7b5e16",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/2c6b147b-764c-4f0e-b4c6-7ad79dd829b5",
                   "affiliation": null,
-                  "billing_address": "23f05529-9d69-4cc8-9cf4-a7c0e1f4385a",
+                  "billing_address": "0902ae36-89cb-4348-b2e4-5111cc5f9bdd",
                   "default_payment_method": null,
+                  "default_saved_list": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1792137087,
-                  "updated_at": 1792137087
+                  "created_at": 1792401286,
+                  "updated_at": 1792401287
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -12625,7 +12908,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c143cd22-1394-4ef3-ac64-c662725ac218",
+                  "id": "42d1781c-aa43-4274-956f-fa5a6efd66d4",
                   "object": "customer",
                   "deleted": true
                 },
@@ -12681,7 +12964,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ad249f4f-1217-4043-84cd-788e61ddcca6",
+                  "id": "2b869eaf-917a-485d-af96-50198c5bfbd1",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -12692,14 +12975,766 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjA5OTZkMDMzLTY0NDgtNDA1My1iYzlkLWVhYjQ2YTIyMWI3NyIsImV4cCI6IjIwMjYtMTAtMTZUMDg6MDY6MzIuNDI5WiIsInB1ciI6ImJsb2JfaWQifX0=--8d6ca7fb79006eb783d12aeca05f924138eff5b3/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjY4ZTYwNzUzLWQyYTctNGU3Zi1hM2ZlLTI4MDJiNjljYzFlNCIsImV4cCI6IjIwMjYtMTAtMTlUMDk6Mjk6NDkuNTc3WiIsInB1ciI6ImJsb2JfaWQifX0=--4f4e149176b895128af05f637cb1dbececae37a2/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1792137992,
-                  "created_at": 1792137089,
-                  "updated_at": 1792137089
+                  "url_expires_at": 1792402189,
+                  "created_at": 1792401288,
+                  "updated_at": 1792401288
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/saved_items": {
+      "get": {
+        "summary": "List",
+        "tags": [
+          "Saved Items"
+        ],
+        "operationId": "list_saved_item",
+        "description": "Returns a list of your saved items.",
+        "parameters": [
+          {
+            "name": "customer_ids[]",
+            "in": "query",
+            "description": "Only return objects that belong to the given customers.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "description": "Only return objects with the given IDs.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of items to be returned, between 1 and 100.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "The page of items you want returned.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "saved_list_ids[]",
+            "in": "query",
+            "description": "Only return objects that belong to the given saved lists.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "list",
+                  "pagination": {
+                    "count": 1,
+                    "limit": 20,
+                    "page": 1,
+                    "url": "/v1/saved_items"
+                  },
+                  "data": [
+                    {
+                      "id": "682bd171-98c0-423e-81a3-259b30d04a95",
+                      "object": "saved_item",
+                      "ad_hoc_amount": null,
+                      "bundle_component_variants": {},
+                      "live_mode": true,
+                      "note": null,
+                      "price_changed": false,
+                      "purchasable_status": "purchasable",
+                      "quantity": 1,
+                      "variant_changed": false,
+                      "saved_list": "68add7f0-9623-475f-877d-9a0baba8782f",
+                      "product": "644001f3-c6ab-4a0d-aac7-faf9da65c35a",
+                      "price": "4f554d4c-e603-44ae-90a2-fbddd5a8c7f9",
+                      "variant": null,
+                      "created_at": 1792401378,
+                      "updated_at": 1792401378
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/list_response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create",
+        "tags": [
+          "Saved Items"
+        ],
+        "operationId": "create_saved_item",
+        "description": "Saves an item to a saved list. Saving the same item again adds to its quantity.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "da4a6faa-3515-48b5-85a0-7b05b694dc61",
+                  "object": "saved_item",
+                  "ad_hoc_amount": null,
+                  "bundle_component_variants": {},
+                  "live_mode": true,
+                  "note": null,
+                  "price_changed": false,
+                  "purchasable_status": "purchasable",
+                  "quantity": 2,
+                  "variant_changed": false,
+                  "saved_list": "30dcf5c1-6ee1-433c-994c-48c2ad843d9d",
+                  "product": "2359857b-e3cc-4c4b-81f5-1e2de38a76f5",
+                  "price": "5c076be5-bf8c-4be8-b460-6d918e125b9b",
+                  "variant": null,
+                  "created_at": 1792401378,
+                  "updated_at": 1792401378
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/saved_item_response"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "saved_item": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/saved_item_body"
+                      }
+                    ]
+                  }
+                },
+                "example": {
+                  "saved_item": {
+                    "saved_list": "30dcf5c1-6ee1-433c-994c-48c2ad843d9d",
+                    "product": "2359857b-e3cc-4c4b-81f5-1e2de38a76f5",
+                    "price": "5c076be5-bf8c-4be8-b460-6d918e125b9b",
+                    "quantity": 2
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/saved_items/{id}": {
+      "get": {
+        "summary": "Retrieve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Saved Items"
+        ],
+        "operationId": "retrieve_saved_item",
+        "description": "Retrieves details of a specific saved item.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "9bcf8d8a-e810-4eee-b8b8-cd0d7f8b1b40",
+                  "object": "saved_item",
+                  "ad_hoc_amount": null,
+                  "bundle_component_variants": {},
+                  "live_mode": true,
+                  "note": null,
+                  "price_changed": false,
+                  "purchasable_status": "purchasable",
+                  "quantity": 1,
+                  "variant_changed": false,
+                  "saved_list": "6894b5d4-4db9-4284-bd9b-67b8a9f4b774",
+                  "product": "bfdc90ce-d118-471a-8fd1-2658fddf6173",
+                  "price": "8abc743c-87fa-4ba0-a798-aa28284736d5",
+                  "variant": null,
+                  "created_at": 1792401378,
+                  "updated_at": 1792401378
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/saved_item_response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Saved Items"
+        ],
+        "operationId": "update_saved_item",
+        "description": "Updates a specific saved item. Updating `saved_list` moves it to another list of the same customer.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "4aebaf56-95ab-4eff-9772-e556276b4fdf",
+                  "object": "saved_item",
+                  "ad_hoc_amount": null,
+                  "bundle_component_variants": {},
+                  "live_mode": true,
+                  "note": null,
+                  "price_changed": false,
+                  "purchasable_status": "purchasable",
+                  "quantity": 3,
+                  "variant_changed": false,
+                  "saved_list": "bb26cced-afa4-4604-947c-1a7a4e3b60a4",
+                  "product": "ed92a055-2ce8-45e9-8b7c-9951192eba0c",
+                  "price": "e1b4eaad-debc-4cb3-a0e6-c74901730b63",
+                  "variant": null,
+                  "created_at": 1792401378,
+                  "updated_at": 1792401378
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/saved_item_response"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "saved_item": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/saved_item_body"
+                      }
+                    ]
+                  }
+                },
+                "example": {
+                  "saved_item": {
+                    "quantity": 3
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Saved Items"
+        ],
+        "operationId": "delete_saved_item",
+        "description": "Deletes a specific saved item.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "8b070b75-4f76-4e7c-8cbe-94333a8e27f8",
+                  "object": "saved_item",
+                  "deleted": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/model_destroy_response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/saved_items/{saved_item_id}/line_item": {
+      "post": {
+        "summary": "Move to checkout",
+        "tags": [
+          "Saved Items"
+        ],
+        "operationId": "movetocheckout_saved_item",
+        "description": "Moves a saved item into a checkout as a line item, at the current price and variant versions.",
+        "parameters": [
+          {
+            "name": "saved_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "saved_item": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/saved_item_to_line_item_body"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/line_items/{line_item_id}/saved_item": {
+      "post": {
+        "summary": "Save line item",
+        "tags": [
+          "Saved Items"
+        ],
+        "operationId": "savelineitem_saved_item",
+        "description": "Moves a checkout line item into a saved list of the checkout's customer.",
+        "parameters": [
+          {
+            "name": "line_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "line_item": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/line_item_to_saved_item_body"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/saved_lists": {
+      "get": {
+        "summary": "List",
+        "tags": [
+          "Saved Lists"
+        ],
+        "operationId": "list_saved_list",
+        "description": "Returns a list of your saved lists.",
+        "parameters": [
+          {
+            "name": "customer_ids[]",
+            "in": "query",
+            "description": "Only return objects that belong to the given customers.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "default",
+            "in": "query",
+            "description": "Only return objects that are the default or not the default.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "description": "Only return objects with the given IDs.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of items to be returned, between 1 and 100.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "The page of items you want returned.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "list",
+                  "pagination": {
+                    "count": 1,
+                    "limit": 20,
+                    "page": 1,
+                    "url": "/v1/saved_lists"
+                  },
+                  "data": [
+                    {
+                      "id": "2a3b8503-aa11-4783-91e5-63c51faa903b",
+                      "object": "saved_list",
+                      "default": false,
+                      "live_mode": true,
+                      "metadata": {},
+                      "name": "Gift ideas",
+                      "customer": "0e42384d-6c78-4cc8-b3f4-bc401a2d5bbc",
+                      "created_at": 1792401379,
+                      "updated_at": 1792401379
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/list_response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create",
+        "tags": [
+          "Saved Lists"
+        ],
+        "operationId": "create_saved_list",
+        "description": "Creates a new saved list for a customer.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "c2528c29-fb42-41a0-8120-cb2e7d108f86",
+                  "object": "saved_list",
+                  "default": false,
+                  "live_mode": true,
+                  "metadata": {},
+                  "name": "Birthday ideas",
+                  "customer": "5dca0055-1d9c-444e-8bb6-253ca88a59a2",
+                  "created_at": 1792401380,
+                  "updated_at": 1792401380
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/saved_list_response"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "saved_list": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/saved_list_body"
+                      }
+                    ]
+                  }
+                },
+                "example": {
+                  "saved_list": {
+                    "customer": "5dca0055-1d9c-444e-8bb6-253ca88a59a2",
+                    "name": "Birthday ideas"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/saved_lists/{id}": {
+      "get": {
+        "summary": "Retrieve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Saved Lists"
+        ],
+        "operationId": "retrieve_saved_list",
+        "description": "Retrieves details of a specific saved list.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "9c2e7128-5f8c-4b23-8ea7-3c2d87f3d79a",
+                  "object": "saved_list",
+                  "default": false,
+                  "live_mode": true,
+                  "metadata": {},
+                  "name": "Gift ideas",
+                  "customer": "7b973f5c-b3ba-4749-9b5a-23cb824b1bc9",
+                  "created_at": 1792401380,
+                  "updated_at": 1792401380
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/saved_list_response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Saved Lists"
+        ],
+        "operationId": "update_saved_list",
+        "description": "Updates a specific saved list. The default list can't be updated.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "7de012e6-e8bc-4a02-8058-cdb4e4e2e189",
+                  "object": "saved_list",
+                  "default": false,
+                  "live_mode": true,
+                  "metadata": {},
+                  "name": "Holiday ideas",
+                  "customer": "9b415e19-012e-410d-a304-01c4def72c3f",
+                  "created_at": 1792401380,
+                  "updated_at": 1792401380
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/saved_list_response"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "saved_list": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/saved_list_body"
+                      }
+                    ]
+                  }
+                },
+                "example": {
+                  "saved_list": {
+                    "name": "Holiday ideas"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Saved Lists"
+        ],
+        "operationId": "delete_saved_list",
+        "description": "Deletes a specific saved list and its items. The default list can't be deleted.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "8083313f-e55f-4c1c-a577-697401e547b9",
+                  "object": "saved_list",
+                  "deleted": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/model_destroy_response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/saved_lists/{saved_list_id}/line_items": {
+      "post": {
+        "summary": "Move to checkout",
+        "tags": [
+          "Saved Lists"
+        ],
+        "operationId": "movetocheckout_saved_list",
+        "description": "Moves every item in the saved list into a checkout as line items. Nothing moves if any item can't.",
+        "parameters": [
+          {
+            "name": "saved_list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "saved_list": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/saved_list_to_line_items_body"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -12722,14 +13757,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1d2e96c5-5ffe-4cc0-b618-810e7338b20c",
+                  "id": "8d462a8d-05a2-46b7-9bb1-1faaff0f9043",
                   "object": "verification_code",
                   "email": "test@example.com",
                   "verified": false,
                   "verified_at": null,
-                  "resend_available_at": 1792137280,
-                  "created_at": 1792137220,
-                  "updated_at": 1792137220
+                  "resend_available_at": 1792401473,
+                  "created_at": 1792401413,
+                  "updated_at": 1792401413
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -12778,14 +13813,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3d6c8860-6df9-4c14-9c7c-978d6c864117",
+                  "id": "f2b8de76-2e3d-4ab7-925f-8ec38625078d",
                   "object": "verification_code",
                   "email": "test-1@example.com",
                   "verified": true,
-                  "verified_at": 1792137220,
-                  "resend_available_at": 1792137220,
-                  "created_at": 1792137220,
-                  "updated_at": 1792137220
+                  "verified_at": 1792401413,
+                  "resend_available_at": 1792401413,
+                  "created_at": 1792401413,
+                  "updated_at": 1792401413
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -12810,7 +13845,7 @@
                 },
                 "example": {
                   "verification_code": {
-                    "code": 428627,
+                    "code": 165151,
                     "email": "test-1@example.com"
                   }
                 }

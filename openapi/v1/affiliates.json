@@ -3406,6 +3406,32 @@
                   }
                 ]
               },
+              "default_saved_list": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated saved list ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/saved_list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated saved list object."
+                  }
+                ]
+              },
+              "saved_lists": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of this customer's saved lists, including the default one."
+                  }
+                ]
+              },
               "licenses": {
                 "nullable": true,
                 "anyOf": [
@@ -8327,6 +8353,251 @@
           }
         }
       },
+      "saved_item_base": {
+        "properties": {
+          "ad_hoc_amount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The amount to use for this item when the associated price is `ad_hoc=true`."
+          },
+          "bundle_component_variants": {
+            "type": "object",
+            "description": "A hash mapping bundle component product UUIDs (keys) to the selected variant UUIDs (values). Picks may be incomplete while saved; every component with variants needs one when the item moves into a checkout."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "A custom note for this item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The quantity saved. Saving the same product, price, variant and bundle picks again adds to this quantity."
+          }
+        }
+      },
+      "saved_item_body": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/saved_item_base"
+          },
+          {
+            "properties": {
+              "price": {
+                "type": "string",
+                "description": "The UUID of the price. The price's current version is pinned."
+              },
+              "product": {
+                "type": "string",
+                "description": "The UUID of the product. Required when creating an item; `price` and `variant` must belong to it."
+              },
+              "saved_list": {
+                "type": "string",
+                "description": "The UUID of the saved list. Required when creating an item. Updating it moves the item to another list of the same customer."
+              },
+              "variant": {
+                "type": "string",
+                "description": "The UUID of the variant. The variant's current version is pinned."
+              }
+            }
+          }
+        ]
+      },
+      "saved_item_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "$ref": "#/components/schemas/saved_item_base"
+          },
+          {
+            "properties": {
+              "live_mode": {
+                "type": "boolean",
+                "description": "Set to true if this item belongs to a live mode customer."
+              },
+              "price": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated price ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/price_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated price object."
+                  }
+                ]
+              },
+              "price_changed": {
+                "type": "boolean",
+                "description": "Set to true when the price has a newer version than the one pinned when the item was saved."
+              },
+              "product": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated product ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/product_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated product object."
+                  }
+                ]
+              },
+              "purchasable_status": {
+                "type": "string",
+                "description": "Whether this item can move into a checkout and, if not, why. Possible values are `price_missing`, `price_gone`, `price_old_version`, `variant_missing`, `variant_gone`, `variant_old_version`, `out_of_stock`, `exceeds_purchase_limit`, or `purchasable`. For a bundle, the status of the first blocking component is reported."
+              },
+              "saved_list": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated saved list ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/saved_list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated saved list object."
+                  }
+                ]
+              },
+              "variant": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated variant ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/variant_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated variant object."
+                  }
+                ]
+              },
+              "variant_changed": {
+                "type": "boolean",
+                "description": "Set to true when the variant has a newer version than the one pinned when the item was saved."
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "line_item_to_saved_item_body": {
+        "properties": {
+          "saved_list": {
+            "type": "string",
+            "description": "The UUID of the saved list to move the line item into. Required; it must belong to the checkout's customer."
+          }
+        }
+      },
+      "saved_item_to_line_item_body": {
+        "properties": {
+          "bundle_component_variants": {
+            "type": "object",
+            "description": "Bundle component variant picks that fill in or replace the saved picks."
+          },
+          "checkout": {
+            "type": "string",
+            "description": "The UUID of the checkout to move the item into. It must be an unpaid checkout of the saved list's customer."
+          },
+          "price": {
+            "type": "string",
+            "description": "The UUID of a price that fills in or replaces the saved price."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "A quantity that replaces the saved quantity."
+          },
+          "variant": {
+            "type": "string",
+            "description": "The UUID of a variant that fills in or replaces the saved variant."
+          }
+        }
+      },
+      "saved_list_body": {
+        "allOf": [
+          {
+            "properties": {
+              "customer": {
+                "type": "string",
+                "description": "The UUID of the customer this list belongs to. Only used when creating a list."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the list. The default list can't be renamed."
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_metadata"
+          }
+        ]
+      },
+      "saved_list_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/model_identifiers"
+          },
+          {
+            "properties": {
+              "customer": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – The associated customer ID."
+                  },
+                  {
+                    "$ref": "#/components/schemas/customer_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – The associated customer object."
+                  }
+                ]
+              },
+              "default": {
+                "type": "boolean",
+                "description": "Whether this is the customer's default list. Every customer has exactly one, and it can't be renamed or deleted."
+              },
+              "live_mode": {
+                "type": "boolean",
+                "description": "Set to true if this list belongs to a live mode customer."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the list. The default list has a fixed name."
+              },
+              "saved_items": {
+                "nullable": true,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "[Expandable](/api-reference/expanding-responses) – Property not returned unless expanded."
+                  },
+                  {
+                    "$ref": "#/components/schemas/list_response",
+                    "description": "[Expanded](/api-reference/expanding-responses) – A list of associated saved item objects."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/model_metadata"
+          },
+          {
+            "$ref": "#/components/schemas/model_timestamps"
+          }
+        ]
+      },
+      "saved_list_to_line_items_body": {
+        "properties": {
+          "checkout": {
+            "type": "string",
+            "description": "The UUID of the checkout to move every item of the list into. It must be an unpaid checkout of the list's customer."
+          }
+        }
+      },
       "list_response": {
         "type": "object",
         "properties": {
@@ -11409,6 +11680,14 @@
       "description": "A review protocol represents the review settings for an account."
     },
     {
+      "name": "Saved Items",
+      "description": "A saved item represents a product that a customer wants to purchase later. It can be moved into a checkout as a line item, and a line item can be saved for later as a saved item."
+    },
+    {
+      "name": "Saved Lists",
+      "description": "A saved list represents a customer's collection of saved items, such as a wishlist. Each customer has a default list, and all items in a list can be moved into a checkout at once."
+    },
+    {
       "name": "Shipments",
       "description": "A shipment represents a package being sent via a shipping provider (e.g. Shippo) with rate quoting, label purchasing, and tracking."
     },
@@ -11581,13 +11860,13 @@
                   },
                   "data": [
                     {
-                      "id": "2f4514b9-d399-4de2-93b3-1b91bc8860c5",
+                      "id": "f7be9b56-98e5-4fce-b323-c4872ea70b19",
                       "object": "affiliation_product",
-                      "affiliation": "2b42a1b5-d43a-41b0-b2bb-fbdb6b34d1e6",
-                      "product": "71086df9-6289-4061-9c2d-36e6644dbd75",
-                      "commission_structure": "a0f1e1b0-4a40-45fa-bd98-05a8a7869b93",
-                      "created_at": 1792137059,
-                      "updated_at": 1792137059
+                      "affiliation": "959cf4ca-e865-4e82-a4ae-a25cd962fac7",
+                      "product": "b455b412-c318-49d6-b33a-c1936fbb7bc2",
+                      "commission_structure": "9e29d861-57a1-4c5c-b3f2-ec6bbb27deca",
+                      "created_at": 1792401261,
+                      "updated_at": 1792401261
                     }
                   ]
                 },
@@ -11613,13 +11892,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ba8f4585-21ec-436f-94cd-153e766b706f",
+                  "id": "6ce27ee2-7116-4b83-9adf-4b85be5881ef",
                   "object": "affiliation_product",
-                  "affiliation": "f4055a9e-2d22-4b0e-b838-554d91fbaa0c",
-                  "product": "6e92dbd8-08f0-413d-b9c8-ee9d2f7e9f7d",
-                  "commission_structure": "71250e53-a84d-4cad-977b-eca8649e61cb",
-                  "created_at": 1792137060,
-                  "updated_at": 1792137060
+                  "affiliation": "193452af-c531-46bf-9c65-dcc83d0d0163",
+                  "product": "46aaa383-7de9-4536-b035-caeae6837852",
+                  "commission_structure": "b3b1b700-9b46-49a0-93ef-1f0f38f6124d",
+                  "created_at": 1792401261,
+                  "updated_at": 1792401261
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_product_response"
@@ -11644,8 +11923,8 @@
                 },
                 "example": {
                   "affiliation_product": {
-                    "affiliation": "f4055a9e-2d22-4b0e-b838-554d91fbaa0c",
-                    "product": "6e92dbd8-08f0-413d-b9c8-ee9d2f7e9f7d",
+                    "affiliation": "193452af-c531-46bf-9c65-dcc83d0d0163",
+                    "product": "46aaa383-7de9-4536-b035-caeae6837852",
                     "commission_structure": {
                       "percent_commission": 33.33
                     }
@@ -11681,13 +11960,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3a99e0e5-d193-456e-9ee9-845e41927fe7",
+                  "id": "b2b079f5-96b5-42cd-bf4c-6600fd022866",
                   "object": "affiliation_product",
-                  "affiliation": "a4fcf5b0-a220-4569-9fca-ba9aa5a55a19",
-                  "product": "5fa0d400-ec88-43d7-9db4-b00d737a5ea9",
-                  "commission_structure": "da545b98-c4e9-4107-92ca-9edeff1960bb",
-                  "created_at": 1792137060,
-                  "updated_at": 1792137060
+                  "affiliation": "765e0614-4805-405b-af4d-6f589215c40c",
+                  "product": "1543e7a4-be4e-403a-a2e8-293ab9ecffdc",
+                  "commission_structure": "7027b9f5-c13e-450a-b330-13e618f626e4",
+                  "created_at": 1792401262,
+                  "updated_at": 1792401262
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_product_response"
@@ -11720,13 +11999,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "203b0309-3280-488e-9950-ea9b5c9b71a7",
+                  "id": "29b53f90-7041-4260-a2d7-790c2bdb7bb6",
                   "object": "affiliation_product",
-                  "affiliation": "7228bada-70b1-4af7-acab-712efbf944c3",
-                  "product": "b116e053-4cf0-46bf-ad35-9d3d629c9ec8",
-                  "commission_structure": "32daefed-f7f0-4cc4-9502-2982eb747b0d",
-                  "created_at": 1792137060,
-                  "updated_at": 1792137060
+                  "affiliation": "f0ffd8cd-a6a6-4c45-b38f-026af8aa1e11",
+                  "product": "657bf9a5-ab33-4188-b201-e009f17386d3",
+                  "commission_structure": "91098f53-6c4d-4879-9251-99c681b33de9",
+                  "created_at": 1792401262,
+                  "updated_at": 1792401262
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_product_response"
@@ -11784,7 +12063,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "93729fe7-9b13-49f4-8eb8-92357b8c4b21",
+                  "id": "ba42a577-045f-4673-b023-cf8c3c8520db",
                   "object": "affiliation_product",
                   "deleted": true
                 },
@@ -11811,7 +12090,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f0339291-ef32-44a2-9d38-8b8ae25aa51f",
+                  "id": "a53f5544-3b34-47e9-95f1-76431aecce19",
                   "object": "affiliation_protocol",
                   "affiliation_request_bio_label": null,
                   "affiliation_request_payout_email_enabled": false,
@@ -11831,9 +12110,9 @@
                   "tracking_length_days": 30,
                   "wordpress_plugin_tracking_enabled": true,
                   "zero_commission_amount_referrals_enabled": true,
-                  "commission_structure": "47c1e7a9-5b0b-433e-9e75-bf8004cfaca9",
-                  "created_at": 1792137060,
-                  "updated_at": 1792137060
+                  "commission_structure": "d672b082-2179-46cb-912e-5022ddb0bfa5",
+                  "created_at": 1792401262,
+                  "updated_at": 1792401262
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_protocol_response"
@@ -11857,7 +12136,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "837001ff-76bc-4d84-8544-d97111f03401",
+                  "id": "6502ca9f-a92f-4ccf-a9c6-51b01aff4f39",
                   "object": "affiliation_protocol",
                   "affiliation_request_bio_label": null,
                   "affiliation_request_payout_email_enabled": false,
@@ -11877,9 +12156,9 @@
                   "tracking_length_days": 30,
                   "wordpress_plugin_tracking_enabled": true,
                   "zero_commission_amount_referrals_enabled": true,
-                  "commission_structure": "1afe33ec-f195-4731-8d2b-6c1ca619d995",
-                  "created_at": 1792137061,
-                  "updated_at": 1792137061
+                  "commission_structure": "8bd7be76-46c5-4588-8bf9-8ff0093eb392",
+                  "created_at": 1792401262,
+                  "updated_at": 1792401262
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_protocol_response"
@@ -11992,7 +12271,7 @@
                   },
                   "data": [
                     {
-                      "id": "e5189ab2-aa0d-4749-8c21-ab3f85717554",
+                      "id": "e049e20b-b106-4c25-aa36-02e150a04b5e",
                       "object": "affiliation_request",
                       "bio": "I will promote your products to all my followers!",
                       "email": "test-affiliate-1@example.com",
@@ -12002,9 +12281,9 @@
                       "payout_email": null,
                       "status": "pending",
                       "url": null,
-                      "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/e5189ab2-aa0d-4749-8c21-ab3f85717554",
-                      "created_at": 1792137061,
-                      "updated_at": 1792137061
+                      "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/e049e20b-b106-4c25-aa36-02e150a04b5e",
+                      "created_at": 1792401262,
+                      "updated_at": 1792401262
                     }
                   ]
                 },
@@ -12030,7 +12309,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "afd9eea1-90b4-4027-a93d-5fd6559617ba",
+                  "id": "dcbb21b3-d0e1-438e-8800-1a5dfadec808",
                   "object": "affiliation_request",
                   "bio": "I have lots of followers!",
                   "email": "test@example.com",
@@ -12040,9 +12319,9 @@
                   "payout_email": null,
                   "status": "pending",
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/afd9eea1-90b4-4027-a93d-5fd6559617ba",
-                  "created_at": 1792137061,
-                  "updated_at": 1792137061
+                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/dcbb21b3-d0e1-438e-8800-1a5dfadec808",
+                  "created_at": 1792401262,
+                  "updated_at": 1792401262
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_request_response"
@@ -12103,7 +12382,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f3f317ea-0f74-4644-bf6a-77b1db8242cb",
+                  "id": "34224f62-d01e-46f2-bbfb-f1c61c0add0d",
                   "object": "affiliation_request",
                   "bio": "I will promote your products to all my followers!",
                   "email": "test-affiliate-3@example.com",
@@ -12113,9 +12392,9 @@
                   "payout_email": null,
                   "status": "pending",
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/f3f317ea-0f74-4644-bf6a-77b1db8242cb",
-                  "created_at": 1792137061,
-                  "updated_at": 1792137061
+                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/34224f62-d01e-46f2-bbfb-f1c61c0add0d",
+                  "created_at": 1792401263,
+                  "updated_at": 1792401263
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_request_response"
@@ -12148,7 +12427,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fc368b88-cc8f-4afd-b7ce-7a69777a6057",
+                  "id": "dc87cf1c-8c3f-4b9d-8065-18c68a7035ac",
                   "object": "affiliation_request",
                   "bio": "I have lots of followers!",
                   "email": "test-affiliate-4@example.com",
@@ -12158,9 +12437,9 @@
                   "payout_email": null,
                   "status": "pending",
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/fc368b88-cc8f-4afd-b7ce-7a69777a6057",
-                  "created_at": 1792137061,
-                  "updated_at": 1792137061
+                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/dc87cf1c-8c3f-4b9d-8065-18c68a7035ac",
+                  "created_at": 1792401263,
+                  "updated_at": 1792401263
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_request_response"
@@ -12216,7 +12495,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d35e67ac-4117-46b4-8c90-4cd714c54fa5",
+                  "id": "87a9b6d1-a4ac-4acb-b8f9-6419a1c1ce4f",
                   "object": "affiliation_request",
                   "deleted": true
                 },
@@ -12253,7 +12532,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ed681568-6b1c-45be-ba52-3e96c5246bdc",
+                  "id": "af8692df-1cdc-4622-bde4-4767dce24560",
                   "object": "affiliation_request",
                   "bio": "I will promote your products to all my followers!",
                   "email": "test-affiliate-6@example.com",
@@ -12263,9 +12542,9 @@
                   "payout_email": null,
                   "status": "approved",
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/ed681568-6b1c-45be-ba52-3e96c5246bdc",
-                  "created_at": 1792137061,
-                  "updated_at": 1792137061
+                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/af8692df-1cdc-4622-bde4-4767dce24560",
+                  "created_at": 1792401263,
+                  "updated_at": 1792401263
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_request_response"
@@ -12300,7 +12579,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "953ccb86-b033-4c19-855c-32951b0a4608",
+                  "id": "65ad5b95-7fab-4965-86e4-ce28cf4a94a3",
                   "object": "affiliation_request",
                   "bio": "I will promote your products to all my followers!",
                   "email": "test-affiliate-7@example.com",
@@ -12310,9 +12589,9 @@
                   "payout_email": null,
                   "status": "denied",
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/953ccb86-b033-4c19-855c-32951b0a4608",
-                  "created_at": 1792137062,
-                  "updated_at": 1792137062
+                  "portal_url": "http://app.example.com/portal_redirect/affiliation_requests/65ad5b95-7fab-4965-86e4-ce28cf4a94a3",
+                  "created_at": 1792401263,
+                  "updated_at": 1792401263
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_request_response"
@@ -12414,27 +12693,27 @@
                   },
                   "data": [
                     {
-                      "id": "315d62c2-41cf-41ff-9fef-37c4e707a0bc",
+                      "id": "4f082701-9d22-4699-8eb8-2a58b79d19f4",
                       "object": "affiliation",
                       "active": true,
                       "bio": null,
-                      "code": "799AE219",
-                      "email": "hessel_garth@durgan.example",
-                      "first_name": "Garth",
-                      "last_name": "Hessel",
+                      "code": "F2F6E001",
+                      "email": "grant.tod@daniel.example",
+                      "first_name": "Tod",
+                      "last_name": "Grant",
                       "metadata": {},
                       "payout_email": null,
                       "url": null,
-                      "portal_url": "http://app.example.com/portal_redirect/affiliations/315d62c2-41cf-41ff-9fef-37c4e707a0bc",
+                      "portal_url": "http://app.example.com/portal_redirect/affiliations/4f082701-9d22-4699-8eb8-2a58b79d19f4",
                       "referral_urls": [
-                        "?aff=799ae219"
+                        "?aff=f2f6e001"
                       ],
                       "total_commission_amount": 0,
                       "total_not_paid_commission_amount": 0,
                       "commission_structure": null,
                       "discarded_at": null,
-                      "created_at": 1792137062,
-                      "updated_at": 1792137062
+                      "created_at": 1792401263,
+                      "updated_at": 1792401263
                     }
                   ]
                 },
@@ -12460,27 +12739,27 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a2e97a3e-821b-44a4-93aa-83ad2916190a",
+                  "id": "6ee7c052-9bd2-42e6-94b9-ed31dde59080",
                   "object": "affiliation",
                   "active": true,
                   "bio": "I have lots of followers!",
-                  "code": "9315C93C",
+                  "code": "FD89B87C",
                   "email": "test@example.com",
                   "first_name": "Jon",
                   "last_name": "Smith",
                   "metadata": {},
                   "payout_email": null,
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliations/a2e97a3e-821b-44a4-93aa-83ad2916190a",
+                  "portal_url": "http://app.example.com/portal_redirect/affiliations/6ee7c052-9bd2-42e6-94b9-ed31dde59080",
                   "referral_urls": [
-                    "?aff=9315c93c"
+                    "?aff=fd89b87c"
                   ],
                   "total_commission_amount": 0,
                   "total_not_paid_commission_amount": 0,
                   "commission_structure": null,
                   "discarded_at": null,
-                  "created_at": 1792137062,
-                  "updated_at": 1792137062
+                  "created_at": 1792401263,
+                  "updated_at": 1792401263
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_response"
@@ -12541,27 +12820,27 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a7877bb1-ead8-40d2-8f23-cda34c91eb65",
+                  "id": "dfbfe0ed-e5dc-4208-97b9-4d2b65dd5cd0",
                   "object": "affiliation",
                   "active": true,
                   "bio": null,
-                  "code": "1AD90CE3",
-                  "email": "daniell.heaney@reynolds-lesch.test",
-                  "first_name": "Daniell",
-                  "last_name": "Heaney",
+                  "code": "5167D35A",
+                  "email": "berge_eleonore@walker.example",
+                  "first_name": "Eleonore",
+                  "last_name": "Berge",
                   "metadata": {},
                   "payout_email": null,
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliations/a7877bb1-ead8-40d2-8f23-cda34c91eb65",
+                  "portal_url": "http://app.example.com/portal_redirect/affiliations/dfbfe0ed-e5dc-4208-97b9-4d2b65dd5cd0",
                   "referral_urls": [
-                    "?aff=1ad90ce3"
+                    "?aff=5167d35a"
                   ],
                   "total_commission_amount": 0,
                   "total_not_paid_commission_amount": 0,
                   "commission_structure": null,
                   "discarded_at": null,
-                  "created_at": 1792137062,
-                  "updated_at": 1792137062
+                  "created_at": 1792401264,
+                  "updated_at": 1792401264
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_response"
@@ -12594,27 +12873,27 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "433c1f75-2900-43a8-9ce7-3eb40dc677b7",
+                  "id": "b9cf7b10-382b-4bf2-b2ec-c5ab08ed7772",
                   "object": "affiliation",
                   "active": true,
                   "bio": "I have 1 million followers!",
-                  "code": "089482A7",
-                  "email": "nienow.ariel@runolfsson.test",
-                  "first_name": "Ariel",
-                  "last_name": "Nienow",
+                  "code": "7D912DE2",
+                  "email": "mclaughlin_josef@williamson.example",
+                  "first_name": "Josef",
+                  "last_name": "McLaughlin",
                   "metadata": {},
                   "payout_email": null,
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliations/433c1f75-2900-43a8-9ce7-3eb40dc677b7",
+                  "portal_url": "http://app.example.com/portal_redirect/affiliations/b9cf7b10-382b-4bf2-b2ec-c5ab08ed7772",
                   "referral_urls": [
-                    "?aff=089482a7"
+                    "?aff=7d912de2"
                   ],
                   "total_commission_amount": 0,
                   "total_not_paid_commission_amount": 0,
                   "commission_structure": null,
                   "discarded_at": null,
-                  "created_at": 1792137062,
-                  "updated_at": 1792137062
+                  "created_at": 1792401264,
+                  "updated_at": 1792401264
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_response"
@@ -12670,7 +12949,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b2aa311c-6297-4480-841b-35b165140bc5",
+                  "id": "4f01fae7-7870-4064-884f-d4bb0950231e",
                   "object": "affiliation",
                   "deleted": true
                 },
@@ -12707,27 +12986,27 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f68b3691-7c0d-4556-ad7e-138f5395df66",
+                  "id": "f7ae4020-5389-4944-957e-45f06535858c",
                   "object": "affiliation",
                   "active": true,
                   "bio": null,
-                  "code": "769FF39B",
-                  "email": "lucrecia.becker@stiedemann.example",
-                  "first_name": "Lucrecia",
-                  "last_name": "Becker",
+                  "code": "28E5A286",
+                  "email": "simonis_somer@johnson.example",
+                  "first_name": "Somer",
+                  "last_name": "Simonis",
                   "metadata": {},
                   "payout_email": null,
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliations/f68b3691-7c0d-4556-ad7e-138f5395df66",
+                  "portal_url": "http://app.example.com/portal_redirect/affiliations/f7ae4020-5389-4944-957e-45f06535858c",
                   "referral_urls": [
-                    "?aff=769ff39b"
+                    "?aff=28e5a286"
                   ],
                   "total_commission_amount": 0,
                   "total_not_paid_commission_amount": 0,
                   "commission_structure": null,
                   "discarded_at": null,
-                  "created_at": 1792137063,
-                  "updated_at": 1792137063
+                  "created_at": 1792401264,
+                  "updated_at": 1792401264
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_response"
@@ -12762,27 +13041,27 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f63ca7c1-4ab5-45dc-91e1-d993524c730b",
+                  "id": "654dad4a-16a6-4bb6-ac8e-aa2a2a99e8e1",
                   "object": "affiliation",
                   "active": false,
                   "bio": null,
-                  "code": "A9DD0382",
-                  "email": "keven_kunde@dibbert.test",
-                  "first_name": "Keven",
-                  "last_name": "Kunde",
+                  "code": "CAFA25BC",
+                  "email": "celeste.wunsch@lakin-mills.test",
+                  "first_name": "Celeste",
+                  "last_name": "Wunsch",
                   "metadata": {},
                   "payout_email": null,
                   "url": null,
-                  "portal_url": "http://app.example.com/portal_redirect/affiliations/f63ca7c1-4ab5-45dc-91e1-d993524c730b",
+                  "portal_url": "http://app.example.com/portal_redirect/affiliations/654dad4a-16a6-4bb6-ac8e-aa2a2a99e8e1",
                   "referral_urls": [
-                    "?aff=a9dd0382"
+                    "?aff=cafa25bc"
                   ],
                   "total_commission_amount": 0,
                   "total_not_paid_commission_amount": 0,
                   "commission_structure": null,
                   "discarded_at": null,
-                  "created_at": 1792137063,
-                  "updated_at": 1792137063
+                  "created_at": 1792401264,
+                  "updated_at": 1792401264
                 },
                 "schema": {
                   "$ref": "#/components/schemas/affiliation_response"
@@ -12887,18 +13166,18 @@
                   },
                   "data": [
                     {
-                      "id": "6044aadc-26db-4814-835e-eb601fc9b876",
+                      "id": "5e8d21c2-fd39-428d-bc03-b1c5561db62f",
                       "object": "click",
-                      "anonymous_id": "148a9771-34b2-49ed-abd2-512a41c06710",
-                      "domain": "ward-kub.test",
+                      "anonymous_id": "d2db324a-d55c-4b0e-a89b-f7314161c507",
+                      "domain": "mcdermott.test",
                       "converted": false,
-                      "expires_at": 1794729081,
+                      "expires_at": 1794993281,
                       "referrer": null,
-                      "url": "http://ward-kub.test/marylynn_douglas",
-                      "affiliation": "2a99b507-e21e-4690-949e-458720babbd3",
+                      "url": "http://mcdermott.test/wilber_leffler",
+                      "affiliation": "3621cb02-00bf-4925-a763-3ad0c1b9f804",
                       "previous_click": null,
-                      "created_at": 1792137081,
-                      "updated_at": 1792137081
+                      "created_at": 1792401281,
+                      "updated_at": 1792401281
                     }
                   ]
                 },
@@ -12935,18 +13214,18 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "946f8a69-390b-4175-b98a-e794303bae0a",
+                  "id": "1f92dcb2-d026-4bbc-8a42-57591e4023c3",
                   "object": "click",
-                  "anonymous_id": "91a7500d-dd54-489a-8526-c57e2cb41362",
-                  "domain": "ullrich.example",
+                  "anonymous_id": "f2b963ea-ceaf-4d22-95f1-e38af579da1a",
+                  "domain": "kuvalis.example",
                   "converted": false,
-                  "expires_at": 1794729081,
+                  "expires_at": 1794993281,
                   "referrer": null,
-                  "url": "http://ullrich.example/tai",
-                  "affiliation": "ad552635-6607-4a47-804d-0103675f2171",
+                  "url": "http://kuvalis.example/seth",
+                  "affiliation": "21fc582d-14d2-4bef-a86f-b8f0bf97ddb8",
                   "previous_click": null,
-                  "created_at": 1792137081,
-                  "updated_at": 1792137081
+                  "created_at": 1792401281,
+                  "updated_at": 1792401281
                 },
                 "schema": {
                   "$ref": "#/components/schemas/click_response"
@@ -13021,14 +13300,14 @@
                   },
                   "data": [
                     {
-                      "id": "89c4600c-e29b-4769-bd9f-dd58b22256ea",
+                      "id": "c69dd9c8-2502-4b5d-ad90-6f2be81a3d4e",
                       "object": "payout_group",
                       "currency": "usd",
-                      "end_date": 1791849600,
+                      "end_date": 1792108800,
                       "live_mode": true,
                       "min_commission_amount": null,
-                      "created_at": 1792137138,
-                      "updated_at": 1792137138
+                      "created_at": 1792401329,
+                      "updated_at": 1792401329
                     }
                   ]
                 },
@@ -13054,14 +13333,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c33c4f5d-b62b-4d48-a019-f7bd37ced999",
+                  "id": "10cac872-62be-4401-bd5f-9c46e9ff31dc",
                   "object": "payout_group",
                   "currency": "usd",
-                  "end_date": 1791849600,
+                  "end_date": 1792108800,
                   "live_mode": true,
                   "min_commission_amount": null,
-                  "created_at": 1792137138,
-                  "updated_at": 1792137138
+                  "created_at": 1792401329,
+                  "updated_at": 1792401329
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payout_group_response"
@@ -13086,7 +13365,7 @@
                 },
                 "example": {
                   "payout_group": {
-                    "end_date": "2026-10-13 07:52:18 UTC"
+                    "end_date": "2026-10-16 09:15:29 UTC"
                   }
                 }
               }
@@ -13119,14 +13398,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4cfadb28-6765-4012-90f3-85bfc3afb787",
+                  "id": "76cc6568-afa8-476f-88b3-27e77d6b4dc0",
                   "object": "payout_group",
                   "currency": "usd",
-                  "end_date": 1791849600,
+                  "end_date": 1792108800,
                   "live_mode": true,
                   "min_commission_amount": null,
-                  "created_at": 1792137139,
-                  "updated_at": 1792137139
+                  "created_at": 1792401329,
+                  "updated_at": 1792401329
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payout_group_response"
@@ -13246,20 +13525,20 @@
                   },
                   "data": [
                     {
-                      "id": "bc859d7f-eae0-469b-9ead-5e90f335e532",
+                      "id": "dcd47152-a262-4582-a58f-f3b881a69cc2",
                       "object": "payout",
                       "currency": "usd",
                       "description": null,
-                      "end_date": 1791849600,
+                      "end_date": 1792108800,
                       "live_mode": true,
                       "manual": false,
                       "payout_email": null,
                       "status": "processing",
                       "total_commission_amount": 9900,
-                      "affiliation": "718e22e7-111d-4148-9899-b90e05fda263",
+                      "affiliation": "ba11cde7-5a01-4855-b9cb-88dffdad6050",
                       "payout_group": null,
-                      "created_at": 1792137139,
-                      "updated_at": 1792137139
+                      "created_at": 1792401329,
+                      "updated_at": 1792401329
                     }
                   ]
                 },
@@ -13285,20 +13564,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "024a7226-74ae-42ed-b50f-4ba410f5bc26",
+                  "id": "848e6a29-faa4-4a0d-8ad4-184d71db84f4",
                   "object": "payout",
                   "currency": "usd",
                   "description": null,
-                  "end_date": 1792022400,
+                  "end_date": 1792281600,
                   "live_mode": true,
                   "manual": false,
                   "payout_email": null,
                   "status": "processing",
                   "total_commission_amount": 9900,
-                  "affiliation": "1f63f712-56c9-4eb8-97cf-b9e05e46dffc",
+                  "affiliation": "6825c2cd-7a52-47e3-96e0-f359eaeafcaa",
                   "payout_group": null,
-                  "created_at": 1792137139,
-                  "updated_at": 1792137139
+                  "created_at": 1792401329,
+                  "updated_at": 1792401329
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payout_response"
@@ -13323,8 +13602,8 @@
                 },
                 "example": {
                   "payout": {
-                    "affiliation": "1f63f712-56c9-4eb8-97cf-b9e05e46dffc",
-                    "end_date": "2026-10-15 07:52:19 UTC"
+                    "affiliation": "6825c2cd-7a52-47e3-96e0-f359eaeafcaa",
+                    "end_date": "2026-10-18 09:15:29 UTC"
                   }
                 }
               }
@@ -13357,20 +13636,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "02dbe697-eae5-4be8-b412-82618176015a",
+                  "id": "ba213793-ab0c-4fa6-88c0-f1c40aa2c41c",
                   "object": "payout",
                   "currency": "usd",
                   "description": null,
-                  "end_date": 1791849600,
+                  "end_date": 1792108800,
                   "live_mode": true,
                   "manual": false,
                   "payout_email": null,
                   "status": "processing",
                   "total_commission_amount": 9900,
-                  "affiliation": "77df9d6a-4a13-4554-b731-33a956bc9eb3",
+                  "affiliation": "e51bf8ff-e7de-4ac1-9d2c-8f6375c3f11b",
                   "payout_group": null,
-                  "created_at": 1792137139,
-                  "updated_at": 1792137139
+                  "created_at": 1792401330,
+                  "updated_at": 1792401330
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payout_response"
@@ -13403,7 +13682,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8fb41232-5ccd-4748-adbe-cfaff8dc5526",
+                  "id": "2b4bc5aa-e7ac-4934-8652-3f70ae13e2a8",
                   "object": "payout",
                   "deleted": true
                 },
@@ -13440,20 +13719,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fe1fb350-c630-49c8-bcd7-0ed358cd8460",
+                  "id": "c36e35e0-9eaa-4357-ac5c-b3aa01009133",
                   "object": "payout",
                   "currency": "usd",
                   "description": null,
-                  "end_date": 1791849600,
+                  "end_date": 1792108800,
                   "live_mode": true,
                   "manual": false,
                   "payout_email": null,
                   "status": "completed",
                   "total_commission_amount": 9900,
-                  "affiliation": "ede4b4c8-9560-4ed8-a176-29f877f0422b",
+                  "affiliation": "71ed145d-98e3-4f8d-afff-68d01a53b4a1",
                   "payout_group": null,
-                  "created_at": 1792137139,
-                  "updated_at": 1792137139
+                  "created_at": 1792401330,
+                  "updated_at": 1792401330
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payout_response"
@@ -13488,20 +13767,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0909646f-4e23-4314-a1b5-b041c977d2fa",
+                  "id": "37e0fe6b-e47f-4f92-be51-13585d8943ca",
                   "object": "payout",
                   "currency": "usd",
                   "description": null,
-                  "end_date": 1791849600,
+                  "end_date": 1792108800,
                   "live_mode": true,
                   "manual": false,
                   "payout_email": null,
                   "status": "processing",
                   "total_commission_amount": 9900,
-                  "affiliation": "7f39117d-44d0-4d50-b38c-ac5bfb17bbe8",
+                  "affiliation": "57e1ec23-bd84-4950-a978-d83017a1fa8b",
                   "payout_group": null,
-                  "created_at": 1792137140,
-                  "updated_at": 1792137140
+                  "created_at": 1792401330,
+                  "updated_at": 1792401330
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payout_response"
@@ -13579,13 +13858,13 @@
                   },
                   "data": [
                     {
-                      "id": "d58c4ca7-f60d-44fa-a378-7f5cbd766bfd",
+                      "id": "5ec8d1c2-8023-476c-9f14-4773f02fce06",
                       "object": "referral_item",
                       "commission_amount": 580,
-                      "line_item": "d2a221ca-34fa-436c-8b7a-8fec11e8d754",
-                      "referral": "26ef2e73-4f50-4d16-bf57-1b457250f3bc",
-                      "created_at": 1792137167,
-                      "updated_at": 1792137167
+                      "line_item": "7991c0b8-9289-4ec7-b271-ba7612197096",
+                      "referral": "23ed64c3-11ed-48e0-9d66-9c5276894f17",
+                      "created_at": 1792401356,
+                      "updated_at": 1792401356
                     }
                   ]
                 },
@@ -13622,13 +13901,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "87d84d49-345d-465d-abb7-6f3e89a8c8b1",
+                  "id": "ab6e976a-c302-4b6e-8454-996ca1fdf170",
                   "object": "referral_item",
                   "commission_amount": 580,
-                  "line_item": "40ac6770-dea5-4f0c-88d0-6e850a2a1acf",
-                  "referral": "bd448a7f-888c-4a7a-8b3b-a454a4b63436",
-                  "created_at": 1792137168,
-                  "updated_at": 1792137168
+                  "line_item": "c3af1597-10af-4756-a46e-dee2ab5c5444",
+                  "referral": "05846e8e-bc74-46ed-b2d1-a0678ad1cdcd",
+                  "created_at": 1792401357,
+                  "updated_at": 1792401357
                 },
                 "schema": {
                   "$ref": "#/components/schemas/referral_item_response"
@@ -13760,7 +14039,7 @@
                   },
                   "data": [
                     {
-                      "id": "df15e4be-157a-48ca-9c6a-4087408c12e3",
+                      "id": "aa6bfd3d-ac21-4c3e-bc70-d1f6fd87cae1",
                       "object": "referral",
                       "commission_amount": 9900,
                       "currency": "usd",
@@ -13769,12 +14048,12 @@
                       "manual": true,
                       "refund_reduction_amount": 0,
                       "status": "reviewing",
-                      "affiliation": "e43bb372-c348-4ef6-bc6b-5bef6495f4d6",
+                      "affiliation": "78b212c6-535d-439d-9d41-82123ea1e606",
                       "attributed_click": null,
                       "checkout": null,
                       "payout": null,
-                      "created_at": 1792137168,
-                      "updated_at": 1792137168
+                      "created_at": 1792401357,
+                      "updated_at": 1792401357
                     }
                   ]
                 },
@@ -13800,7 +14079,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "97eaef96-1afc-4dc5-93a9-7bd15d2df88a",
+                  "id": "8311bd79-c362-44d3-8376-a4e6d1fb73af",
                   "object": "referral",
                   "commission_amount": 9900,
                   "currency": "usd",
@@ -13809,12 +14088,12 @@
                   "manual": true,
                   "refund_reduction_amount": 0,
                   "status": "reviewing",
-                  "affiliation": "1200367d-043b-4786-94e7-522813b1244a",
+                  "affiliation": "1ae75a1f-0db2-4395-8168-ed90ab5798cc",
                   "attributed_click": null,
                   "checkout": null,
                   "payout": null,
-                  "created_at": 1792137168,
-                  "updated_at": 1792137168
+                  "created_at": 1792401357,
+                  "updated_at": 1792401357
                 },
                 "schema": {
                   "$ref": "#/components/schemas/referral_response"
@@ -13839,7 +14118,7 @@
                 },
                 "example": {
                   "referral": {
-                    "affiliation": "1200367d-043b-4786-94e7-522813b1244a",
+                    "affiliation": "1ae75a1f-0db2-4395-8168-ed90ab5798cc",
                     "commission_amount": 9900
                   }
                 }
@@ -13873,7 +14152,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9cbca1a0-7864-43e9-a0d1-b615be7c26a1",
+                  "id": "0c7eb9b8-e313-4021-ace1-81964f3636f2",
                   "object": "referral",
                   "commission_amount": 9900,
                   "currency": "usd",
@@ -13882,12 +14161,12 @@
                   "manual": true,
                   "refund_reduction_amount": 0,
                   "status": "reviewing",
-                  "affiliation": "3ac8dc97-7a9d-4392-abd2-d8fcafd513d2",
+                  "affiliation": "f08a0056-ebe6-4ccf-bf78-1167f7df0ffd",
                   "attributed_click": null,
                   "checkout": null,
                   "payout": null,
-                  "created_at": 1792137168,
-                  "updated_at": 1792137168
+                  "created_at": 1792401357,
+                  "updated_at": 1792401357
                 },
                 "schema": {
                   "$ref": "#/components/schemas/referral_response"
@@ -13920,7 +14199,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "c477c0a6-46b7-4f71-b921-96cccd79c585",
+                  "id": "0a5635a1-8841-47a3-915d-650d8e1f2190",
                   "object": "referral",
                   "commission_amount": 4500,
                   "currency": "usd",
@@ -13929,12 +14208,12 @@
                   "manual": true,
                   "refund_reduction_amount": 0,
                   "status": "reviewing",
-                  "affiliation": "2e669135-5517-42ad-b838-564b9e552a39",
+                  "affiliation": "b23abf6b-9eb1-40f4-a4b9-73ccd6153b30",
                   "attributed_click": null,
                   "checkout": null,
                   "payout": null,
-                  "created_at": 1792137168,
-                  "updated_at": 1792137168
+                  "created_at": 1792401357,
+                  "updated_at": 1792401357
                 },
                 "schema": {
                   "$ref": "#/components/schemas/referral_response"
@@ -13990,7 +14269,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2c24e994-315a-4bc1-81d6-84a142ad9737",
+                  "id": "339a2040-3a9b-420e-8511-97f35fd675b3",
                   "object": "referral",
                   "deleted": true
                 },
@@ -14027,7 +14306,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "88207075-e2d9-416c-b21d-03d1b58a183c",
+                  "id": "17f1333d-220c-4ef0-b7d0-b29fe4f9b76a",
                   "object": "referral",
                   "commission_amount": 9900,
                   "currency": "usd",
@@ -14036,12 +14315,12 @@
                   "manual": true,
                   "refund_reduction_amount": 0,
                   "status": "approved",
-                  "affiliation": "cf9cb13c-310a-4144-ad64-c61e8f97cd05",
+                  "affiliation": "d9d83b30-06e6-43f9-980f-0b6f328b798f",
                   "attributed_click": null,
                   "checkout": null,
                   "payout": null,
-                  "created_at": 1792137169,
-                  "updated_at": 1792137169
+                  "created_at": 1792401357,
+                  "updated_at": 1792401357
                 },
                 "schema": {
                   "$ref": "#/components/schemas/referral_response"
@@ -14076,7 +14355,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f703d585-b997-4fb9-8a6b-5045f5fc31c0",
+                  "id": "aa643b66-0385-4880-812c-0dba3cc300cb",
                   "object": "referral",
                   "commission_amount": 9900,
                   "currency": "usd",
@@ -14085,12 +14364,12 @@
                   "manual": true,
                   "refund_reduction_amount": 0,
                   "status": "denied",
-                  "affiliation": "7e92e009-41f4-4eb0-857e-8d499d62b83e",
+                  "affiliation": "6c4459fb-cad5-4ead-ae63-5db6d04ce999",
                   "attributed_click": null,
                   "checkout": null,
                   "payout": null,
-                  "created_at": 1792137169,
-                  "updated_at": 1792137169
+                  "created_at": 1792401358,
+                  "updated_at": 1792401358
                 },
                 "schema": {
                   "$ref": "#/components/schemas/referral_response"
@@ -14125,7 +14404,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "51029a21-a716-41c3-bc17-50914d45ff06",
+                  "id": "776666c0-8b29-4e34-b42e-aedc5e7438d9",
                   "object": "referral",
                   "commission_amount": 9900,
                   "currency": "usd",
@@ -14134,12 +14413,12 @@
                   "manual": true,
                   "refund_reduction_amount": 0,
                   "status": "reviewing",
-                  "affiliation": "d2d6771b-3383-4a85-8a8a-244b964749b8",
+                  "affiliation": "f3c6787a-cd31-4e25-8342-a44149848006",
                   "attributed_click": null,
                   "checkout": null,
                   "payout": null,
-                  "created_at": 1792137169,
-                  "updated_at": 1792137169
+                  "created_at": 1792401358,
+                  "updated_at": 1792401358
                 },
                 "schema": {
                   "$ref": "#/components/schemas/referral_response"
