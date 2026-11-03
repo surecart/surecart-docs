@@ -6343,6 +6343,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this product – one of `digital`, `tangible`, `service`, or `saas`."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this product, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `hs_code` takes precedence when set."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this product was manufactured, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `country_of_origin` takes precedence when set."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -8798,6 +8808,101 @@
             "type": "string",
             "nullable": true,
             "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
+          },
+          "customs_declaration": {
+            "type": "object",
+            "nullable": true,
+            "description": "Customs information for the carrier. Required to quote a shipment while `customs_required` is true. Leave `items` empty to derive them from the fulfillment. Cannot be changed after the label is purchased.",
+            "properties": {
+              "certify": {
+                "type": "boolean",
+                "description": "Certifies that the certify_signer has provided all information truthfully."
+              },
+              "certify_signer": {
+                "type": "string",
+                "description": "Name of the person responsible for the validity of the customs information."
+              },
+              "contents_type": {
+                "type": "string",
+                "description": "Type of goods being shipped – one of `DOCUMENTS`, `GIFT`, `SAMPLE`, `MERCHANDISE`, `HUMANITARIAN_DONATION`, `RETURN_MERCHANDISE`, `OTHER`."
+              },
+              "contents_explanation": {
+                "type": "string",
+                "nullable": true,
+                "description": "Explanation of the type of goods. Required when `contents_type` is `OTHER`."
+              },
+              "non_delivery_option": {
+                "type": "string",
+                "description": "How the carrier should proceed if the shipment can't be delivered – one of `ABANDON`, `RETURN`."
+              },
+              "eel_pfc": {
+                "type": "string",
+                "nullable": true,
+                "description": "EEL/PFC type of the shipment – one of `NOEEI_30_37_a`, `NOEEI_30_37_h`, `NOEEI_30_37_f`, `NOEEI_30_36`, `AES_ITN`. Leave empty to use the default for US exports — `NOEEI_30_36` to Canada, `NOEEI_30_37_a` otherwise."
+              },
+              "aes_itn": {
+                "type": "string",
+                "nullable": true,
+                "description": "The AES / ITN reference of the shipment. Required when `eel_pfc` is `AES_ITN`."
+              },
+              "incoterm": {
+                "type": "string",
+                "nullable": true,
+                "description": "The incoterm reference of the shipment, when required by the carrier – one of `DDP`, `DDU`, `FCA`, `DAP`, `eDAP`."
+              },
+              "items": {
+                "type": "array",
+                "description": "The individual items included in this shipment for customs purposes. Leave empty to derive them from the fulfillment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Text description of the item."
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "description": "Quantity of this item in the shipment."
+                    },
+                    "net_weight": {
+                      "type": "string",
+                      "description": "Total weight of this item (quantity * weight per item)."
+                    },
+                    "mass_unit": {
+                      "type": "string",
+                      "description": "The unit of net_weight – one of `g`, `kg`, `lb`, `oz`."
+                    },
+                    "value_amount": {
+                      "type": "string",
+                      "description": "Total value of this item (quantity * value per item)."
+                    },
+                    "value_currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO 4217 currency code for value_amount, e.g. `USD`."
+                    },
+                    "origin_country": {
+                      "type": "string",
+                      "description": "The two-letter ISO country code of origin for this item."
+                    },
+                    "hs_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The HS/tariff code of the item, required by some carriers."
+                    },
+                    "tariff_number": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The tariff number of the item. Takes precedence over hs_code when both are given."
+                    },
+                    "sku_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The SKU code of the item, required by some carriers."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -8911,6 +9016,14 @@
               "live_mode": {
                 "type": "boolean",
                 "description": "Whether or not this shipment was created in live mode."
+              },
+              "international": {
+                "type": "boolean",
+                "description": "Whether the from_contact and to_contact are in different countries."
+              },
+              "customs_required": {
+                "type": "boolean",
+                "description": "Whether this shipment needs a customs_declaration before it can be quoted."
               },
               "label_url": {
                 "type": "string",
@@ -11072,6 +11185,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this variant. If `null`, inherits from the product."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this variant. If `null`, inherits from the product."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this variant was manufactured. If `null`, inherits from the product."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -11849,15 +11972,15 @@
                   },
                   "data": [
                     {
-                      "id": "92662483-0d4a-427f-9ef9-d4ac830f828c",
+                      "id": "cb7573c6-0c6f-4057-b255-822f6d87fd35",
                       "object": "tax_override",
                       "label": null,
                       "shipping": false,
                       "rate": 7.5,
-                      "product_collection": "da2f783a-3016-4068-8cf1-3060283b0271",
-                      "tax_zone": "81028125-4c72-4028-aab1-7239f5ef6626",
-                      "created_at": 1793086954,
-                      "updated_at": 1793086954
+                      "product_collection": "fea47930-5ae7-4f1e-aea1-d122b7e633ae",
+                      "tax_zone": "050f006a-1e6e-4d30-a162-12750231858a",
+                      "created_at": 1793623100,
+                      "updated_at": 1793623100
                     }
                   ]
                 },
@@ -11883,15 +12006,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "46bdbfa7-18af-49e1-8883-6b910404a5cb",
+                  "id": "4c5c3df9-16cd-4388-8663-5136b7ed9544",
                   "object": "tax_override",
                   "label": "GST + PST",
                   "shipping": false,
                   "rate": 10.0,
-                  "product_collection": "5dc37b55-ee24-48aa-93fb-a01340148879",
-                  "tax_zone": "bc986e9c-a847-485f-973e-ae35358a0239",
-                  "created_at": 1793086954,
-                  "updated_at": 1793086954
+                  "product_collection": "7f99d38b-1fd6-499b-84eb-45b0a59302ed",
+                  "tax_zone": "76755b4b-bb65-4e3d-831b-482de18b38d8",
+                  "created_at": 1793623100,
+                  "updated_at": 1793623100
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11916,8 +12039,8 @@
                 },
                 "example": {
                   "tax_override": {
-                    "tax_zone": "bc986e9c-a847-485f-973e-ae35358a0239",
-                    "product_collection": "5dc37b55-ee24-48aa-93fb-a01340148879",
+                    "tax_zone": "76755b4b-bb65-4e3d-831b-482de18b38d8",
+                    "product_collection": "7f99d38b-1fd6-499b-84eb-45b0a59302ed",
                     "rate": 10,
                     "label": "GST + PST"
                   }
@@ -11952,15 +12075,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d5c98f5b-f5ff-44a6-af77-f7348470eb5f",
+                  "id": "572819b2-d5e8-4939-bb3a-f61b962bc9bc",
                   "object": "tax_override",
                   "label": null,
                   "shipping": false,
                   "rate": 7.5,
-                  "product_collection": "8be09ff4-42be-4398-ba1b-0e1989633d09",
-                  "tax_zone": "2b7bb8cc-3351-4234-b472-3c7c1bd27f18",
-                  "created_at": 1793086954,
-                  "updated_at": 1793086954
+                  "product_collection": "f4555d23-65d5-4fec-8dc8-bc3ecf1fc448",
+                  "tax_zone": "03d24c75-be79-4e73-bcb5-cc78a6274fd4",
+                  "created_at": 1793623100,
+                  "updated_at": 1793623100
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -11984,15 +12107,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ccf8935d-a0c9-44b9-a433-3cfd7455d821",
+                  "id": "92f2cc86-bcc4-4795-9c7f-c2e92aa30822",
                   "object": "tax_override",
                   "label": "GST + PST",
                   "shipping": false,
                   "rate": 5.0,
-                  "product_collection": "e463f319-969d-4598-9e0a-850992d04c8f",
-                  "tax_zone": "d61172b0-8f48-4759-b234-0ff9bd0fa634",
-                  "created_at": 1793086955,
-                  "updated_at": 1793086955
+                  "product_collection": "55dbcf2b-34d9-4370-98f5-97274fb38719",
+                  "tax_zone": "d2df9f60-ef62-42a9-8760-0060b5031dfe",
+                  "created_at": 1793623101,
+                  "updated_at": 1793623101
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -12039,7 +12162,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "63309eb5-8445-4fc8-874c-3147e856b0b9",
+                  "id": "bdc03243-efff-43d6-8291-fb749428870c",
                   "object": "tax_override",
                   "deleted": true
                 },
@@ -12066,7 +12189,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d1b11324-30e5-4f30-9063-0f73268814b7",
+                  "id": "94d69658-710c-457d-ae3e-0d521637a5c4",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -12078,11 +12201,11 @@
                   "tax_enabled": false,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "0e5bde8a-12dc-4628-8f10-98964b0b4f4f",
+                  "address": "319aa180-b0e6-4f08-b862-766d3ba2b702",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1793086955,
-                  "updated_at": 1793086955
+                  "created_at": 1793623102,
+                  "updated_at": 1793623102
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -12106,7 +12229,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0fb59be4-fa88-4626-9e5f-9e932b61de8b",
+                  "id": "08b45c6d-f8f8-41c7-8567-d81ee7aa4f8f",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -12118,11 +12241,11 @@
                   "tax_enabled": true,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "9db03326-39bd-4f5e-8dd4-48cbb7977ff1",
+                  "address": "cf7db9d8-8f89-4dba-b002-4b983aa15ecf",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1793086955,
-                  "updated_at": 1793086955
+                  "created_at": 1793623103,
+                  "updated_at": 1793623103
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -12211,14 +12334,14 @@
                   },
                   "data": [
                     {
-                      "id": "9e9aaa43-14f6-4e1c-810a-a841ca13713e",
+                      "id": "93dceccd-a0c8-4cdb-87d2-e77463043bb8",
                       "object": "tax_registration",
                       "label": null,
                       "manual_rate": 5.5,
                       "tax_identifier": null,
-                      "tax_zone": "3f2e12ff-e2e5-4ef8-bbaa-790673b988bb",
-                      "created_at": 1793086955,
-                      "updated_at": 1793086955
+                      "tax_zone": "2e55d507-a3a9-445a-bd5a-dc10acfdcbcc",
+                      "created_at": 1793623104,
+                      "updated_at": 1793623104
                     }
                   ]
                 },
@@ -12244,14 +12367,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2a6dba4a-f191-48a1-a62b-d307ac49b780",
+                  "id": "b346e524-aba5-4fd9-ba27-df8db352b66f",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 10.0,
                   "tax_identifier": null,
-                  "tax_zone": "480a40c8-cdd3-4197-860d-e64228552cc7",
-                  "created_at": 1793086955,
-                  "updated_at": 1793086955
+                  "tax_zone": "10a3c4e4-3625-4352-818f-22627737c1ab",
+                  "created_at": 1793623105,
+                  "updated_at": 1793623105
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -12276,7 +12399,7 @@
                 },
                 "example": {
                   "tax_registration": {
-                    "tax_zone": "480a40c8-cdd3-4197-860d-e64228552cc7",
+                    "tax_zone": "10a3c4e4-3625-4352-818f-22627737c1ab",
                     "manual_rate": 10
                   }
                 }
@@ -12310,14 +12433,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1d393ada-0803-427b-bc2e-ce88d4b3b7bb",
+                  "id": "3a8a2254-b2e8-4533-8cd9-4ce02aec31d2",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_identifier": null,
-                  "tax_zone": "9f8b2b64-e5ca-4371-8f02-9274caa997b5",
-                  "created_at": 1793086955,
-                  "updated_at": 1793086955
+                  "tax_zone": "36a84531-f2ce-484e-b097-27b3971e3448",
+                  "created_at": 1793623106,
+                  "updated_at": 1793623106
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -12341,14 +12464,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "19b79b38-dabd-4bd7-98e5-78d2864b68c2",
+                  "id": "4da19f1c-8a6d-4364-bbef-91b8d1862a5a",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
-                  "tax_identifier": "36941b7d-65f6-470f-92c8-b1bda04cb273",
-                  "tax_zone": "35e28218-e1db-44f0-a3f9-ce28c7e1e9b1",
-                  "created_at": 1793086955,
-                  "updated_at": 1793086955
+                  "tax_identifier": "6fd4d69f-6b95-4dd6-9172-ea838270d9b7",
+                  "tax_zone": "083cfe4d-e262-470e-9582-e73b304f4d8c",
+                  "created_at": 1793623108,
+                  "updated_at": 1793623108
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -12397,7 +12520,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "895813b9-c73c-4e0a-8158-6adca61fc147",
+                  "id": "455d3441-4db4-4b11-a5b1-9394ef35674f",
                   "object": "tax_registration",
                   "deleted": true
                 },

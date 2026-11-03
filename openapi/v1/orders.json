@@ -6343,6 +6343,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this product – one of `digital`, `tangible`, `service`, or `saas`."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this product, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `hs_code` takes precedence when set."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this product was manufactured, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `country_of_origin` takes precedence when set."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -8798,6 +8808,101 @@
             "type": "string",
             "nullable": true,
             "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
+          },
+          "customs_declaration": {
+            "type": "object",
+            "nullable": true,
+            "description": "Customs information for the carrier. Required to quote a shipment while `customs_required` is true. Leave `items` empty to derive them from the fulfillment. Cannot be changed after the label is purchased.",
+            "properties": {
+              "certify": {
+                "type": "boolean",
+                "description": "Certifies that the certify_signer has provided all information truthfully."
+              },
+              "certify_signer": {
+                "type": "string",
+                "description": "Name of the person responsible for the validity of the customs information."
+              },
+              "contents_type": {
+                "type": "string",
+                "description": "Type of goods being shipped – one of `DOCUMENTS`, `GIFT`, `SAMPLE`, `MERCHANDISE`, `HUMANITARIAN_DONATION`, `RETURN_MERCHANDISE`, `OTHER`."
+              },
+              "contents_explanation": {
+                "type": "string",
+                "nullable": true,
+                "description": "Explanation of the type of goods. Required when `contents_type` is `OTHER`."
+              },
+              "non_delivery_option": {
+                "type": "string",
+                "description": "How the carrier should proceed if the shipment can't be delivered – one of `ABANDON`, `RETURN`."
+              },
+              "eel_pfc": {
+                "type": "string",
+                "nullable": true,
+                "description": "EEL/PFC type of the shipment – one of `NOEEI_30_37_a`, `NOEEI_30_37_h`, `NOEEI_30_37_f`, `NOEEI_30_36`, `AES_ITN`. Leave empty to use the default for US exports — `NOEEI_30_36` to Canada, `NOEEI_30_37_a` otherwise."
+              },
+              "aes_itn": {
+                "type": "string",
+                "nullable": true,
+                "description": "The AES / ITN reference of the shipment. Required when `eel_pfc` is `AES_ITN`."
+              },
+              "incoterm": {
+                "type": "string",
+                "nullable": true,
+                "description": "The incoterm reference of the shipment, when required by the carrier – one of `DDP`, `DDU`, `FCA`, `DAP`, `eDAP`."
+              },
+              "items": {
+                "type": "array",
+                "description": "The individual items included in this shipment for customs purposes. Leave empty to derive them from the fulfillment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Text description of the item."
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "description": "Quantity of this item in the shipment."
+                    },
+                    "net_weight": {
+                      "type": "string",
+                      "description": "Total weight of this item (quantity * weight per item)."
+                    },
+                    "mass_unit": {
+                      "type": "string",
+                      "description": "The unit of net_weight – one of `g`, `kg`, `lb`, `oz`."
+                    },
+                    "value_amount": {
+                      "type": "string",
+                      "description": "Total value of this item (quantity * value per item)."
+                    },
+                    "value_currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO 4217 currency code for value_amount, e.g. `USD`."
+                    },
+                    "origin_country": {
+                      "type": "string",
+                      "description": "The two-letter ISO country code of origin for this item."
+                    },
+                    "hs_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The HS/tariff code of the item, required by some carriers."
+                    },
+                    "tariff_number": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The tariff number of the item. Takes precedence over hs_code when both are given."
+                    },
+                    "sku_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The SKU code of the item, required by some carriers."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -8911,6 +9016,14 @@
               "live_mode": {
                 "type": "boolean",
                 "description": "Whether or not this shipment was created in live mode."
+              },
+              "international": {
+                "type": "boolean",
+                "description": "Whether the from_contact and to_contact are in different countries."
+              },
+              "customs_required": {
+                "type": "boolean",
+                "description": "Whether this shipment needs a customs_declaration before it can be quoted."
               },
               "label_url": {
                 "type": "string",
@@ -11072,6 +11185,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this variant. If `null`, inherits from the product."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this variant. If `null`, inherits from the product."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this variant was manufactured. If `null`, inherits from the product."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -11799,7 +11922,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5199744e-c9f7-4477-9378-64d9418a0bbc",
+                  "id": "77c7bea0-5715-4b16-9379-e1cc10e5475d",
                   "object": "abandoned_checkout_protocol",
                   "enabled": false,
                   "first_promotion_notification": null,
@@ -11812,9 +11935,9 @@
                   ],
                   "promotion_expires_after_days": null,
                   "test_mode_enabled": true,
-                  "coupon": "dc214c8b-9d32-45de-87a4-395839482f4d",
-                  "created_at": 1793086817,
-                  "updated_at": 1793086817
+                  "coupon": "5e9a4e9f-4fcf-4c33-9095-b4d1ba61d65d",
+                  "created_at": 1793622732,
+                  "updated_at": 1793622732
                 },
                 "schema": {
                   "$ref": "#/components/schemas/abandoned_checkout_protocol_response"
@@ -11838,7 +11961,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a7690671-bf4f-4770-b45b-0b144624b26a",
+                  "id": "d772cc1e-7241-4c08-9e98-b5f89da06da7",
                   "object": "abandoned_checkout_protocol",
                   "enabled": false,
                   "first_promotion_notification": null,
@@ -11851,9 +11974,9 @@
                   ],
                   "promotion_expires_after_days": null,
                   "test_mode_enabled": true,
-                  "coupon": "e7a62a09-6fb0-45cb-8e98-89a1db7c2c10",
-                  "created_at": 1793086818,
-                  "updated_at": 1793086818
+                  "coupon": "35089aac-0728-4450-9b49-99f74877db30",
+                  "created_at": 1793622733,
+                  "updated_at": 1793622733
                 },
                 "schema": {
                   "$ref": "#/components/schemas/abandoned_checkout_protocol_response"
@@ -11975,20 +12098,20 @@
                   },
                   "data": [
                     {
-                      "id": "4af906a0-a459-4cda-b9d2-74f884e3081d",
+                      "id": "f9095d0a-0db0-43c5-b46d-e0d5500332dc",
                       "object": "abandoned_checkout",
                       "notifications_enabled": true,
                       "notification_status": "not_scheduled",
                       "notifications_scheduled_at": [],
-                      "portal_url": "http://app.example.com/portal_redirect/abandoned_checkouts/4af906a0-a459-4cda-b9d2-74f884e3081d",
+                      "portal_url": "http://app.example.com/portal_redirect/abandoned_checkouts/f9095d0a-0db0-43c5-b46d-e0d5500332dc",
                       "recovery_status": "abandoned",
                       "recovered_at": null,
-                      "checkout": "8ef97ef7-c0c5-4352-86c2-dfaf614b8cce",
-                      "customer": "4eea1fb9-59d1-472a-a378-684f821d8ae5",
+                      "checkout": "cf4d4d30-e4ea-428a-8e14-f3e35fa3ad74",
+                      "customer": "8ebf1c90-396c-4a4c-b05e-0ffc510c6ee9",
                       "promotion": null,
                       "recovered_checkout": null,
-                      "created_at": 1793084719,
-                      "updated_at": 1793086819
+                      "created_at": 1793620636,
+                      "updated_at": 1793622736
                     }
                   ]
                 },
@@ -12025,20 +12148,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "38fe2882-1616-4c78-b5d9-5b966b83fcc6",
+                  "id": "a597fe41-28f6-407c-8fb3-73dbc9e17f51",
                   "object": "abandoned_checkout",
                   "notifications_enabled": true,
                   "notification_status": "not_scheduled",
                   "notifications_scheduled_at": [],
-                  "portal_url": "http://app.example.com/portal_redirect/abandoned_checkouts/38fe2882-1616-4c78-b5d9-5b966b83fcc6",
+                  "portal_url": "http://app.example.com/portal_redirect/abandoned_checkouts/a597fe41-28f6-407c-8fb3-73dbc9e17f51",
                   "recovery_status": "abandoned",
                   "recovered_at": null,
-                  "checkout": "46698c4f-6dbb-4a3c-9ffa-9010c4ba8125",
-                  "customer": "d74e562a-15bb-492c-a54a-8c95c11db8c2",
+                  "checkout": "17989187-0a57-495d-ba81-c2aa3f7c544b",
+                  "customer": "f0e90d04-7f6a-45ad-a5ea-04bcb49d08e3",
                   "promotion": null,
                   "recovered_checkout": null,
-                  "created_at": 1793084719,
-                  "updated_at": 1793086819
+                  "created_at": 1793620637,
+                  "updated_at": 1793622737
                 },
                 "schema": {
                   "$ref": "#/components/schemas/abandoned_checkout_response"
@@ -12062,20 +12185,20 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5bd05de9-aa79-47da-b09c-4c13434c2f39",
+                  "id": "02344c79-cc50-4324-a5d5-a2ffae610279",
                   "object": "abandoned_checkout",
                   "notifications_enabled": true,
                   "notification_status": "not_scheduled",
                   "notifications_scheduled_at": [],
-                  "portal_url": "http://app.example.com/portal_redirect/abandoned_checkouts/5bd05de9-aa79-47da-b09c-4c13434c2f39",
+                  "portal_url": "http://app.example.com/portal_redirect/abandoned_checkouts/02344c79-cc50-4324-a5d5-a2ffae610279",
                   "recovery_status": "abandoned",
                   "recovered_at": null,
-                  "checkout": "db96fe37-2761-42cf-aa13-f9908418cb4c",
-                  "customer": "1da4dd9c-21e2-4d50-b08f-8854e3166cda",
+                  "checkout": "07bf1961-2fff-4dbc-9901-1aac677c7c89",
+                  "customer": "e56e476d-3b7b-447e-900b-0e315a31fbfb",
                   "promotion": null,
                   "recovered_checkout": null,
-                  "created_at": 1793084719,
-                  "updated_at": 1793086819
+                  "created_at": 1793620639,
+                  "updated_at": 1793622739
                 },
                 "schema": {
                   "$ref": "#/components/schemas/abandoned_checkout_response"
@@ -12209,21 +12332,21 @@
                   },
                   "data": [
                     {
-                      "id": "d0556032-9bf3-457c-8c71-e99e58b421a9",
+                      "id": "445b154a-6dc3-4f22-a765-d349fff2c636",
                       "object": "charge",
                       "amount": 2900,
                       "currency": "usd",
                       "disputed_amount": 0,
-                      "external_charge_id": "clh4btn643z5hle",
+                      "external_charge_id": "3g3td18plqw21f1",
                       "fully_refunded": false,
                       "live_mode": true,
                       "refunded_amount": 0,
-                      "customer": "d02cef19-0a32-48d0-8d0d-78ba386644d5",
-                      "checkout": "77a5530c-71d0-4faa-b274-45f45832af36",
-                      "payment_intent": "2b7a4905-806b-4b53-88f3-5d5a3dea696d",
+                      "customer": "96cfc49a-1aa8-41ce-8d60-9088e3b465fd",
+                      "checkout": "dd64436e-10b4-4ca7-8ee5-b8d28be69182",
+                      "payment_intent": "97dfeec1-9306-4b98-8adc-1ed1d65d3f0c",
                       "payment_method": null,
-                      "created_at": 1793086836,
-                      "updated_at": 1793086836
+                      "created_at": 1793622798,
+                      "updated_at": 1793622798
                     }
                   ]
                 },
@@ -12260,21 +12383,21 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1f2dc7ef-0620-4688-9c00-036e85bb9493",
+                  "id": "3c5fcbe3-2b31-4c51-b6d9-7594310e1022",
                   "object": "charge",
                   "amount": 2900,
                   "currency": "usd",
                   "disputed_amount": 0,
-                  "external_charge_id": "60jvb29t56gbikw",
+                  "external_charge_id": "n47geglozz1qnd7",
                   "fully_refunded": false,
                   "live_mode": true,
                   "refunded_amount": 0,
-                  "customer": "90559931-31fb-4ef0-aeac-eb54abd5d06b",
-                  "checkout": "3a85d72c-6907-42d1-9235-791450de1152",
-                  "payment_intent": "d0d3e4c3-766c-4812-9e3e-4a07c156a8e6",
+                  "customer": "4e2d8758-daf3-4c9c-a487-4b9ec4e95dd2",
+                  "checkout": "fe688cb8-4a64-42cd-9a29-c11678c3b707",
+                  "payment_intent": "480d2eac-eca5-4887-b5ae-dceaf5e7f434",
                   "payment_method": null,
-                  "created_at": 1793086837,
-                  "updated_at": 1793086837
+                  "created_at": 1793622801,
+                  "updated_at": 1793622801
                 },
                 "schema": {
                   "$ref": "#/components/schemas/charge_response"
@@ -12340,14 +12463,14 @@
                   },
                   "data": [
                     {
-                      "id": "19374758-5828-4f4d-98ca-10b341a408bf",
+                      "id": "2df1af3e-3eb9-46d7-b03f-e36eed61b383",
                       "object": "checkout_fee",
                       "amount": 0,
-                      "description": "PremiumCode260455",
+                      "description": "StellarDeal350631",
                       "fee_type": "manual",
-                      "checkout": "4c89de78-f941-4812-9abf-0389a33b6098",
-                      "created_at": 1793086837,
-                      "updated_at": 1793086837
+                      "checkout": "6e49063a-e9ee-43d0-9e3e-f0c64e1e4fab",
+                      "created_at": 1793622802,
+                      "updated_at": 1793622802
                     }
                   ]
                 },
@@ -12373,14 +12496,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d10d4fdf-39bc-465c-98ac-88112afac4c6",
+                  "id": "4060a2d5-073d-42b8-8aed-fc104e87e4e5",
                   "object": "checkout_fee",
                   "amount": 10,
                   "description": "Setup fee",
                   "fee_type": "manual",
-                  "checkout": "d68d58b8-b622-4a61-8d62-6e8515654f06",
-                  "created_at": 1793086837,
-                  "updated_at": 1793086837
+                  "checkout": "836f6f54-4d34-4522-88cf-cd86e362f1b9",
+                  "created_at": 1793622804,
+                  "updated_at": 1793622804
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_fee_response"
@@ -12407,7 +12530,7 @@
                   "checkout_fee": {
                     "amount": 10,
                     "description": "Setup fee",
-                    "checkout": "d68d58b8-b622-4a61-8d62-6e8515654f06"
+                    "checkout": "836f6f54-4d34-4522-88cf-cd86e362f1b9"
                   }
                 }
               }
@@ -12440,14 +12563,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "42b84ae7-5fa2-4045-af42-ab7fce41eaa8",
+                  "id": "0cfa4682-847b-4692-a90b-a3a1a9f8db45",
                   "object": "checkout_fee",
                   "amount": 0,
-                  "description": "AmazingSale745649",
+                  "description": "PremiumSale593453",
                   "fee_type": "manual",
-                  "checkout": "973f8c40-97ec-4620-846d-d845bd66a797",
-                  "created_at": 1793086838,
-                  "updated_at": 1793086838
+                  "checkout": "fe806d50-dc6a-461c-8b5a-08a0bc1f7b87",
+                  "created_at": 1793622804,
+                  "updated_at": 1793622804
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_fee_response"
@@ -12480,14 +12603,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "90184aab-7890-4985-99a9-ce4d16597d8b",
+                  "id": "de19f860-014e-4be1-886e-80d1030235b9",
                   "object": "checkout_fee",
                   "amount": 25,
-                  "description": "PremiumPrice309198",
+                  "description": "SpecialSavings396156",
                   "fee_type": "manual",
-                  "checkout": "0d0fd1e9-e845-46f8-90df-c589f0462605",
-                  "created_at": 1793086838,
-                  "updated_at": 1793086838
+                  "checkout": "f412ea28-80fd-4e6e-910b-cdf536c3e049",
+                  "created_at": 1793622805,
+                  "updated_at": 1793622805
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_fee_response"
@@ -12543,7 +12666,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "68b08f5f-682e-499f-8b98-74dab496ddb6",
+                  "id": "83f301d0-b508-42a7-ac7b-cfce36108e38",
                   "object": "checkout_fee",
                   "deleted": true
                 },
@@ -12570,7 +12693,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8a1e6817-482c-49df-8c93-8e4e63cb51e6",
+                  "id": "7b1f97bd-c79a-473f-b484-e8f61ef41ce1",
                   "object": "checkout_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -12579,8 +12702,8 @@
                   "thank_you_heading": "Thank you for your order!",
                   "thank_you_description": "An order confirmation email with details of this order and a link back to this page have been sent to your email address below.",
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1793086838,
-                  "updated_at": 1793086838
+                  "created_at": 1793622807,
+                  "updated_at": 1793622807
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_portal_protocol_response"
@@ -12604,7 +12727,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d47a7a37-eb7b-4631-b963-a5b1b1bd4db1",
+                  "id": "9fe17691-c422-4cf1-a176-9beb8d3bff64",
                   "object": "checkout_portal_protocol",
                   "back_url": "https://example.com",
                   "external_enabled": true,
@@ -12613,8 +12736,8 @@
                   "thank_you_heading": "Thank you for your order!",
                   "thank_you_description": "An order confirmation email with details of this order and a link back to this page have been sent to your email address below.",
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1793086839,
-                  "updated_at": 1793086839
+                  "created_at": 1793622807,
+                  "updated_at": 1793622807
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_portal_protocol_response"
@@ -12760,7 +12883,7 @@
                   },
                   "data": [
                     {
-                      "id": "62d5d015-e560-49e0-b19f-3bba124c7810",
+                      "id": "88cc6e3c-2fc9-4a15-ba8d-429bda5988fe",
                       "object": "checkout",
                       "abandoned_checkout_enabled": true,
                       "amount_due": 2900,
@@ -12794,7 +12917,7 @@
                       "paid_at": null,
                       "payment_method_required": true,
                       "phone_required": false,
-                      "portal_url": "http://app.example.com/portal_redirect/checkouts/62d5d015-e560-49e0-b19f-3bba124c7810",
+                      "portal_url": "http://app.example.com/portal_redirect/checkouts/88cc6e3c-2fc9-4a15-ba8d-429bda5988fe",
                       "phone": null,
                       "proration_amount": 0,
                       "refunded_amount": 0,
@@ -12823,7 +12946,7 @@
                       "current_upsell": null,
                       "invoice": null,
                       "last_click": null,
-                      "customer": "378bed0a-cc48-4cce-91eb-19d9b3a4882f",
+                      "customer": "13422380-1028-42cb-b1dd-5fe0ee5e5c7c",
                       "discount": null,
                       "geo_address": null,
                       "ip_geo_address": null,
@@ -12838,8 +12961,8 @@
                       "tax_identifier": null,
                       "selected_shipping_choice": null,
                       "upsell_funnel": null,
-                      "created_at": 1793086839,
-                      "updated_at": 1793086839
+                      "created_at": 1793622809,
+                      "updated_at": 1793622809
                     }
                   ]
                 },
@@ -12865,7 +12988,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3302be23-73b7-4b47-b0de-fb8a25efdf61",
+                  "id": "fa6c8fe0-a7db-468f-8a86-2b902ef4234d",
                   "object": "checkout",
                   "abandoned_checkout_enabled": true,
                   "amount_due": 0,
@@ -12899,7 +13022,7 @@
                   "paid_at": null,
                   "payment_method_required": false,
                   "phone_required": false,
-                  "portal_url": "http://app.example.com/portal_redirect/checkouts/3302be23-73b7-4b47-b0de-fb8a25efdf61",
+                  "portal_url": "http://app.example.com/portal_redirect/checkouts/fa6c8fe0-a7db-468f-8a86-2b902ef4234d",
                   "phone": null,
                   "proration_amount": 0,
                   "refunded_amount": 0,
@@ -12928,7 +13051,7 @@
                   "current_upsell": null,
                   "invoice": null,
                   "last_click": null,
-                  "customer": "0f3a8fba-aa68-41a7-9862-8074ff494136",
+                  "customer": "f03c5da6-43b2-4a80-a8b7-0fca73edcd55",
                   "discount": null,
                   "geo_address": null,
                   "ip_geo_address": null,
@@ -12943,8 +13066,8 @@
                   "tax_identifier": null,
                   "selected_shipping_choice": null,
                   "upsell_funnel": null,
-                  "created_at": 1793086839,
-                  "updated_at": 1793086839
+                  "created_at": 1793622810,
+                  "updated_at": 1793622810
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_response"
@@ -13013,7 +13136,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0c8c01f3-312b-4fcf-abaf-fafa7b3a1471",
+                  "id": "9267bd8f-8c19-4feb-bf23-28fe396994a5",
                   "object": "checkout",
                   "abandoned_checkout_enabled": true,
                   "amount_due": 2900,
@@ -13047,7 +13170,7 @@
                   "paid_at": null,
                   "payment_method_required": true,
                   "phone_required": false,
-                  "portal_url": "http://app.example.com/portal_redirect/checkouts/0c8c01f3-312b-4fcf-abaf-fafa7b3a1471",
+                  "portal_url": "http://app.example.com/portal_redirect/checkouts/9267bd8f-8c19-4feb-bf23-28fe396994a5",
                   "phone": null,
                   "proration_amount": 0,
                   "refunded_amount": 0,
@@ -13076,7 +13199,7 @@
                   "current_upsell": null,
                   "invoice": null,
                   "last_click": null,
-                  "customer": "58fc0ca2-8fc8-4a0b-b6c7-b91e22e1480c",
+                  "customer": "87361c55-3211-4fe5-9d30-6606225e947b",
                   "discount": null,
                   "geo_address": null,
                   "ip_geo_address": null,
@@ -13091,8 +13214,8 @@
                   "tax_identifier": null,
                   "selected_shipping_choice": null,
                   "upsell_funnel": null,
-                  "created_at": 1793086839,
-                  "updated_at": 1793086839
+                  "created_at": 1793622811,
+                  "updated_at": 1793622811
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_response"
@@ -13126,7 +13249,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cf02b768-c2de-4fe0-8143-805a95e859b4",
+                  "id": "93589e2b-23ce-4f6a-a5c5-16a1caea3855",
                   "object": "checkout",
                   "abandoned_checkout_enabled": true,
                   "amount_due": 2900,
@@ -13160,7 +13283,7 @@
                   "paid_at": null,
                   "payment_method_required": true,
                   "phone_required": false,
-                  "portal_url": "http://app.example.com/portal_redirect/checkouts/cf02b768-c2de-4fe0-8143-805a95e859b4",
+                  "portal_url": "http://app.example.com/portal_redirect/checkouts/93589e2b-23ce-4f6a-a5c5-16a1caea3855",
                   "phone": null,
                   "proration_amount": 0,
                   "refunded_amount": 0,
@@ -13189,7 +13312,7 @@
                   "current_upsell": null,
                   "invoice": null,
                   "last_click": null,
-                  "customer": "86117d29-1909-42e5-8cd9-889de5a7c8ce",
+                  "customer": "e53ed8da-8e53-4e05-b7e2-ce072459b6f0",
                   "discount": null,
                   "geo_address": null,
                   "ip_geo_address": null,
@@ -13204,8 +13327,8 @@
                   "tax_identifier": null,
                   "selected_shipping_choice": null,
                   "upsell_funnel": null,
-                  "created_at": 1793086840,
-                  "updated_at": 1793086840
+                  "created_at": 1793622812,
+                  "updated_at": 1793622812
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_response"
@@ -13233,7 +13356,7 @@
                     "email": "updated-customer@example.com",
                     "line_items": [
                       {
-                        "price_id": "7b1f650e-79e8-4527-b5a0-d21881448b28",
+                        "price_id": "ddc13f50-73b7-4040-a859-56402e2e0a06",
                         "quantity": 1
                       }
                     ]
@@ -13334,7 +13457,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d4272b42-d596-429d-a4d5-654d24b1a421",
+                  "id": "8a7d52f1-f34b-4baf-a078-518af5d939cb",
                   "object": "checkout",
                   "abandoned_checkout_enabled": true,
                   "amount_due": 2900,
@@ -13368,7 +13491,7 @@
                   "paid_at": null,
                   "payment_method_required": true,
                   "phone_required": false,
-                  "portal_url": "http://app.example.com/portal_redirect/checkouts/d4272b42-d596-429d-a4d5-654d24b1a421",
+                  "portal_url": "http://app.example.com/portal_redirect/checkouts/8a7d52f1-f34b-4baf-a078-518af5d939cb",
                   "phone": null,
                   "proration_amount": 0,
                   "refunded_amount": 0,
@@ -13393,11 +13516,11 @@
                   "trial_amount": 0,
                   "upsells_expire_at": null,
                   "billing_address": null,
-                  "current_payment_intent": "4b1fa33d-3aa2-4c3e-b35d-dcbcc2889442",
+                  "current_payment_intent": "93573ee7-61f5-4e64-b185-f995869ede66",
                   "current_upsell": null,
                   "invoice": null,
                   "last_click": null,
-                  "customer": "b0963726-58cf-40d6-9fbc-6e33aca75653",
+                  "customer": "cef606f6-7254-4b7b-9032-ea809665f73a",
                   "discount": null,
                   "geo_address": null,
                   "ip_geo_address": null,
@@ -13412,8 +13535,8 @@
                   "tax_identifier": null,
                   "selected_shipping_choice": null,
                   "upsell_funnel": null,
-                  "created_at": 1793086840,
-                  "updated_at": 1793086840
+                  "created_at": 1793622814,
+                  "updated_at": 1793622814
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_response"
@@ -13448,7 +13571,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "69c2a473-7fb8-4157-9332-801f20c13803",
+                  "id": "81288a3e-fc7c-47e2-8756-2d5d82af018b",
                   "object": "checkout",
                   "abandoned_checkout_enabled": true,
                   "amount_due": 2900,
@@ -13479,10 +13602,10 @@
                   "g_weight": 0.0,
                   "latitude": null,
                   "longitude": null,
-                  "paid_at": 1793086841,
+                  "paid_at": 1793622816,
                   "payment_method_required": false,
                   "phone_required": false,
-                  "portal_url": "http://app.example.com/portal_redirect/checkouts/69c2a473-7fb8-4157-9332-801f20c13803",
+                  "portal_url": "http://app.example.com/portal_redirect/checkouts/81288a3e-fc7c-47e2-8756-2d5d82af018b",
                   "phone": null,
                   "proration_amount": 0,
                   "refunded_amount": 0,
@@ -13505,18 +13628,18 @@
                   "total_amount": 2900,
                   "total_savings_amount": 0,
                   "trial_amount": 0,
-                  "upsells_expire_at": 1793088641,
+                  "upsells_expire_at": 1793624616,
                   "billing_address": null,
                   "current_payment_intent": null,
                   "current_upsell": null,
                   "invoice": null,
                   "last_click": null,
-                  "customer": "f841f65e-f1fb-4669-8043-c783b760cb92",
+                  "customer": "9551d2cd-20e9-4b2d-b772-cb17862f029d",
                   "discount": null,
                   "geo_address": null,
                   "ip_geo_address": null,
                   "manual_payment_method": null,
-                  "order": "3b83806c-5fcf-47c3-aad7-cd157cb06c99",
+                  "order": "fca231d5-fff2-497e-a922-de352ee04396",
                   "payment_method": null,
                   "inherited_billing_address": null,
                   "inherited_shipping_address": null,
@@ -13526,8 +13649,8 @@
                   "tax_identifier": null,
                   "selected_shipping_choice": null,
                   "upsell_funnel": null,
-                  "created_at": 1793086841,
-                  "updated_at": 1793086841
+                  "created_at": 1793622816,
+                  "updated_at": 1793622816
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_response"
@@ -13562,7 +13685,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1581f90f-3cb7-4163-b59e-bd91d884b359",
+                  "id": "d3e9b54b-1e71-4da6-ac6a-095efc6da668",
                   "object": "checkout",
                   "abandoned_checkout_enabled": true,
                   "amount_due": 2900,
@@ -13596,7 +13719,7 @@
                   "paid_at": null,
                   "payment_method_required": true,
                   "phone_required": false,
-                  "portal_url": "http://app.example.com/portal_redirect/checkouts/1581f90f-3cb7-4163-b59e-bd91d884b359",
+                  "portal_url": "http://app.example.com/portal_redirect/checkouts/d3e9b54b-1e71-4da6-ac6a-095efc6da668",
                   "phone": null,
                   "proration_amount": 0,
                   "refunded_amount": 0,
@@ -13619,18 +13742,18 @@
                   "total_amount": 2900,
                   "total_savings_amount": 0,
                   "trial_amount": 0,
-                  "upsells_expire_at": 1793088641,
+                  "upsells_expire_at": 1793624617,
                   "billing_address": null,
                   "current_payment_intent": null,
                   "current_upsell": null,
                   "invoice": null,
                   "last_click": null,
-                  "customer": "8fbe50b9-e084-4e5b-b144-1e3781557695",
+                  "customer": "cfae7738-efcc-4398-a02f-417b55971168",
                   "discount": null,
                   "geo_address": null,
                   "ip_geo_address": null,
                   "manual_payment_method": null,
-                  "order": "c51372c4-15b0-4ae1-b321-966956c2d48a",
+                  "order": "2cddcebc-3cb1-43c8-a694-d09edc97778f",
                   "payment_method": null,
                   "inherited_billing_address": null,
                   "inherited_shipping_address": null,
@@ -13640,8 +13763,8 @@
                   "tax_identifier": null,
                   "selected_shipping_choice": null,
                   "upsell_funnel": null,
-                  "created_at": 1793086841,
-                  "updated_at": 1793086842
+                  "created_at": 1793622817,
+                  "updated_at": 1793622817
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_response"
@@ -13750,7 +13873,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8dc79efc-43bc-497d-8eb4-934919458902",
+                  "id": "4b527f0f-d78c-4d2a-b63d-c4611b9e1e27",
                   "object": "checkout",
                   "abandoned_checkout_enabled": true,
                   "amount_due": 2900,
@@ -13781,10 +13904,10 @@
                   "g_weight": 0.0,
                   "latitude": null,
                   "longitude": null,
-                  "paid_at": 1793086843,
+                  "paid_at": 1793622821,
                   "payment_method_required": true,
                   "phone_required": false,
-                  "portal_url": "http://app.example.com/portal_redirect/checkouts/8dc79efc-43bc-497d-8eb4-934919458902",
+                  "portal_url": "http://app.example.com/portal_redirect/checkouts/4b527f0f-d78c-4d2a-b63d-c4611b9e1e27",
                   "phone": null,
                   "proration_amount": 0,
                   "refunded_amount": 0,
@@ -13807,18 +13930,18 @@
                   "total_amount": 2900,
                   "total_savings_amount": 0,
                   "trial_amount": 0,
-                  "upsells_expire_at": 1793088643,
+                  "upsells_expire_at": 1793624621,
                   "billing_address": null,
                   "current_payment_intent": null,
                   "current_upsell": null,
                   "invoice": null,
                   "last_click": null,
-                  "customer": "db8a9ccc-c8d3-472c-9a7f-62228a91c2bc",
+                  "customer": "e0b1846f-8c9e-4b26-aae0-7e4b4ea82dfd",
                   "discount": null,
                   "geo_address": null,
                   "ip_geo_address": null,
                   "manual_payment_method": null,
-                  "order": "6ab64353-6b66-4c1f-b606-d12ed6772a70",
+                  "order": "1524bf59-562d-4cf9-bef9-b07e7ae56441",
                   "payment_method": null,
                   "inherited_billing_address": null,
                   "inherited_shipping_address": null,
@@ -13827,9 +13950,9 @@
                   "shipping_address": null,
                   "tax_identifier": null,
                   "selected_shipping_choice": null,
-                  "upsell_funnel": "e46da73e-1c98-4b2c-a239-0df9d099bffb",
-                  "created_at": 1793086843,
-                  "updated_at": 1793086844
+                  "upsell_funnel": "c7c5ccaa-ac18-4b5c-8cac-2e0bd4dc8137",
+                  "created_at": 1793622820,
+                  "updated_at": 1793622821
                 },
                 "schema": {
                   "$ref": "#/components/schemas/checkout_response"
@@ -13940,17 +14063,17 @@
                   },
                   "data": [
                     {
-                      "id": "98442a94-d93e-4368-9c9d-2ff34c721ef6",
+                      "id": "0b3d4fd3-f92a-4ff4-ae64-de2225b42bfe",
                       "object": "dispute",
                       "amount": 2900,
                       "currency": "usd",
-                      "external_dispute_id": "dp_zeo4r5opmx22uq65zehhab0l",
+                      "external_dispute_id": "dp_dlhbhi88zyt1ln9x4xceu025",
                       "live_mode": true,
                       "processor_type": "stripe",
                       "status": "pending",
-                      "charge": "c9e62084-bf0e-4c65-a0e9-81de4ee0901d",
-                      "created_at": 1793086854,
-                      "updated_at": 1793086854
+                      "charge": "85f616a5-bbd5-4392-8311-ed97208d3c71",
+                      "created_at": 1793622845,
+                      "updated_at": 1793622845
                     }
                   ]
                 },
@@ -13987,17 +14110,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0d8d5f0f-b7ac-40ea-bd5b-229a2c70cef8",
+                  "id": "ff7935e7-2c38-4ae8-b21e-e4ace6809427",
                   "object": "dispute",
                   "amount": 2900,
                   "currency": "usd",
-                  "external_dispute_id": "dp_t68nm0b71c020z52r8ui6z65",
+                  "external_dispute_id": "dp_xm46n2dmxfleol6m00kgffl8",
                   "live_mode": true,
                   "processor_type": "stripe",
                   "status": "pending",
-                  "charge": "a27fec37-d309-4033-ba0f-edaa3640fa94",
-                  "created_at": 1793086855,
-                  "updated_at": 1793086855
+                  "charge": "abef6bc5-cd2d-4c69-bb4a-e60e40c994d0",
+                  "created_at": 1793622847,
+                  "updated_at": 1793622847
                 },
                 "schema": {
                   "$ref": "#/components/schemas/dispute_response"
@@ -14063,14 +14186,14 @@
                   },
                   "data": [
                     {
-                      "id": "f229f790-f74b-4182-adac-7a29f9a94e4f",
+                      "id": "923b1a9c-8ff3-4a50-a0a0-bf46b62d186a",
                       "object": "fee",
                       "amount": 100,
                       "description": "Transaction Fee",
                       "fee_type": "manual",
-                      "line_item": "bacc03dc-4c7b-44a6-ad01-6fd1d653b07a",
-                      "created_at": 1793086859,
-                      "updated_at": 1793086859
+                      "line_item": "4cbbcdf1-175b-4ede-ac9d-7f12a0cedbc5",
+                      "created_at": 1793622855,
+                      "updated_at": 1793622855
                     }
                   ]
                 },
@@ -14096,14 +14219,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4d0f3214-5767-4e9c-9019-dff9cd636e99",
+                  "id": "9db3ac62-3de6-41a8-ab90-77bad5400553",
                   "object": "fee",
                   "amount": 10,
                   "description": "Setup fee",
                   "fee_type": "manual",
-                  "line_item": "965319ce-62ae-4cc1-8c1c-4a10c89269c3",
-                  "created_at": 1793086859,
-                  "updated_at": 1793086859
+                  "line_item": "bc6e8a34-f37c-4643-9f6c-8b31ea31c9cb",
+                  "created_at": 1793622856,
+                  "updated_at": 1793622856
                 },
                 "schema": {
                   "$ref": "#/components/schemas/fee_response"
@@ -14130,7 +14253,7 @@
                   "fee": {
                     "amount": 10,
                     "description": "Setup fee",
-                    "line_item": "965319ce-62ae-4cc1-8c1c-4a10c89269c3"
+                    "line_item": "bc6e8a34-f37c-4643-9f6c-8b31ea31c9cb"
                   }
                 }
               }
@@ -14163,14 +14286,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "631773f9-1e63-48f8-b61d-fffebe191975",
+                  "id": "a8bb513f-5d41-4e2d-8f6c-fdaad2a8d83e",
                   "object": "fee",
                   "amount": 100,
                   "description": "Transaction Fee",
                   "fee_type": "manual",
-                  "line_item": "c21f38d8-0c43-4fff-bea4-f76523605d76",
-                  "created_at": 1793086859,
-                  "updated_at": 1793086859
+                  "line_item": "1442e04c-4a7a-4790-ba25-d8083740b988",
+                  "created_at": 1793622857,
+                  "updated_at": 1793622857
                 },
                 "schema": {
                   "$ref": "#/components/schemas/fee_response"
@@ -14203,14 +14326,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a331a274-85fb-475f-a098-3d04fe1a043a",
+                  "id": "21fe459c-7905-4c64-a5d5-c32c45242b98",
                   "object": "fee",
                   "amount": 25,
                   "description": "Transaction Fee",
                   "fee_type": "manual",
-                  "line_item": "2eafef79-9dbe-4a36-9588-292db9119fd3",
-                  "created_at": 1793086859,
-                  "updated_at": 1793086859
+                  "line_item": "6a8016b4-5057-4d4e-bc80-6af57207868a",
+                  "created_at": 1793622858,
+                  "updated_at": 1793622858
                 },
                 "schema": {
                   "$ref": "#/components/schemas/fee_response"
@@ -14266,7 +14389,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9647bcf6-aadd-4532-bcbf-f3cdcc851b4d",
+                  "id": "a061deb9-27be-4db2-9da7-9bd31d49e59a",
                   "object": "fee",
                   "deleted": true
                 },
@@ -14376,7 +14499,7 @@
                   },
                   "data": [
                     {
-                      "id": "a6d398ea-4482-408b-9c88-62e56ae0fc66",
+                      "id": "b8e06290-988f-4462-b699-ded3f0ce9b14",
                       "object": "invoice",
                       "automatic_collection": false,
                       "due_date": null,
@@ -14388,12 +14511,12 @@
                       "notifications_enabled": true,
                       "order_number": null,
                       "status": "draft",
-                      "portal_url": "http://app.example.com/portal_redirect/invoices/a6d398ea-4482-408b-9c88-62e56ae0fc66",
+                      "portal_url": "http://app.example.com/portal_redirect/invoices/b8e06290-988f-4462-b699-ded3f0ce9b14",
                       "notification_sent_at": null,
                       "reminder_notification_sent_at": null,
-                      "checkout": "5400a2f0-583f-43f4-ae1d-5e459e76e744",
-                      "created_at": 1793086867,
-                      "updated_at": 1793086867
+                      "checkout": "0dc1663e-ce6f-4b7d-a01e-2031da4a34ff",
+                      "created_at": 1793622873,
+                      "updated_at": 1793622873
                     }
                   ]
                 },
@@ -14419,7 +14542,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f28b0827-67c0-4ab0-ac64-64097d472a2a",
+                  "id": "d316c4ba-b52c-4ca2-9e3e-c106b2a4a90d",
                   "object": "invoice",
                   "automatic_collection": false,
                   "due_date": 1717113600,
@@ -14431,12 +14554,12 @@
                   "notifications_enabled": true,
                   "order_number": null,
                   "status": "draft",
-                  "portal_url": "http://app.example.com/portal_redirect/invoices/f28b0827-67c0-4ab0-ac64-64097d472a2a",
+                  "portal_url": "http://app.example.com/portal_redirect/invoices/d316c4ba-b52c-4ca2-9e3e-c106b2a4a90d",
                   "notification_sent_at": null,
                   "reminder_notification_sent_at": null,
-                  "checkout": "245346de-dd12-408a-a835-d33ad5e3e62d",
-                  "created_at": 1793086867,
-                  "updated_at": 1793086867
+                  "checkout": "bf9eddd0-7d7e-45a7-924f-0e4bb3f683ec",
+                  "created_at": 1793622873,
+                  "updated_at": 1793622873
                 },
                 "schema": {
                   "$ref": "#/components/schemas/invoice_response"
@@ -14503,7 +14626,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "eadd9da7-458d-4bb9-b456-7dedee741ced",
+                  "id": "c3604cca-90c2-4e5c-a1b4-9e5c557390ee",
                   "object": "invoice",
                   "automatic_collection": false,
                   "due_date": null,
@@ -14515,12 +14638,12 @@
                   "notifications_enabled": true,
                   "order_number": null,
                   "status": "draft",
-                  "portal_url": "http://app.example.com/portal_redirect/invoices/eadd9da7-458d-4bb9-b456-7dedee741ced",
+                  "portal_url": "http://app.example.com/portal_redirect/invoices/c3604cca-90c2-4e5c-a1b4-9e5c557390ee",
                   "notification_sent_at": null,
                   "reminder_notification_sent_at": null,
-                  "checkout": "654c6d6f-d407-41d7-bb61-02be2bb99dcf",
-                  "created_at": 1793086867,
-                  "updated_at": 1793086867
+                  "checkout": "4434d80e-fbf2-4f06-9278-100943d29923",
+                  "created_at": 1793622874,
+                  "updated_at": 1793622874
                 },
                 "schema": {
                   "$ref": "#/components/schemas/invoice_response"
@@ -14553,7 +14676,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "94a398b5-3ecd-42b0-908d-9befe9f061aa",
+                  "id": "46419a21-789a-4ca4-a3a5-7fff37567e33",
                   "object": "invoice",
                   "automatic_collection": false,
                   "due_date": 1719705600,
@@ -14565,12 +14688,12 @@
                   "notifications_enabled": true,
                   "order_number": null,
                   "status": "draft",
-                  "portal_url": "http://app.example.com/portal_redirect/invoices/94a398b5-3ecd-42b0-908d-9befe9f061aa",
+                  "portal_url": "http://app.example.com/portal_redirect/invoices/46419a21-789a-4ca4-a3a5-7fff37567e33",
                   "notification_sent_at": null,
                   "reminder_notification_sent_at": null,
-                  "checkout": "f9d5c639-2703-495c-9d39-7e5da653434a",
-                  "created_at": 1793086868,
-                  "updated_at": 1793086868
+                  "checkout": "c493922b-cc5d-4c33-93f6-ddce9e7845bb",
+                  "created_at": 1793622874,
+                  "updated_at": 1793622874
                 },
                 "schema": {
                   "$ref": "#/components/schemas/invoice_response"
@@ -14626,7 +14749,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3a56ecf9-8321-4b8f-aed6-d9adae2d4383",
+                  "id": "1fcf6755-94ac-4642-b93c-c9d15f5772a1",
                   "object": "invoice",
                   "deleted": true
                 },
@@ -14663,24 +14786,24 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2d84e466-3b12-436e-afb8-b1e0a705e470",
+                  "id": "6bcd3545-4321-437f-b3eb-f2aa64b10eb3",
                   "object": "invoice",
                   "automatic_collection": false,
                   "due_date": null,
                   "footer": null,
-                  "issue_date": 1793059200,
+                  "issue_date": 1793577600,
                   "live_mode": true,
                   "memo": null,
                   "metadata": {},
                   "notifications_enabled": true,
                   "order_number": "0001",
                   "status": "draft",
-                  "portal_url": "http://app.example.com/portal_redirect/invoices/2d84e466-3b12-436e-afb8-b1e0a705e470",
-                  "notification_sent_at": 1793086868,
+                  "portal_url": "http://app.example.com/portal_redirect/invoices/6bcd3545-4321-437f-b3eb-f2aa64b10eb3",
+                  "notification_sent_at": 1793622876,
                   "reminder_notification_sent_at": null,
-                  "checkout": "b20fe984-4f81-4e2c-870c-c43416eaa80d",
-                  "created_at": 1793086868,
-                  "updated_at": 1793086869
+                  "checkout": "25025a2a-304c-4024-bf42-bac0f17d3b25",
+                  "created_at": 1793622876,
+                  "updated_at": 1793622876
                 },
                 "schema": {
                   "$ref": "#/components/schemas/invoice_response"
@@ -14744,24 +14867,24 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2e2e1eed-2f1f-4437-9e04-dbd9e759f42f",
+                  "id": "00c85f99-c0a3-481a-804d-afc69cbde184",
                   "object": "invoice",
                   "automatic_collection": false,
                   "due_date": null,
                   "footer": null,
-                  "issue_date": 1793059200,
+                  "issue_date": 1793577600,
                   "live_mode": true,
                   "memo": null,
                   "metadata": {},
                   "notifications_enabled": true,
                   "order_number": "0001",
                   "status": "open",
-                  "portal_url": "http://app.example.com/portal_redirect/invoices/2e2e1eed-2f1f-4437-9e04-dbd9e759f42f",
-                  "notification_sent_at": 1793086869,
+                  "portal_url": "http://app.example.com/portal_redirect/invoices/00c85f99-c0a3-481a-804d-afc69cbde184",
+                  "notification_sent_at": 1793622877,
                   "reminder_notification_sent_at": null,
-                  "checkout": "8bb9f4fc-951a-4c51-aa87-b05d6e25caa0",
-                  "created_at": 1793086869,
-                  "updated_at": 1793086869
+                  "checkout": "6646a0e8-bf26-4176-b175-fb0c921cd26b",
+                  "created_at": 1793622877,
+                  "updated_at": 1793622877
                 },
                 "schema": {
                   "$ref": "#/components/schemas/invoice_response"
@@ -14796,24 +14919,24 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d3041d72-2898-40e6-9a03-d4823242d468",
+                  "id": "d2ef5f44-432b-4415-b3bd-a2f06aeb7a81",
                   "object": "invoice",
                   "automatic_collection": false,
                   "due_date": null,
                   "footer": null,
-                  "issue_date": 1793059200,
+                  "issue_date": 1793577600,
                   "live_mode": true,
                   "memo": null,
                   "metadata": {},
                   "notifications_enabled": true,
                   "order_number": "0001",
                   "status": "open",
-                  "portal_url": "http://app.example.com/portal_redirect/invoices/d3041d72-2898-40e6-9a03-d4823242d468",
-                  "notification_sent_at": 1793086870,
+                  "portal_url": "http://app.example.com/portal_redirect/invoices/d2ef5f44-432b-4415-b3bd-a2f06aeb7a81",
+                  "notification_sent_at": 1793622879,
                   "reminder_notification_sent_at": null,
-                  "checkout": "da7bbe36-6a38-4027-ba5a-c056efd85c41",
-                  "created_at": 1793086869,
-                  "updated_at": 1793086870
+                  "checkout": "f6066796-bae3-43c8-92d5-50a8b437fe53",
+                  "created_at": 1793622878,
+                  "updated_at": 1793622879
                 },
                 "schema": {
                   "$ref": "#/components/schemas/invoice_response"
@@ -14891,7 +15014,7 @@
                   },
                   "data": [
                     {
-                      "id": "f8e4c7a6-e1f5-43ab-8357-8fe9940d5df4",
+                      "id": "4d52a544-c85a-46fb-9b17-73f0741d05c8",
                       "object": "line_item",
                       "ad_hoc_amount": null,
                       "discount_amount": 0,
@@ -14917,16 +15040,16 @@
                       "variant_options": null,
                       "variant_option_names": null,
                       "bump": null,
-                      "checkout": "fc0473a8-bc95-4f16-913b-db85c6792c21",
-                      "price": "5c8b421f-e042-4843-9e92-4a19036ec0c7",
+                      "checkout": "e91ceaed-2cbb-4fa0-884b-8bbd34f75bbd",
+                      "price": "d97bc3ed-68ca-40b0-a0ee-c0849e5b588a",
                       "upsell": null,
                       "variant": null,
                       "swap": null,
                       "component_line_item": false,
                       "bundle_component_variants": {},
                       "bundle_line_item": null,
-                      "created_at": 1793086875,
-                      "updated_at": 1793086876
+                      "created_at": 1793622889,
+                      "updated_at": 1793622889
                     }
                   ]
                 },
@@ -14962,7 +15085,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "744dccf3-7697-4161-88c3-536a647280d4",
+                  "id": "5194ea35-3fd8-4088-8968-53ce26d56a6c",
                   "object": "line_item",
                   "ad_hoc_amount": null,
                   "discount_amount": 0,
@@ -14988,16 +15111,16 @@
                   "variant_options": null,
                   "variant_option_names": null,
                   "bump": null,
-                  "checkout": "4c5b4e4b-7d78-45a9-b946-7969368c84a6",
-                  "price": "2560a6e9-e0f4-4f74-bb31-709a61d806bc",
+                  "checkout": "246c210d-faee-4e2f-a252-21fefd25b3e8",
+                  "price": "5457d425-0794-4366-8563-ea3634d090a0",
                   "upsell": null,
                   "variant": null,
                   "swap": null,
                   "component_line_item": false,
                   "bundle_component_variants": {},
                   "bundle_line_item": null,
-                  "created_at": 1793086876,
-                  "updated_at": 1793086876
+                  "created_at": 1793622890,
+                  "updated_at": 1793622890
                 },
                 "schema": {
                   "$ref": "#/components/schemas/line_item_response"
@@ -15022,8 +15145,8 @@
                 },
                 "example": {
                   "line_item": {
-                    "price": "2560a6e9-e0f4-4f74-bb31-709a61d806bc",
-                    "checkout": "4c5b4e4b-7d78-45a9-b946-7969368c84a6"
+                    "price": "5457d425-0794-4366-8563-ea3634d090a0",
+                    "checkout": "246c210d-faee-4e2f-a252-21fefd25b3e8"
                   }
                 }
               }
@@ -15056,7 +15179,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7f6ca575-6aad-44dc-892a-d657fe2ff11a",
+                  "id": "f3be4cb0-1de4-4fe8-87ae-1f3183687875",
                   "object": "line_item",
                   "ad_hoc_amount": null,
                   "discount_amount": 0,
@@ -15082,16 +15205,16 @@
                   "variant_options": null,
                   "variant_option_names": null,
                   "bump": null,
-                  "checkout": "5a02d27f-0dd9-4d75-be1a-8d752140c9e6",
-                  "price": "eee71c51-81ea-4e81-b397-c76432c32732",
+                  "checkout": "87f61bde-3652-4a2a-9bc2-238da38c8e7d",
+                  "price": "a764dd5c-48f6-4c90-a8d9-be1bd6474c9a",
                   "upsell": null,
                   "variant": null,
                   "swap": null,
                   "component_line_item": false,
                   "bundle_component_variants": {},
                   "bundle_line_item": null,
-                  "created_at": 1793086876,
-                  "updated_at": 1793086876
+                  "created_at": 1793622890,
+                  "updated_at": 1793622890
                 },
                 "schema": {
                   "$ref": "#/components/schemas/line_item_response"
@@ -15133,7 +15256,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5241624c-bf23-4be9-b840-f79ac9435f92",
+                  "id": "dada26d0-8f34-48be-b994-51b2fc4747d0",
                   "object": "line_item",
                   "ad_hoc_amount": null,
                   "discount_amount": 0,
@@ -15159,16 +15282,16 @@
                   "variant_options": null,
                   "variant_option_names": null,
                   "bump": null,
-                  "checkout": "1bfe8245-3190-4c4e-9437-f8d8601ee6d4",
-                  "price": "4111f708-56ca-4fb9-a872-8ad9481ceafb",
+                  "checkout": "3a1d4fe1-833c-47dd-8ffa-4836f2e6afdd",
+                  "price": "3d9f9afe-3bb3-4edd-99bb-ef7efe11275a",
                   "upsell": null,
                   "variant": null,
                   "swap": null,
                   "component_line_item": false,
                   "bundle_component_variants": {},
                   "bundle_line_item": null,
-                  "created_at": 1793086876,
-                  "updated_at": 1793086876
+                  "created_at": 1793622891,
+                  "updated_at": 1793622891
                 },
                 "schema": {
                   "$ref": "#/components/schemas/line_item_response"
@@ -15224,7 +15347,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "82e74275-acf2-4711-93ab-9e5458541ece",
+                  "id": "b1212dd1-0ecd-413f-a470-bf2ef1167701",
                   "object": "line_item",
                   "deleted": true
                 },
@@ -15262,7 +15385,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "55ec184b-65f8-4dda-b9eb-f2d35b34b86a",
+                  "id": "6fc58965-a121-407a-ba21-afdf1c09b2e9",
                   "object": "line_item",
                   "ad_hoc_amount": null,
                   "discount_amount": 0,
@@ -15288,16 +15411,16 @@
                   "variant_options": null,
                   "variant_option_names": null,
                   "bump": null,
-                  "checkout": "72e4532f-c8c6-4119-865c-4fb1e33236d5",
-                  "price": "375d1cc5-15bb-441f-943d-e56d29bea7cf",
-                  "upsell": "9cbcc380-a931-4166-9cee-12bef4c7c3c0",
+                  "checkout": "8381e9ca-ad76-431c-9989-cd3149899063",
+                  "price": "38c054eb-cb18-42e9-a064-4516728303c6",
+                  "upsell": "e4dbdced-3791-4da6-b010-588e7fb3cd04",
                   "variant": null,
                   "swap": null,
                   "component_line_item": false,
                   "bundle_component_variants": {},
                   "bundle_line_item": null,
-                  "created_at": 1793086878,
-                  "updated_at": 1793086878
+                  "created_at": 1793622893,
+                  "updated_at": 1793622893
                 },
                 "schema": {
                   "$ref": "#/components/schemas/line_item_response"
@@ -15322,9 +15445,9 @@
                 },
                 "example": {
                   "line_item": {
-                    "price": "375d1cc5-15bb-441f-943d-e56d29bea7cf",
-                    "checkout": "72e4532f-c8c6-4119-865c-4fb1e33236d5",
-                    "upsell": "9cbcc380-a931-4166-9cee-12bef4c7c3c0"
+                    "price": "38c054eb-cb18-42e9-a064-4516728303c6",
+                    "checkout": "8381e9ca-ad76-431c-9989-cd3149899063",
+                    "upsell": "e4dbdced-3791-4da6-b010-588e7fb3cd04"
                   }
                 }
               }
@@ -15357,7 +15480,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "58696aba-3054-4eb4-8f40-509247c270b5",
+                  "id": "dbddba1f-bae9-4e25-b434-3bbc933a54ce",
                   "object": "line_item",
                   "ad_hoc_amount": null,
                   "discount_amount": 0,
@@ -15383,16 +15506,16 @@
                   "variant_options": null,
                   "variant_option_names": null,
                   "bump": null,
-                  "checkout": "76dc1664-99d5-4ce5-8aff-051fdd5261bc",
-                  "price": "d1fd8d53-c25b-4515-9c49-9825fa7fe71c",
+                  "checkout": "6bb0f6d5-ac15-4474-926b-46570adb8ff6",
+                  "price": "b14bed27-83a6-4bd4-a34c-665b50fe517e",
                   "upsell": null,
                   "variant": null,
-                  "swap": "7a9998c1-c538-4b30-bf1e-51aa9a877e0e",
+                  "swap": "eca45791-6dab-4855-83f4-a1ad9d4cbfbb",
                   "component_line_item": false,
                   "bundle_component_variants": {},
                   "bundle_line_item": null,
-                  "created_at": 1793086878,
-                  "updated_at": 1793086878
+                  "created_at": 1793622894,
+                  "updated_at": 1793622894
                 },
                 "schema": {
                   "$ref": "#/components/schemas/line_item_response"
@@ -15427,7 +15550,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "28335c7b-5d30-4d74-aebb-cb452c1b95fd",
+                  "id": "bc14ca38-eea0-41bc-8db6-5ed392ff0f21",
                   "object": "line_item",
                   "ad_hoc_amount": null,
                   "discount_amount": 0,
@@ -15453,16 +15576,16 @@
                   "variant_options": null,
                   "variant_option_names": null,
                   "bump": null,
-                  "checkout": "db94684b-c4e4-483b-9231-edb51d333b70",
-                  "price": "cf32e0c0-ce94-43df-b840-1b3b4476c594",
+                  "checkout": "9d93e762-8217-426f-9a97-abee6b432d42",
+                  "price": "d81dcb7c-3193-43f5-ac70-590e66ad6c99",
                   "upsell": null,
                   "variant": null,
                   "swap": null,
                   "component_line_item": false,
                   "bundle_component_variants": {},
                   "bundle_line_item": null,
-                  "created_at": 1793086879,
-                  "updated_at": 1793086879
+                  "created_at": 1793622895,
+                  "updated_at": 1793622895
                 },
                 "schema": {
                   "$ref": "#/components/schemas/line_item_response"
@@ -15565,14 +15688,14 @@
                   },
                   "data": [
                     {
-                      "id": "5599ccc2-da1b-48fc-826d-3a915f3702a0",
+                      "id": "dcbc393f-af7e-4827-bd7f-563fc95da690",
                       "object": "manual_charge",
                       "amount": 2900,
                       "currency": "usd",
-                      "checkout": "6035a8fd-0c8d-4b07-a973-e78d1bd60993",
+                      "checkout": "d9f14217-2913-46b8-b143-81e0ab41e6de",
                       "manual_payment_method": null,
-                      "created_at": 1793086880,
-                      "updated_at": 1793086880
+                      "created_at": 1793622900,
+                      "updated_at": 1793622900
                     }
                   ]
                 },
@@ -15609,14 +15732,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "646c6b5e-353c-4d83-a672-18676d8c11cf",
+                  "id": "57fb4ec7-a865-4935-aa91-3a5019efd1c7",
                   "object": "manual_charge",
                   "amount": 2900,
                   "currency": "usd",
-                  "checkout": "4eed590d-d476-4d7b-a162-01c9dae28cd9",
+                  "checkout": "5524484a-6116-49ae-beeb-249c8320a20c",
                   "manual_payment_method": null,
-                  "created_at": 1793086881,
-                  "updated_at": 1793086881
+                  "created_at": 1793622903,
+                  "updated_at": 1793622903
                 },
                 "schema": {
                   "$ref": "#/components/schemas/manual_charge_response"
@@ -15700,7 +15823,7 @@
                   },
                   "data": [
                     {
-                      "id": "2ff98bb3-d12a-482b-85e9-5881ce288f3b",
+                      "id": "84797348-d8e5-45b9-bf18-1d62e7997684",
                       "object": "manual_payment_method",
                       "archived": false,
                       "archived_at": null,
@@ -15709,8 +15832,8 @@
                       "name": "Manual Payment Method 1",
                       "reusable": true,
                       "discarded_at": null,
-                      "created_at": 1793086881,
-                      "updated_at": 1793086881
+                      "created_at": 1793622904,
+                      "updated_at": 1793622904
                     }
                   ]
                 },
@@ -15736,7 +15859,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "95ad4461-1458-43dc-a5f3-219760ebeac0",
+                  "id": "c1a87eb1-9efb-4fa1-81b1-273700f3910a",
                   "object": "manual_payment_method",
                   "archived": false,
                   "archived_at": null,
@@ -15745,8 +15868,8 @@
                   "name": "Cash on Delivery",
                   "reusable": true,
                   "discarded_at": null,
-                  "created_at": 1793086881,
-                  "updated_at": 1793086881
+                  "created_at": 1793622905,
+                  "updated_at": 1793622905
                 },
                 "schema": {
                   "$ref": "#/components/schemas/manual_payment_method_response"
@@ -15804,7 +15927,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9c0ba325-70d2-4846-a83a-74cac9d8724d",
+                  "id": "1ec36e7f-2f22-4cdf-ae80-89af0c195083",
                   "object": "manual_payment_method",
                   "archived": false,
                   "archived_at": null,
@@ -15813,8 +15936,8 @@
                   "name": "Manual Payment Method 3",
                   "reusable": true,
                   "discarded_at": null,
-                  "created_at": 1793086881,
-                  "updated_at": 1793086881
+                  "created_at": 1793622905,
+                  "updated_at": 1793622905
                 },
                 "schema": {
                   "$ref": "#/components/schemas/manual_payment_method_response"
@@ -15847,7 +15970,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a4c3b583-b9ae-4500-9040-ed89fa611e68",
+                  "id": "06f35d2a-9e13-43cf-85bf-f7afb0d1f3ec",
                   "object": "manual_payment_method",
                   "archived": false,
                   "archived_at": null,
@@ -15856,8 +15979,8 @@
                   "name": "Bank Transfer",
                   "reusable": true,
                   "discarded_at": null,
-                  "created_at": 1793086881,
-                  "updated_at": 1793086881
+                  "created_at": 1793622906,
+                  "updated_at": 1793622906
                 },
                 "schema": {
                   "$ref": "#/components/schemas/manual_payment_method_response"
@@ -15913,7 +16036,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3e60f87c-0462-4d69-99f8-ef8e98676161",
+                  "id": "f75a1f36-ac25-40fb-95e7-9758bd3565fb",
                   "object": "manual_payment_method",
                   "deleted": true
                 },
@@ -15940,7 +16063,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7e85b595-2532-4e3b-be65-03f56a2a6e11",
+                  "id": "0fb87f7f-d5d6-4234-8124-4392e680fb5f",
                   "object": "order_protocol",
                   "capture_geo_address_enabled": false,
                   "geo_address_capturable_countries": [],
@@ -15952,8 +16075,8 @@
                   "number_prefix": null,
                   "require_reusable_payment_methods": false,
                   "upsells_expire_after_minutes": 30,
-                  "created_at": 1793086883,
-                  "updated_at": 1793086883
+                  "created_at": 1793622923,
+                  "updated_at": 1793622923
                 },
                 "schema": {
                   "$ref": "#/components/schemas/order_protocol_response"
@@ -15977,7 +16100,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cb235e0f-46f5-4485-9090-0ca70b6b3df4",
+                  "id": "9ab48487-58e8-4773-b3c7-62634ea60693",
                   "object": "order_protocol",
                   "capture_geo_address_enabled": false,
                   "geo_address_capturable_countries": [],
@@ -15989,8 +16112,8 @@
                   "number_prefix": null,
                   "require_reusable_payment_methods": false,
                   "upsells_expire_after_minutes": 30,
-                  "created_at": 1793086883,
-                  "updated_at": 1793086883
+                  "created_at": 1793622923,
+                  "updated_at": 1793622923
                 },
                 "schema": {
                   "$ref": "#/components/schemas/order_protocol_response"
@@ -16376,7 +16499,7 @@
                   },
                   "data": [
                     {
-                      "id": "f74667e6-8330-462a-9754-057cb5557167",
+                      "id": "803b791d-c898-40f9-b681-a0befa543abc",
                       "object": "order",
                       "fulfillment_status": "unfulfilled",
                       "live_mode": true,
@@ -16384,12 +16507,12 @@
                       "order_type": "checkout",
                       "return_status": "not_returned",
                       "shipment_status": "unshippable",
-                      "portal_url": "http://app.example.com/portal_redirect/orders/f74667e6-8330-462a-9754-057cb5557167",
-                      "statement_url": "http://app.example.com/statements/orders/f74667e6-8330-462a-9754-057cb5557167",
+                      "portal_url": "http://app.example.com/portal_redirect/orders/803b791d-c898-40f9-b681-a0befa543abc",
+                      "statement_url": "http://app.example.com/statements/orders/803b791d-c898-40f9-b681-a0befa543abc",
                       "status": "paid",
-                      "checkout": "686d51fd-d04b-4908-89dc-e4f74d7007ea",
-                      "created_at": 1793086884,
-                      "updated_at": 1793086884
+                      "checkout": "30a0fcb3-f539-4075-b9a5-e1a6270eae80",
+                      "created_at": 1793622925,
+                      "updated_at": 1793622925
                     }
                   ]
                 },
@@ -16597,7 +16720,7 @@
                   },
                   "data": [
                     {
-                      "id": "13b0b0a2-4a7a-472d-8a16-2bb92b1efff1",
+                      "id": "8d5e595c-6161-4e2c-a50e-be8516c1ffcb",
                       "object": "order",
                       "fulfillment_status": "unfulfilled",
                       "live_mode": true,
@@ -16605,12 +16728,12 @@
                       "order_type": "checkout",
                       "return_status": "not_returned",
                       "shipment_status": "unshippable",
-                      "portal_url": "http://app.example.com/portal_redirect/orders/13b0b0a2-4a7a-472d-8a16-2bb92b1efff1",
-                      "statement_url": "http://app.example.com/statements/orders/13b0b0a2-4a7a-472d-8a16-2bb92b1efff1",
+                      "portal_url": "http://app.example.com/portal_redirect/orders/8d5e595c-6161-4e2c-a50e-be8516c1ffcb",
+                      "statement_url": "http://app.example.com/statements/orders/8d5e595c-6161-4e2c-a50e-be8516c1ffcb",
                       "status": "paid",
-                      "checkout": "7c382841-5908-48d1-9080-0a3c66d75ac6",
-                      "created_at": 1793086885,
-                      "updated_at": 1793086885
+                      "checkout": "fa4bf891-7042-4c8c-9602-d603b36ffb70",
+                      "created_at": 1793622926,
+                      "updated_at": 1793622926
                     }
                   ]
                 },
@@ -16647,7 +16770,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7d08efd3-a10c-420d-ae5b-531b01024fe2",
+                  "id": "72cefac7-a209-490a-8c51-d2fdba4ea0df",
                   "object": "order",
                   "fulfillment_status": "unfulfilled",
                   "live_mode": true,
@@ -16655,12 +16778,12 @@
                   "order_type": "checkout",
                   "return_status": "not_returned",
                   "shipment_status": "unshippable",
-                  "portal_url": "http://app.example.com/portal_redirect/orders/7d08efd3-a10c-420d-ae5b-531b01024fe2",
-                  "statement_url": "http://app.example.com/statements/orders/7d08efd3-a10c-420d-ae5b-531b01024fe2",
+                  "portal_url": "http://app.example.com/portal_redirect/orders/72cefac7-a209-490a-8c51-d2fdba4ea0df",
+                  "statement_url": "http://app.example.com/statements/orders/72cefac7-a209-490a-8c51-d2fdba4ea0df",
                   "status": "paid",
-                  "checkout": "aec0dc7d-96eb-4d57-a5e7-5531b9f943bd",
-                  "created_at": 1793086885,
-                  "updated_at": 1793086885
+                  "checkout": "5b1a1084-142b-497b-bce0-5f09306b8027",
+                  "created_at": 1793622927,
+                  "updated_at": 1793622927
                 },
                 "schema": {
                   "$ref": "#/components/schemas/order_response"
@@ -16695,7 +16818,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d41ebb22-77f2-4ba7-8f14-f021b64163dd",
+                  "id": "c3dc95d5-820e-4102-a4cf-9f0215608406",
                   "object": "order",
                   "fulfillment_status": "unfulfilled",
                   "live_mode": true,
@@ -16703,12 +16826,12 @@
                   "order_type": "checkout",
                   "return_status": "not_returned",
                   "shipment_status": "unshippable",
-                  "portal_url": "http://app.example.com/portal_redirect/orders/d41ebb22-77f2-4ba7-8f14-f021b64163dd",
-                  "statement_url": "http://app.example.com/statements/orders/d41ebb22-77f2-4ba7-8f14-f021b64163dd",
+                  "portal_url": "http://app.example.com/portal_redirect/orders/c3dc95d5-820e-4102-a4cf-9f0215608406",
+                  "statement_url": "http://app.example.com/statements/orders/c3dc95d5-820e-4102-a4cf-9f0215608406",
                   "status": "paid",
-                  "checkout": "67beded2-d232-43dc-aeeb-c1633578f80b",
-                  "created_at": 1793086886,
-                  "updated_at": 1793086886
+                  "checkout": "31a0802d-bdd0-41f3-8641-50ba56196e88",
+                  "created_at": 1793622928,
+                  "updated_at": 1793622928
                 },
                 "schema": {
                   "$ref": "#/components/schemas/order_response"
@@ -16798,7 +16921,7 @@
                   },
                   "data": [
                     {
-                      "id": "f5282acf-af42-41b7-ab3d-3083ee73181e",
+                      "id": "f7010195-a80b-4f7b-8e28-33c46a9b1b42",
                       "object": "payment_failure",
                       "amount": 2900,
                       "currency": "usd",
@@ -16807,11 +16930,11 @@
                       "renewal": true,
                       "validation_error_codes": [],
                       "checkout": null,
-                      "customer": "4af29c40-61a1-4c76-bc0b-13e429e5a8ba",
+                      "customer": "4b2eb878-5f8e-435a-8a9d-7eaf5d168d66",
                       "payment_intent": null,
                       "payment_method": null,
-                      "created_at": 1793086887,
-                      "updated_at": 1793086887
+                      "created_at": 1793622939,
+                      "updated_at": 1793622939
                     }
                   ]
                 },
@@ -16924,7 +17047,7 @@
                   },
                   "data": [
                     {
-                      "id": "daf63ecb-2699-4c9a-8b7c-439b59bfd811",
+                      "id": "9cb3f38e-e34b-4420-b477-301c0d181196",
                       "object": "payment_intent",
                       "amount": 500,
                       "currency": "usd",
@@ -16944,12 +17067,12 @@
                       "reusable": false,
                       "status": "pending",
                       "checkout": null,
-                      "customer": "5b1a9c1e-9fbd-4b78-acee-39102d526dea",
+                      "customer": "3e20223b-b0d0-41f1-9d12-6afdb83bb422",
                       "payment_method": null,
                       "platform_fee": null,
                       "service_fee": null,
-                      "created_at": 1793086887,
-                      "updated_at": 1793086887
+                      "created_at": 1793622941,
+                      "updated_at": 1793622941
                     }
                   ]
                 },
@@ -16975,11 +17098,11 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e0ef19f3-443e-435a-a819-840f3cc7f6b3",
+                  "id": "b9578de2-c345-41f5-90a5-cb2c5f185986",
                   "object": "payment_intent",
                   "amount": 0,
                   "currency": "usd",
-                  "external_intent_id": "seti_RbRPgmLcoqYKMDB",
+                  "external_intent_id": "seti_RdaTU2mn0g0XNJB",
                   "live_mode": true,
                   "off_session": false,
                   "processor_data": {
@@ -16995,12 +17118,12 @@
                   "reusable": true,
                   "status": "pending",
                   "checkout": null,
-                  "customer": "82170c4b-d5b6-4953-8205-cd56a1dc7840",
+                  "customer": "61f926af-5bcf-4d0c-9b3c-280b4289a604",
                   "payment_method": null,
                   "platform_fee": null,
                   "service_fee": null,
-                  "created_at": 1793086887,
-                  "updated_at": 1793086887
+                  "created_at": 1793622942,
+                  "updated_at": 1793622942
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payment_intent_response"
@@ -17025,7 +17148,7 @@
                 },
                 "example": {
                   "payment_intent": {
-                    "customer": "82170c4b-d5b6-4953-8205-cd56a1dc7840",
+                    "customer": "61f926af-5bcf-4d0c-9b3c-280b4289a604",
                     "processor_type": "stripe"
                   }
                 }
@@ -17070,7 +17193,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "452fbe2b-0bf9-49c1-9460-4f2e8372f12e",
+                  "id": "206a657b-7a24-42fd-ba1c-56c043180385",
                   "object": "payment_intent",
                   "amount": 500,
                   "currency": "usd",
@@ -17090,12 +17213,12 @@
                   "reusable": false,
                   "status": "pending",
                   "checkout": null,
-                  "customer": "2c5f1ca0-cc9d-44d7-b48a-5e9e03718e0d",
+                  "customer": "25c47cf6-3648-471a-8153-31d779747314",
                   "payment_method": null,
                   "platform_fee": null,
                   "service_fee": null,
-                  "created_at": 1793086888,
-                  "updated_at": 1793086888
+                  "created_at": 1793622943,
+                  "updated_at": 1793622943
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payment_intent_response"
@@ -17130,7 +17253,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0668ec14-4418-40df-9af8-4a35a342c110",
+                  "id": "64999b18-e18c-4b67-8c2e-41f7873decc5",
                   "object": "payment_intent",
                   "amount": 500,
                   "currency": "usd",
@@ -17153,12 +17276,12 @@
                   "reusable": false,
                   "status": "succeeded",
                   "checkout": null,
-                  "customer": "6b00be3d-7eae-4535-98d3-b2619b53f2b2",
-                  "payment_method": "8c32c81a-72bd-45c3-8c3d-ef0f878b03e1",
+                  "customer": "a581311e-9e5c-4097-9ed7-12a19a6130a9",
+                  "payment_method": "f83efca2-7f21-444f-afc2-d37330c8696f",
                   "platform_fee": null,
                   "service_fee": null,
-                  "created_at": 1793086888,
-                  "updated_at": 1793086888
+                  "created_at": 1793622944,
+                  "updated_at": 1793622944
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payment_intent_response"
@@ -17254,7 +17377,7 @@
                   },
                   "data": [
                     {
-                      "id": "363366d6-6e4e-4efd-b16b-fcdd7ce7aa74",
+                      "id": "6ce4bf46-fafd-4d84-92ef-c8a2cc0b7bd2",
                       "object": "payment_method",
                       "external_payment_method_id": "pm_3_Ju1BB2fs4LLhxzSoekOTDo3",
                       "live_mode": true,
@@ -17263,12 +17386,12 @@
                       "supported_currencies": null,
                       "type": "card",
                       "bank_account": null,
-                      "card": "13bd2c6b-98e9-4493-ad79-d68493f9b80f",
-                      "customer": "ccda8dd9-d30b-4f70-87b0-ee216f26ad9c",
+                      "card": "4b91218e-8d30-41c8-a490-983068c2f06d",
+                      "customer": "f61edac2-e179-4153-acd5-d75a0aeb4cab",
                       "payment_instrument": null,
                       "paypal_account": null,
-                      "created_at": 1793086888,
-                      "updated_at": 1793086888
+                      "created_at": 1793622947,
+                      "updated_at": 1793622947
                     }
                   ]
                 },
@@ -17305,7 +17428,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1c86b215-eecc-42b3-bf56-5a3b16002e92",
+                  "id": "929b275a-fe72-4ffe-9992-9b7317a9b8f4",
                   "object": "payment_method",
                   "external_payment_method_id": "pm_4_Ju1BB2fs4LLhxzSoekOTDo3",
                   "live_mode": true,
@@ -17314,12 +17437,12 @@
                   "supported_currencies": null,
                   "type": "card",
                   "bank_account": null,
-                  "card": "fc1b5681-c95b-46b0-ba64-bc77b504ce7d",
-                  "customer": "9598464a-cb00-40e0-999b-953423d95ec8",
+                  "card": "754051f9-0fe0-4483-a399-55e8965ff452",
+                  "customer": "588339fe-cd77-4b1b-a901-d5dd5dff4f4f",
                   "payment_instrument": null,
                   "paypal_account": null,
-                  "created_at": 1793086888,
-                  "updated_at": 1793086888
+                  "created_at": 1793622948,
+                  "updated_at": 1793622948
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payment_method_response"
@@ -17354,7 +17477,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1424a81e-d04f-4644-a542-c0ddca67c5e8",
+                  "id": "91dd2eba-9481-4d43-b612-0ddf98e6932d",
                   "object": "payment_method",
                   "external_payment_method_id": "pm_5_Ju1BB2fs4LLhxzSoekOTDo3",
                   "live_mode": true,
@@ -17363,12 +17486,12 @@
                   "supported_currencies": null,
                   "type": "card",
                   "bank_account": null,
-                  "card": "5b27c8c6-10fd-46a6-8095-f000f27edb7d",
+                  "card": "061668ff-ef0c-4603-b84e-ab1f7f477c84",
                   "customer": null,
                   "payment_instrument": null,
                   "paypal_account": null,
-                  "created_at": 1793086888,
-                  "updated_at": 1793086888
+                  "created_at": 1793622949,
+                  "updated_at": 1793622949
                 },
                 "schema": {
                   "$ref": "#/components/schemas/payment_method_response"
@@ -17562,42 +17685,42 @@
                   },
                   "data": [
                     {
-                      "id": "55c4e4c0-410b-487e-822a-710b5167cc3f",
+                      "id": "639cd0a5-b237-49a3-8c8b-fd12159613f5",
                       "object": "purchase",
                       "live_mode": true,
                       "quantity": 1,
                       "revoked": false,
                       "revoked_at": null,
                       "revoke_at": null,
-                      "customer": "0dd2110b-0729-47b0-b685-55d356370364",
-                      "initial_order": "b030fdcf-b721-4ddc-b413-14e9455f238b",
+                      "customer": "b5b6f336-05e0-4613-af4d-f5c1b7e420ec",
+                      "initial_order": "efdb1894-7fc9-421a-ac50-fe95f77c7f7a",
                       "license": null,
-                      "price": "67d3abba-8e50-433d-8a5b-b41261472166",
-                      "product": "b95755dc-d7ae-4584-8544-e4e931bcc05a",
+                      "price": "eb487e52-08ce-42c0-a831-307ef9aa6dcb",
+                      "product": "220a0581-ffde-4222-8b42-540e3e86e1a5",
                       "subscription": null,
                       "variant": null,
                       "review": null,
-                      "created_at": 1793086906,
-                      "updated_at": 1793086906
+                      "created_at": 1793622999,
+                      "updated_at": 1793622999
                     },
                     {
-                      "id": "e3fe1fc4-221d-4fec-929e-6ea957d5e94a",
+                      "id": "1e975537-ac3d-4c10-95a7-8b42872cf47c",
                       "object": "purchase",
                       "live_mode": true,
                       "quantity": 1,
                       "revoked": false,
                       "revoked_at": null,
                       "revoke_at": null,
-                      "customer": "0dd2110b-0729-47b0-b685-55d356370364",
+                      "customer": "b5b6f336-05e0-4613-af4d-f5c1b7e420ec",
                       "initial_order": null,
                       "license": null,
-                      "price": "67d3abba-8e50-433d-8a5b-b41261472166",
-                      "product": "b95755dc-d7ae-4584-8544-e4e931bcc05a",
+                      "price": "eb487e52-08ce-42c0-a831-307ef9aa6dcb",
+                      "product": "220a0581-ffde-4222-8b42-540e3e86e1a5",
                       "subscription": null,
                       "variant": null,
                       "review": null,
-                      "created_at": 1793086906,
-                      "updated_at": 1793086906
+                      "created_at": 1793622999,
+                      "updated_at": 1793622999
                     }
                   ]
                 },
@@ -17623,23 +17746,23 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "53fd9f78-0dbd-4db3-a4a3-15f8689501d5",
+                  "id": "6ef516a8-43aa-410d-b02a-30419f552d71",
                   "object": "purchase",
                   "live_mode": true,
                   "quantity": 1,
                   "revoked": false,
                   "revoked_at": null,
-                  "revoke_at": 1793173308,
-                  "customer": "6335e2be-fa38-4906-ba4e-9bc003d7b5b0",
+                  "revoke_at": 1793709402,
+                  "customer": "383ad670-c476-4fc1-91e8-2a7041c2b282",
                   "initial_order": null,
                   "license": null,
-                  "price": "9b238c84-8cf8-4a0a-ad19-e8112bb068b4",
-                  "product": "1c9175c0-d9e5-4484-bfbd-950f4fb53937",
+                  "price": "72187b9e-bbde-47d2-8bca-e3037169984b",
+                  "product": "13d3f8c9-e770-46d9-af4a-2cff180c0d54",
                   "subscription": null,
                   "variant": null,
                   "review": null,
-                  "created_at": 1793086908,
-                  "updated_at": 1793086908
+                  "created_at": 1793623002,
+                  "updated_at": 1793623002
                 },
                 "schema": {
                   "$ref": "#/components/schemas/purchase_response"
@@ -17664,9 +17787,9 @@
                 },
                 "example": {
                   "purchase": {
-                    "customer_id": "6335e2be-fa38-4906-ba4e-9bc003d7b5b0",
-                    "price_id": "9b238c84-8cf8-4a0a-ad19-e8112bb068b4",
-                    "revoke_at": "2026-10-28 07:41:48 UTC"
+                    "customer_id": "383ad670-c476-4fc1-91e8-2a7041c2b282",
+                    "price_id": "72187b9e-bbde-47d2-8bca-e3037169984b",
+                    "revoke_at": "2026-11-03 12:36:42 UTC"
                   }
                 }
               }
@@ -17699,23 +17822,23 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bfab2a71-e833-4dff-b4bf-3f62b3f91564",
+                  "id": "e08f01f4-06fb-46f3-8233-a369947d4af0",
                   "object": "purchase",
                   "live_mode": true,
                   "quantity": 1,
                   "revoked": false,
                   "revoked_at": null,
                   "revoke_at": null,
-                  "customer": "c7922287-48ec-4f81-a044-ba163d045ce5",
-                  "initial_order": "bb66c19c-4cb5-43b1-a9fe-de68dcd8d942",
+                  "customer": "63f23022-a491-439b-b807-c44e10f030ef",
+                  "initial_order": "8ad7c9d3-2f37-4d8c-826a-9d9b973440c7",
                   "license": null,
-                  "price": "04e51c2c-0349-4458-bdf6-1c93c2daf15c",
-                  "product": "503cf713-005b-49e0-9481-db335809ed2b",
+                  "price": "fce2a3e0-c1bc-4e90-ab11-a5d2c0aac69f",
+                  "product": "57e140d8-d21e-464d-afd3-cf83542d1c85",
                   "subscription": null,
                   "variant": null,
                   "review": null,
-                  "created_at": 1793086907,
-                  "updated_at": 1793086907
+                  "created_at": 1793623000,
+                  "updated_at": 1793623000
                 },
                 "schema": {
                   "$ref": "#/components/schemas/purchase_response"
@@ -17739,23 +17862,23 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ce775beb-4461-474a-bdf8-5a2c8fcbd000",
+                  "id": "ea62783d-1e1b-4f5a-9f03-62e7866e6458",
                   "object": "purchase",
                   "live_mode": true,
                   "quantity": 1,
                   "revoked": false,
                   "revoked_at": null,
-                  "revoke_at": 1793173311,
-                  "customer": "88880940-2218-4a40-913d-64da365de573",
-                  "initial_order": "e41c06a4-7f70-4c04-9dbe-9a3ce82937fd",
+                  "revoke_at": 1793709407,
+                  "customer": "53a126ff-686a-4a91-9a85-3f7095a22b80",
+                  "initial_order": "1e655a88-3f98-423b-8da4-dc71bd67a781",
                   "license": null,
-                  "price": "7d75efef-e238-4e83-aa8d-595fc6f6dcde",
-                  "product": "babfed65-476e-4893-a8f1-db957469527a",
+                  "price": "ef037a33-955d-4863-b315-b06bc260a541",
+                  "product": "cd75ba42-d59c-47ab-af9e-9048412ad47d",
                   "subscription": null,
                   "variant": null,
                   "review": null,
-                  "created_at": 1793086911,
-                  "updated_at": 1793086911
+                  "created_at": 1793623007,
+                  "updated_at": 1793623007
                 },
                 "schema": {
                   "$ref": "#/components/schemas/purchase_response"
@@ -17780,7 +17903,7 @@
                 },
                 "example": {
                   "purchase": {
-                    "revoke_at": "2026-10-28 07:41:51 UTC"
+                    "revoke_at": "2026-11-03 12:36:47 UTC"
                   }
                 }
               }
@@ -17813,23 +17936,23 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d7b0c804-3dca-48c7-8844-cb981c56fc7a",
+                  "id": "44d08912-5f22-4a55-8986-df5049073fdf",
                   "object": "purchase",
                   "live_mode": true,
                   "quantity": 1,
                   "revoked": false,
                   "revoked_at": null,
                   "revoke_at": null,
-                  "customer": "f8ec9c0f-65f6-46ef-ae37-918bbe70551f",
-                  "initial_order": "79ec27a3-e996-40c2-9482-41fad8808d3a",
+                  "customer": "df8c951c-7b62-4b55-ba1e-09abd1cb4b94",
+                  "initial_order": "f76c5397-4af2-44dc-902b-e5747f029277",
                   "license": null,
-                  "price": "3f905a76-d592-4833-b621-68e3d2d140a1",
-                  "product": "836d38d9-9b9d-467e-a609-e0ef5297fef4",
+                  "price": "9dd7bd2c-c01e-4b30-a84a-49135b3140ab",
+                  "product": "4eea4274-d457-4eec-a134-b46399bac5a8",
                   "subscription": null,
                   "variant": null,
                   "review": null,
-                  "created_at": 1793086909,
-                  "updated_at": 1793086909
+                  "created_at": 1793623004,
+                  "updated_at": 1793623004
                 },
                 "schema": {
                   "$ref": "#/components/schemas/purchase_response"
@@ -17864,23 +17987,23 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "9bf2aaf3-c97b-40f2-9586-f3def13ef0a1",
+                  "id": "6096bee4-958e-4742-9e05-cd42d600e761",
                   "object": "purchase",
                   "live_mode": true,
                   "quantity": 1,
                   "revoked": true,
-                  "revoked_at": 1793086910,
+                  "revoked_at": 1793623006,
                   "revoke_at": null,
-                  "customer": "3929f4ab-2631-4f22-8cdb-2f24f34d84c2",
-                  "initial_order": "98145507-5c58-4f12-9733-3b6bf32af13a",
+                  "customer": "37d7286e-3bdd-4a37-8b75-2a6c71f71d9b",
+                  "initial_order": "b57a280c-3811-44bf-af75-9a913babaedd",
                   "license": null,
-                  "price": "a49f528e-02bd-4c7a-953f-acb462e0d509",
-                  "product": "c8a0bcd7-2134-41c5-b30a-42a7d25aca9d",
+                  "price": "29e0c6e0-e65c-45d7-a32c-d432d5a64c95",
+                  "product": "5aa8d0f3-d8cf-4155-8ca4-d319906d2b2f",
                   "subscription": null,
                   "variant": null,
                   "review": null,
-                  "created_at": 1793086910,
-                  "updated_at": 1793086910
+                  "created_at": 1793623006,
+                  "updated_at": 1793623006
                 },
                 "schema": {
                   "$ref": "#/components/schemas/purchase_response"
@@ -17958,15 +18081,15 @@
                   },
                   "data": [
                     {
-                      "id": "8c0ce9af-49ec-4b16-9b6b-05fa5cf0cf9a",
+                      "id": "bcc17b06-4d1a-4d9d-adf5-3a04d7bf016b",
                       "object": "refund_item",
                       "quantity": 1,
                       "restock": false,
                       "revoke_purchase": false,
-                      "line_item": "d82224d5-1021-4134-8f66-9ba38d739a52",
-                      "refund": "c2f95612-9212-46e2-af32-eed35d617e5c",
-                      "created_at": 1793086915,
-                      "updated_at": 1793086915
+                      "line_item": "fd25499c-8111-4eee-b14e-1e3e617c51f5",
+                      "refund": "0eefe7d2-2ff8-459a-ae7d-5ad3a09a1607",
+                      "created_at": 1793623021,
+                      "updated_at": 1793623021
                     }
                   ]
                 },
@@ -18003,15 +18126,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f88a46e4-7202-457a-83a4-edac51a19db4",
+                  "id": "87a09b87-1944-410e-bd40-343432a8e3fe",
                   "object": "refund_item",
                   "quantity": 1,
                   "restock": false,
                   "revoke_purchase": false,
-                  "line_item": "27ba1b13-9f36-47ca-a1c9-3fb099a57726",
-                  "refund": "03e2433a-1c7e-41aa-bbdb-7473f0ff021b",
-                  "created_at": 1793086916,
-                  "updated_at": 1793086916
+                  "line_item": "e879b187-25af-4162-9523-af1d2737f4f8",
+                  "refund": "fa936d1e-b8a2-4064-9bd8-eb86f5329447",
+                  "created_at": 1793623024,
+                  "updated_at": 1793623024
                 },
                 "schema": {
                   "$ref": "#/components/schemas/refund_item_response"
@@ -18122,21 +18245,21 @@
                   },
                   "data": [
                     {
-                      "id": "4ad15189-5285-47bb-8b2c-124f1e160682",
+                      "id": "27bdbdeb-e76f-4b7c-8b6c-824fa281ee4b",
                       "object": "refund",
                       "amount": 1450,
                       "currency": "usd",
-                      "external_refund_id": "xuxlwpnlgtn8squ",
+                      "external_refund_id": "afgvxs01zxb8jgg",
                       "failure_reason": null,
                       "live_mode": true,
                       "metadata": {},
                       "reason": "requested_by_customer",
                       "status": "pending",
-                      "charge": "de52d344-d8e4-41a7-9dde-83694ac3e775",
-                      "customer": "be26b964-b184-4988-ab30-2f0622d811ed",
+                      "charge": "5b8bddf9-dbaa-4a84-a9eb-d3f7272f1b0b",
+                      "customer": "049a188f-3e28-41bb-8656-c9a91a0f6e3c",
                       "return_request": null,
-                      "created_at": 1793086917,
-                      "updated_at": 1793086917
+                      "created_at": 1793623027,
+                      "updated_at": 1793623027
                     }
                   ]
                 },
@@ -18172,21 +18295,21 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2940248e-c0f4-4aa7-ae28-1f1a52a4740d",
+                  "id": "c95bd550-8d26-444b-b4c8-88c8c770de41",
                   "object": "refund",
                   "amount": 500,
                   "currency": "usd",
-                  "external_refund_id": "re_RbRQCGTcf4rHqPj",
+                  "external_refund_id": "re_RdaUtbJ0hgvZqHo",
                   "failure_reason": null,
                   "live_mode": true,
                   "metadata": {},
                   "reason": "requested_by_customer",
                   "status": "succeeded",
-                  "charge": "f4083d96-f45b-4a25-8ee8-c5c40c0e54b4",
-                  "customer": "bf4b0bde-fbdc-474a-a0f9-9d61082b08e5",
+                  "charge": "5f7817f2-fba0-46e0-8bc1-e60c95139815",
+                  "customer": "166d00df-ffb7-4ef6-bdcd-f118ec3bab74",
                   "return_request": null,
-                  "created_at": 1793086920,
-                  "updated_at": 1793086920
+                  "created_at": 1793623030,
+                  "updated_at": 1793623030
                 },
                 "schema": {
                   "$ref": "#/components/schemas/refund_response"
@@ -18213,7 +18336,7 @@
                   "refund": {
                     "amount": 500,
                     "reason": "requested_by_customer",
-                    "charge_id": "f4083d96-f45b-4a25-8ee8-c5c40c0e54b4"
+                    "charge_id": "5f7817f2-fba0-46e0-8bc1-e60c95139815"
                   }
                 }
               }
@@ -18246,21 +18369,21 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fee3a876-1524-4293-a8b8-b1e64a08bea1",
+                  "id": "83c334c2-83fb-4277-af4a-8a79cccf73b3",
                   "object": "refund",
                   "amount": 1450,
                   "currency": "usd",
-                  "external_refund_id": "ashosxlgygxbn08",
+                  "external_refund_id": "zlv9is37nxis7fn",
                   "failure_reason": null,
                   "live_mode": true,
                   "metadata": {},
                   "reason": "requested_by_customer",
                   "status": "pending",
-                  "charge": "96bc5783-f4b8-4959-827e-1255e3199116",
-                  "customer": "3bdc8c95-4057-469a-afb9-0449580278ce",
+                  "charge": "5b240599-9639-46b3-8d68-f8a567bea992",
+                  "customer": "14e0d897-9997-4845-8f7a-847a582a9dda",
                   "return_request": null,
-                  "created_at": 1793086921,
-                  "updated_at": 1793086921
+                  "created_at": 1793623034,
+                  "updated_at": 1793623034
                 },
                 "schema": {
                   "$ref": "#/components/schemas/refund_response"
@@ -18326,14 +18449,14 @@
                   },
                   "data": [
                     {
-                      "id": "d84b86ad-2c5e-452e-af96-7537b3575f3b",
+                      "id": "c4ccf504-b620-4ce2-8a1c-76646b9c2a2c",
                       "object": "shipping_fee",
                       "amount": 0,
-                      "description": "IncrediblePrice345493",
+                      "description": "IncredibleSale831985",
                       "fee_type": "manual",
-                      "checkout": "b052342f-4b7c-4010-bb35-91087947bc38",
-                      "created_at": 1793086940,
-                      "updated_at": 1793086940
+                      "checkout": "ccd4dbc9-7374-498d-90f7-44531dce52c3",
+                      "created_at": 1793623071,
+                      "updated_at": 1793623071
                     }
                   ]
                 },
@@ -18359,14 +18482,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2f113509-6392-4e6c-acd4-79585be0e19a",
+                  "id": "8c6fe322-beda-4bba-a1e0-a089fc738dca",
                   "object": "shipping_fee",
                   "amount": 10,
                   "description": "Setup fee",
                   "fee_type": "manual",
-                  "checkout": "c3dd8bc9-c4cd-47bf-86bc-8bd1d64e03b0",
-                  "created_at": 1793086940,
-                  "updated_at": 1793086940
+                  "checkout": "f16f7024-690f-47aa-9cb9-922542c2334e",
+                  "created_at": 1793623072,
+                  "updated_at": 1793623072
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_fee_response"
@@ -18393,7 +18516,7 @@
                   "shipping_fee": {
                     "amount": 10,
                     "description": "Setup fee",
-                    "checkout": "c3dd8bc9-c4cd-47bf-86bc-8bd1d64e03b0"
+                    "checkout": "f16f7024-690f-47aa-9cb9-922542c2334e"
                   }
                 }
               }
@@ -18426,14 +18549,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b628e6e6-000c-426d-ba45-c7c185652f9f",
+                  "id": "37f5d44b-ecca-4327-8d83-c7d7795fe58d",
                   "object": "shipping_fee",
                   "amount": 0,
-                  "description": "PremiumPromotion212269",
+                  "description": "KillerDeal928122",
                   "fee_type": "manual",
-                  "checkout": "b687ddab-14ef-478f-b37d-671dce62e411",
-                  "created_at": 1793086941,
-                  "updated_at": 1793086941
+                  "checkout": "a93c073f-c1da-49e1-8843-85363fff1cd9",
+                  "created_at": 1793623072,
+                  "updated_at": 1793623072
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_fee_response"
@@ -18466,14 +18589,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "056d280d-7f85-4ca2-9517-9329220c1376",
+                  "id": "2d933b74-4a55-423b-9ef8-ccccd5077c51",
                   "object": "shipping_fee",
                   "amount": 25,
-                  "description": "StellarPromo112256",
+                  "description": "SpecialDeal726821",
                   "fee_type": "manual",
-                  "checkout": "4530bc33-3f14-4b7c-9cbe-32a09be8255d",
-                  "created_at": 1793086941,
-                  "updated_at": 1793086941
+                  "checkout": "2b60ac40-5df6-4961-bdfb-737acd356e78",
+                  "created_at": 1793623073,
+                  "updated_at": 1793623073
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_fee_response"
@@ -18529,7 +18652,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d80b83d9-2338-42f4-bdff-699f2fd033dc",
+                  "id": "33e64f11-a28b-4066-9c8f-a82f47508068",
                   "object": "shipping_fee",
                   "deleted": true
                 },

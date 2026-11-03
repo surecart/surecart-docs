@@ -6343,6 +6343,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this product – one of `digital`, `tangible`, `service`, or `saas`."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this product, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `hs_code` takes precedence when set."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this product was manufactured, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `country_of_origin` takes precedence when set."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -8798,6 +8808,101 @@
             "type": "string",
             "nullable": true,
             "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
+          },
+          "customs_declaration": {
+            "type": "object",
+            "nullable": true,
+            "description": "Customs information for the carrier. Required to quote a shipment while `customs_required` is true. Leave `items` empty to derive them from the fulfillment. Cannot be changed after the label is purchased.",
+            "properties": {
+              "certify": {
+                "type": "boolean",
+                "description": "Certifies that the certify_signer has provided all information truthfully."
+              },
+              "certify_signer": {
+                "type": "string",
+                "description": "Name of the person responsible for the validity of the customs information."
+              },
+              "contents_type": {
+                "type": "string",
+                "description": "Type of goods being shipped – one of `DOCUMENTS`, `GIFT`, `SAMPLE`, `MERCHANDISE`, `HUMANITARIAN_DONATION`, `RETURN_MERCHANDISE`, `OTHER`."
+              },
+              "contents_explanation": {
+                "type": "string",
+                "nullable": true,
+                "description": "Explanation of the type of goods. Required when `contents_type` is `OTHER`."
+              },
+              "non_delivery_option": {
+                "type": "string",
+                "description": "How the carrier should proceed if the shipment can't be delivered – one of `ABANDON`, `RETURN`."
+              },
+              "eel_pfc": {
+                "type": "string",
+                "nullable": true,
+                "description": "EEL/PFC type of the shipment – one of `NOEEI_30_37_a`, `NOEEI_30_37_h`, `NOEEI_30_37_f`, `NOEEI_30_36`, `AES_ITN`. Leave empty to use the default for US exports — `NOEEI_30_36` to Canada, `NOEEI_30_37_a` otherwise."
+              },
+              "aes_itn": {
+                "type": "string",
+                "nullable": true,
+                "description": "The AES / ITN reference of the shipment. Required when `eel_pfc` is `AES_ITN`."
+              },
+              "incoterm": {
+                "type": "string",
+                "nullable": true,
+                "description": "The incoterm reference of the shipment, when required by the carrier – one of `DDP`, `DDU`, `FCA`, `DAP`, `eDAP`."
+              },
+              "items": {
+                "type": "array",
+                "description": "The individual items included in this shipment for customs purposes. Leave empty to derive them from the fulfillment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Text description of the item."
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "description": "Quantity of this item in the shipment."
+                    },
+                    "net_weight": {
+                      "type": "string",
+                      "description": "Total weight of this item (quantity * weight per item)."
+                    },
+                    "mass_unit": {
+                      "type": "string",
+                      "description": "The unit of net_weight – one of `g`, `kg`, `lb`, `oz`."
+                    },
+                    "value_amount": {
+                      "type": "string",
+                      "description": "Total value of this item (quantity * value per item)."
+                    },
+                    "value_currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO 4217 currency code for value_amount, e.g. `USD`."
+                    },
+                    "origin_country": {
+                      "type": "string",
+                      "description": "The two-letter ISO country code of origin for this item."
+                    },
+                    "hs_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The HS/tariff code of the item, required by some carriers."
+                    },
+                    "tariff_number": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The tariff number of the item. Takes precedence over hs_code when both are given."
+                    },
+                    "sku_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The SKU code of the item, required by some carriers."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -8911,6 +9016,14 @@
               "live_mode": {
                 "type": "boolean",
                 "description": "Whether or not this shipment was created in live mode."
+              },
+              "international": {
+                "type": "boolean",
+                "description": "Whether the from_contact and to_contact are in different countries."
+              },
+              "customs_required": {
+                "type": "boolean",
+                "description": "Whether this shipment needs a customs_declaration before it can be quoted."
               },
               "label_url": {
                 "type": "string",
@@ -11072,6 +11185,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this variant. If `null`, inherits from the product."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this variant. If `null`, inherits from the product."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this variant was manufactured. If `null`, inherits from the product."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -11852,14 +11975,14 @@
                   },
                   "data": [
                     {
-                      "id": "748205aa-d2b6-4b2b-a308-cd0443ff805c",
+                      "id": "51d86526-5760-488e-aaee-8898a5f0b1ac",
                       "object": "activation",
                       "counted": true,
                       "name": null,
                       "fingerprint": "example.com",
-                      "license": "dae49e31-bb44-4844-82d3-4d99a1edc3d0",
-                      "created_at": 1793086821,
-                      "updated_at": 1793086821
+                      "license": "6ff1c305-905b-44ed-a0d8-6e1abd2cb376",
+                      "created_at": 1793622744,
+                      "updated_at": 1793622744
                     }
                   ]
                 },
@@ -11885,14 +12008,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3951cf04-d13e-431c-839d-8c500fa1afb0",
+                  "id": "2b91d8f8-e026-42ed-b63f-61d88f271dff",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "0cdae669-ed30-438e-902a-11ec74353c1f",
-                  "created_at": 1793086822,
-                  "updated_at": 1793086822
+                  "license": "503d261d-afad-4a46-bff5-99f5dbf0679c",
+                  "created_at": 1793622746,
+                  "updated_at": 1793622746
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11919,7 +12042,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "0cdae669-ed30-438e-902a-11ec74353c1f"
+                    "license_id": "503d261d-afad-4a46-bff5-99f5dbf0679c"
                   }
                 }
               }
@@ -11952,14 +12075,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "113c1717-b446-4314-b4bf-14953cdd3fdb",
+                  "id": "64c9179d-753b-44df-8df2-b32e4ef6600e",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "23d64636-35f4-4173-8f88-b93543b16073",
-                  "created_at": 1793086823,
-                  "updated_at": 1793086823
+                  "license": "b2f2e87d-cc27-4ff2-ae5b-bb30f7698cd3",
+                  "created_at": 1793622748,
+                  "updated_at": 1793622748
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11992,14 +12115,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2b6055b6-c225-4f6a-b37f-d98168bec166",
+                  "id": "1bfef787-39c4-482d-9f7c-0eea1d04f75a",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "b8988fc6-e1db-48bc-9b14-8f6f48a6d119",
-                  "created_at": 1793086824,
-                  "updated_at": 1793086824
+                  "license": "8024b937-7918-4a01-a4a9-e7a335698d87",
+                  "created_at": 1793622749,
+                  "updated_at": 1793622749
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12055,7 +12178,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "15d4397e-0cc4-4513-9773-11ac087922a2",
+                  "id": "efc2fc83-5ba1-408c-bfe7-7f717ff43c7e",
                   "object": "activation",
                   "deleted": true
                 },
@@ -12186,17 +12309,17 @@
                   },
                   "data": [
                     {
-                      "id": "824252eb-ceac-4d33-8546-a4fa2d07f7e0",
+                      "id": "952b58ef-ef9b-48fa-9950-32c74db9ed03",
                       "object": "license",
                       "activations_count": 0,
                       "activation_limit": null,
-                      "key": "32c13c80-8d4f-4aa4-b83e-58b1c4588a17",
+                      "key": "da29fddf-95d5-467f-abcc-00e1d65aba75",
                       "revokes_at": null,
                       "status": "inactive",
-                      "customer": "7106e482-7024-4ac6-98f1-900c4faf6082",
-                      "purchase": "479c91ec-377e-4e86-978a-0ddc1db6be5c",
-                      "created_at": 1793086871,
-                      "updated_at": 1793086871
+                      "customer": "e181aed3-b2b7-4860-876c-1b2695f17c09",
+                      "purchase": "70604072-0db3-44eb-a524-73c53ac500bc",
+                      "created_at": 1793622880,
+                      "updated_at": 1793622880
                     }
                   ]
                 },
@@ -12222,17 +12345,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "85da22d6-a3da-4748-8676-1166a56ceaaf",
+                  "id": "98ecd44f-b3f0-450e-8e00-180e8183d7c3",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
                   "key": "abc-123-def-456",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "c7782a98-9624-44fb-9bc7-a08543dae90b",
-                  "purchase": "fa3eacb0-5e58-4ef2-a419-3b1d74c1e3ca",
-                  "created_at": 1793086872,
-                  "updated_at": 1793086872
+                  "customer": "67db3da3-f089-4b33-a448-ef084024ade1",
+                  "purchase": "0445862a-1d2e-4e33-9b0c-2c27ed1f2ac1",
+                  "created_at": 1793622883,
+                  "updated_at": 1793622883
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12258,7 +12381,7 @@
                 "example": {
                   "license": {
                     "key": "abc-123-def-456",
-                    "purchase": "fa3eacb0-5e58-4ef2-a419-3b1d74c1e3ca"
+                    "purchase": "0445862a-1d2e-4e33-9b0c-2c27ed1f2ac1"
                   }
                 }
               }
@@ -12291,17 +12414,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d4e59b7d-d3a5-4706-8b60-00f353e71014",
+                  "id": "18ff85d4-97de-4019-ad13-48ddf4d20a7f",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "7c3d2940-a242-4ed8-af82-117a5d49875e",
+                  "key": "1f99dc1f-a26c-4b29-9b90-21dd0a5f76bb",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "aa178fa6-2457-4403-81c6-4b5fd3c90ccb",
-                  "purchase": "30619054-c867-4752-993d-b7f7e2b65f6d",
-                  "created_at": 1793086873,
-                  "updated_at": 1793086873
+                  "customer": "e76cdc60-3c31-4fd1-bdd2-2b1154981261",
+                  "purchase": "5a83898c-4763-4518-9650-11792bea89c8",
+                  "created_at": 1793622885,
+                  "updated_at": 1793622885
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12334,17 +12457,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bd2ed325-5100-4285-a71e-27b4ac10b6bd",
+                  "id": "7d4c0bac-0e0a-41db-bd46-5bf4d23aa304",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": 10,
-                  "key": "ad942fe1-fd39-432c-8e4b-0d7c6241c185",
+                  "key": "fa76033b-c172-48b2-837f-823ce02ff5c9",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "7b7c9dae-ed5c-4c44-83a6-4158f4d19aaa",
-                  "purchase": "5fb0f96d-5ef2-4603-a7e5-ce24158a4270",
-                  "created_at": 1793086874,
-                  "updated_at": 1793086874
+                  "customer": "da8564f4-0c33-4dd6-98e4-5a6c8cce2336",
+                  "purchase": "afd167c6-bc8e-4054-b259-4cb5b1d2dcf0",
+                  "created_at": 1793622887,
+                  "updated_at": 1793622887
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12400,7 +12523,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d9ca31f5-1eff-4a6e-b4e0-307d8e5c2c88",
+                  "id": "2409d2dc-312c-4428-bf0f-ef9bc2a3c207",
                   "object": "license",
                   "deleted": true
                 },

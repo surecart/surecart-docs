@@ -6343,6 +6343,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this product – one of `digital`, `tangible`, `service`, or `saas`."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this product, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `hs_code` takes precedence when set."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this product was manufactured, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `country_of_origin` takes precedence when set."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -8798,6 +8808,101 @@
             "type": "string",
             "nullable": true,
             "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
+          },
+          "customs_declaration": {
+            "type": "object",
+            "nullable": true,
+            "description": "Customs information for the carrier. Required to quote a shipment while `customs_required` is true. Leave `items` empty to derive them from the fulfillment. Cannot be changed after the label is purchased.",
+            "properties": {
+              "certify": {
+                "type": "boolean",
+                "description": "Certifies that the certify_signer has provided all information truthfully."
+              },
+              "certify_signer": {
+                "type": "string",
+                "description": "Name of the person responsible for the validity of the customs information."
+              },
+              "contents_type": {
+                "type": "string",
+                "description": "Type of goods being shipped – one of `DOCUMENTS`, `GIFT`, `SAMPLE`, `MERCHANDISE`, `HUMANITARIAN_DONATION`, `RETURN_MERCHANDISE`, `OTHER`."
+              },
+              "contents_explanation": {
+                "type": "string",
+                "nullable": true,
+                "description": "Explanation of the type of goods. Required when `contents_type` is `OTHER`."
+              },
+              "non_delivery_option": {
+                "type": "string",
+                "description": "How the carrier should proceed if the shipment can't be delivered – one of `ABANDON`, `RETURN`."
+              },
+              "eel_pfc": {
+                "type": "string",
+                "nullable": true,
+                "description": "EEL/PFC type of the shipment – one of `NOEEI_30_37_a`, `NOEEI_30_37_h`, `NOEEI_30_37_f`, `NOEEI_30_36`, `AES_ITN`. Leave empty to use the default for US exports — `NOEEI_30_36` to Canada, `NOEEI_30_37_a` otherwise."
+              },
+              "aes_itn": {
+                "type": "string",
+                "nullable": true,
+                "description": "The AES / ITN reference of the shipment. Required when `eel_pfc` is `AES_ITN`."
+              },
+              "incoterm": {
+                "type": "string",
+                "nullable": true,
+                "description": "The incoterm reference of the shipment, when required by the carrier – one of `DDP`, `DDU`, `FCA`, `DAP`, `eDAP`."
+              },
+              "items": {
+                "type": "array",
+                "description": "The individual items included in this shipment for customs purposes. Leave empty to derive them from the fulfillment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Text description of the item."
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "description": "Quantity of this item in the shipment."
+                    },
+                    "net_weight": {
+                      "type": "string",
+                      "description": "Total weight of this item (quantity * weight per item)."
+                    },
+                    "mass_unit": {
+                      "type": "string",
+                      "description": "The unit of net_weight – one of `g`, `kg`, `lb`, `oz`."
+                    },
+                    "value_amount": {
+                      "type": "string",
+                      "description": "Total value of this item (quantity * value per item)."
+                    },
+                    "value_currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO 4217 currency code for value_amount, e.g. `USD`."
+                    },
+                    "origin_country": {
+                      "type": "string",
+                      "description": "The two-letter ISO country code of origin for this item."
+                    },
+                    "hs_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The HS/tariff code of the item, required by some carriers."
+                    },
+                    "tariff_number": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The tariff number of the item. Takes precedence over hs_code when both are given."
+                    },
+                    "sku_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The SKU code of the item, required by some carriers."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -8911,6 +9016,14 @@
               "live_mode": {
                 "type": "boolean",
                 "description": "Whether or not this shipment was created in live mode."
+              },
+              "international": {
+                "type": "boolean",
+                "description": "Whether the from_contact and to_contact are in different countries."
+              },
+              "customs_required": {
+                "type": "boolean",
+                "description": "Whether this shipment needs a customs_declaration before it can be quoted."
               },
               "label_url": {
                 "type": "string",
@@ -11072,6 +11185,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this variant. If `null`, inherits from the product."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this variant. If `null`, inherits from the product."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this variant was manufactured. If `null`, inherits from the product."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -11800,14 +11923,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e0a9ea77-e27c-4066-8f06-489f3c187e6b",
+                  "id": "32e90534-a8ad-46e7-b1d5-5a0dc6ec3e4b",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "81236229-f8d5-4f64-abff-30f0a4d3b3e0",
-                  "created_at": 1793086899,
-                  "updated_at": 1793086899
+                  "license": "094d8407-b298-4a38-a28f-51927b901f26",
+                  "created_at": 1793622986,
+                  "updated_at": 1793622986
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11834,7 +11957,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "81236229-f8d5-4f64-abff-30f0a4d3b3e0"
+                    "license_id": "094d8407-b298-4a38-a28f-51927b901f26"
                   }
                 }
               }
@@ -11867,14 +11990,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "80e31f6d-e667-45d2-ac85-d3adfa36b4b1",
+                  "id": "0f9d75df-2086-473d-9edf-405eaec9885e",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "0e4be66e-0286-4072-8336-e893e3a7a247",
-                  "created_at": 1793086900,
-                  "updated_at": 1793086900
+                  "license": "77ab3d0d-accc-42aa-bfb1-c294f2013c1c",
+                  "created_at": 1793622988,
+                  "updated_at": 1793622988
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11907,14 +12030,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "66570a63-d9cc-4df8-8909-2b480705d2f4",
+                  "id": "364a03e8-2b1a-4352-8eb6-0d5a377d4911",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "4eea5a3d-6979-4da6-afc3-131158d37f4e",
-                  "created_at": 1793086901,
-                  "updated_at": 1793086901
+                  "license": "5d736382-10d1-45dd-8136-92bd7a0bd08f",
+                  "created_at": 1793622990,
+                  "updated_at": 1793622990
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -11970,7 +12093,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "10110bd9-7269-4b31-9ce0-d0eb7bb608cf",
+                  "id": "a0abab86-5e1a-42b9-9dd1-cbaa573a2fe2",
                   "object": "activation",
                   "deleted": true
                 },
@@ -13568,14 +13691,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0dfe85b9-2acd-409f-8346-031f1322e756",
+                  "id": "ed5902c5-1a8b-40de-9019-f535ac650167",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1795678903,
+                  "expires_at": 1796214993,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1793086903,
-                  "updated_at": 1793086903
+                  "created_at": 1793622993,
+                  "updated_at": 1793622993
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -13600,7 +13723,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "414206A5",
+                    "affiliation_code": "3BAF95F9",
                     "url": "http://example.com"
                   }
                 }
@@ -13634,19 +13757,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "09060715-2a46-4a15-a7f1-5e2ac8f98741",
+                  "id": "076796a8-95a8-462e-b04d-258acc22d18e",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "c326656a-f1d8-4d6c-b81a-bfeeefe01ebf",
+                  "key": "9bbe30da-ae42-4884-8d53-6a461143d19e",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "7ac9fbbf-65ed-433e-844c-0a07535361d5",
-                  "product": "4f7d40fb-7363-42cc-9596-cc899b429b79",
+                  "price": "7d2a9cee-cd30-4062-a522-8237e82245f5",
+                  "product": "d9b80c6d-cfb6-4f17-84ae-e887b103ad9f",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1793086904,
-                  "updated_at": 1793086904
+                  "created_at": 1793622995,
+                  "updated_at": 1793622995
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -13699,7 +13822,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5b8efc7e-3d9f-448f-bffd-fdec8531d688",
+                  "id": "adaac98f-9bee-4f5a-b12a-8b1d21a6d0e5",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -13710,11 +13833,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjUzNjcyYWRjLWExNWQtNGVhMy05YzE3LTljOThjNmRhODAxMSIsImV4cCI6IjIwMjYtMTAtMjdUMDc6NTY6NDUuMjc4WiIsInB1ciI6ImJsb2JfaWQifX0=--2649caa4e71bdf2d95a36f1b248718c7ddec5036/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjEyOTZmMWZhLWFiYzYtNDYzZi1hODk5LTQ1MGM1ZDBhZGYwNiIsImV4cCI6IjIwMjYtMTEtMDJUMTI6NTE6MzYuOTA5WiIsInB1ciI6ImJsb2JfaWQifX0=--a68529bd4eeb4e946854692c9979026aecc15083/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1793087805,
-                  "created_at": 1793086904,
-                  "updated_at": 1793086904
+                  "url_expires_at": 1793623896,
+                  "created_at": 1793622995,
+                  "updated_at": 1793622995
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"

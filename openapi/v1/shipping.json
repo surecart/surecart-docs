@@ -6343,6 +6343,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this product – one of `digital`, `tangible`, `service`, or `saas`."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this product, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `hs_code` takes precedence when set."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this product was manufactured, used to build customs declarations for international shipments. If the `Product` has variants, each variant's own `country_of_origin` takes precedence when set."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -8798,6 +8808,101 @@
             "type": "string",
             "nullable": true,
             "description": "The token of a carrier parcel template (e.g. `USPS_SmallFlatRateBox`), resolved against this shipment's own shipping provider. Defaults to the parcel template's token when `parcel_template` is set, and can be cleared or overridden by passing it explicitly. When it resolves to a fixed-size package its dimensions are used, and quoted rates cover only that carrier — read the carrier itself from the parcel template, or from the selected rate once one is chosen. Cannot be changed after the label is purchased."
+          },
+          "customs_declaration": {
+            "type": "object",
+            "nullable": true,
+            "description": "Customs information for the carrier. Required to quote a shipment while `customs_required` is true. Leave `items` empty to derive them from the fulfillment. Cannot be changed after the label is purchased.",
+            "properties": {
+              "certify": {
+                "type": "boolean",
+                "description": "Certifies that the certify_signer has provided all information truthfully."
+              },
+              "certify_signer": {
+                "type": "string",
+                "description": "Name of the person responsible for the validity of the customs information."
+              },
+              "contents_type": {
+                "type": "string",
+                "description": "Type of goods being shipped – one of `DOCUMENTS`, `GIFT`, `SAMPLE`, `MERCHANDISE`, `HUMANITARIAN_DONATION`, `RETURN_MERCHANDISE`, `OTHER`."
+              },
+              "contents_explanation": {
+                "type": "string",
+                "nullable": true,
+                "description": "Explanation of the type of goods. Required when `contents_type` is `OTHER`."
+              },
+              "non_delivery_option": {
+                "type": "string",
+                "description": "How the carrier should proceed if the shipment can't be delivered – one of `ABANDON`, `RETURN`."
+              },
+              "eel_pfc": {
+                "type": "string",
+                "nullable": true,
+                "description": "EEL/PFC type of the shipment – one of `NOEEI_30_37_a`, `NOEEI_30_37_h`, `NOEEI_30_37_f`, `NOEEI_30_36`, `AES_ITN`. Leave empty to use the default for US exports — `NOEEI_30_36` to Canada, `NOEEI_30_37_a` otherwise."
+              },
+              "aes_itn": {
+                "type": "string",
+                "nullable": true,
+                "description": "The AES / ITN reference of the shipment. Required when `eel_pfc` is `AES_ITN`."
+              },
+              "incoterm": {
+                "type": "string",
+                "nullable": true,
+                "description": "The incoterm reference of the shipment, when required by the carrier – one of `DDP`, `DDU`, `FCA`, `DAP`, `eDAP`."
+              },
+              "items": {
+                "type": "array",
+                "description": "The individual items included in this shipment for customs purposes. Leave empty to derive them from the fulfillment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Text description of the item."
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "description": "Quantity of this item in the shipment."
+                    },
+                    "net_weight": {
+                      "type": "string",
+                      "description": "Total weight of this item (quantity * weight per item)."
+                    },
+                    "mass_unit": {
+                      "type": "string",
+                      "description": "The unit of net_weight – one of `g`, `kg`, `lb`, `oz`."
+                    },
+                    "value_amount": {
+                      "type": "string",
+                      "description": "Total value of this item (quantity * value per item)."
+                    },
+                    "value_currency": {
+                      "type": "string",
+                      "description": "The three-letter ISO 4217 currency code for value_amount, e.g. `USD`."
+                    },
+                    "origin_country": {
+                      "type": "string",
+                      "description": "The two-letter ISO country code of origin for this item."
+                    },
+                    "hs_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The HS/tariff code of the item, required by some carriers."
+                    },
+                    "tariff_number": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The tariff number of the item. Takes precedence over hs_code when both are given."
+                    },
+                    "sku_code": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The SKU code of the item, required by some carriers."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -8911,6 +9016,14 @@
               "live_mode": {
                 "type": "boolean",
                 "description": "Whether or not this shipment was created in live mode."
+              },
+              "international": {
+                "type": "boolean",
+                "description": "Whether the from_contact and to_contact are in different countries."
+              },
+              "customs_required": {
+                "type": "boolean",
+                "description": "Whether this shipment needs a customs_declaration before it can be quoted."
               },
               "label_url": {
                 "type": "string",
@@ -11072,6 +11185,16 @@
                 "nullable": true,
                 "description": "The tax category/code that matches this variant. If `null`, inherits from the product."
               },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The HS/tariff code for this variant. If `null`, inherits from the product."
+              },
+              "country_of_origin": {
+                "type": "string",
+                "nullable": true,
+                "description": "The two-letter ISO country code where this variant was manufactured. If `null`, inherits from the product."
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -11852,15 +11975,15 @@
                   },
                   "data": [
                     {
-                      "id": "e698b044-3871-4a80-b603-5259c7e34a79",
+                      "id": "1d97fb0e-e59e-4991-8d77-d54bb0ec461f",
                       "object": "fulfillment_item",
                       "quantity": 1,
                       "g_weight": 0.0,
                       "unit_g_weight": 0.0,
-                      "fulfillment": "60450252-0d62-4f5a-a8ea-38450fcae1de",
-                      "line_item": "4a28aa94-904b-43bc-be51-79f8f4d8e262",
-                      "created_at": 1793086860,
-                      "updated_at": 1793086860
+                      "fulfillment": "2b4613e0-9458-475c-83fb-e3145b39ac98",
+                      "line_item": "37cfa168-9d9f-4376-a64d-c3d8ce5cd3f6",
+                      "created_at": 1793622860,
+                      "updated_at": 1793622860
                     }
                   ]
                 },
@@ -11897,15 +12020,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "154a4f75-fb27-4593-b914-85691e9b3d9b",
+                  "id": "51331a45-9d2d-4dc5-ba2f-e2022fcd4409",
                   "object": "fulfillment_item",
                   "quantity": 1,
                   "g_weight": 0.0,
                   "unit_g_weight": 0.0,
-                  "fulfillment": "7e42881e-8d40-41f6-bfa5-71e52d468f3d",
-                  "line_item": "eaaa018d-eeec-4e0f-a3d2-5acaed21efa5",
-                  "created_at": 1793086861,
-                  "updated_at": 1793086861
+                  "fulfillment": "5428f207-2cbc-4d63-9d51-300a05740ed5",
+                  "line_item": "22e95148-66ce-4528-81fa-1697cdb13dd5",
+                  "created_at": 1793622861,
+                  "updated_at": 1793622861
                 },
                 "schema": {
                   "$ref": "#/components/schemas/fulfillment_item_response"
@@ -11995,16 +12118,16 @@
                   },
                   "data": [
                     {
-                      "id": "809b2bc3-0f16-49b2-a671-b494eb39e55d",
+                      "id": "54ece90d-9e69-4536-a136-6918a24af751",
                       "object": "fulfillment",
                       "awaiting_label": false,
                       "g_weight": 0.0,
                       "notifications_enabled": false,
                       "number": "0000-F",
                       "shipment_status": "unshipped",
-                      "order": "bff9b2a6-de6e-436f-9fdc-90aeff4bdd11",
-                      "created_at": 1793086862,
-                      "updated_at": 1793086862
+                      "order": "c402ae15-6d60-4997-8c9d-a7585a987ab0",
+                      "created_at": 1793622863,
+                      "updated_at": 1793622863
                     }
                   ]
                 },
@@ -12030,16 +12153,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bb811d74-8d1b-4f64-ac5e-14fb7f95ce3c",
+                  "id": "6d082ddf-8234-4ae6-b7f3-5f9455efc718",
                   "object": "fulfillment",
                   "awaiting_label": true,
                   "g_weight": 0.0,
                   "notifications_enabled": false,
                   "number": "0000-F1",
                   "shipment_status": "unshipped",
-                  "order": "200aa23a-04be-49f0-8788-d8c5e019e609",
-                  "created_at": 1793086864,
-                  "updated_at": 1793086864
+                  "order": "8dcef43e-e211-4904-b258-ce174cda73e1",
+                  "created_at": 1793622866,
+                  "updated_at": 1793622866
                 },
                 "schema": {
                   "$ref": "#/components/schemas/fulfillment_response"
@@ -12064,16 +12187,16 @@
                 },
                 "example": {
                   "fulfillment": {
-                    "order": "200aa23a-04be-49f0-8788-d8c5e019e609",
+                    "order": "8dcef43e-e211-4904-b258-ce174cda73e1",
                     "fulfillment_items": [
                       {
-                        "line_item": "99e03e8e-42a0-447a-8bb5-42c4d111ef30",
+                        "line_item": "b1144730-2de9-4996-8100-4cb36fe91e89",
                         "quantity": 1
                       }
                     ],
                     "shipments": [
                       {
-                        "shipping_provider": "42611cb9-8481-4eea-931a-1160c6a21ec2",
+                        "shipping_provider": "d49cfbb9-a30f-4372-8e4a-f7d51b748ce8",
                         "inherit_weight": false,
                         "weight": 2,
                         "weight_unit": "lb",
@@ -12083,7 +12206,7 @@
                           "height": 5,
                           "unit": "in"
                         },
-                        "shipping_date": "2026-10-27",
+                        "shipping_date": "2026-11-02",
                         "from_contact": {
                           "name": "Sender Name",
                           "email": "sender@example.com",
@@ -12142,16 +12265,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4ca998ba-a9db-4a79-b8dd-d331032d3485",
+                  "id": "d1cedcf7-f301-4c9a-90eb-5879fd3961c7",
                   "object": "fulfillment",
                   "awaiting_label": false,
                   "g_weight": 0.0,
                   "notifications_enabled": false,
                   "number": "0000-F",
                   "shipment_status": "unshipped",
-                  "order": "ee2a05f9-4048-4125-8076-efdbb38ba7af",
-                  "created_at": 1793086864,
-                  "updated_at": 1793086864
+                  "order": "553510e1-992b-4ced-af09-17bdb8f5de1f",
+                  "created_at": 1793622867,
+                  "updated_at": 1793622867
                 },
                 "schema": {
                   "$ref": "#/components/schemas/fulfillment_response"
@@ -12175,16 +12298,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "6f68eaf7-af38-49eb-87a4-cf3e1feb92fb",
+                  "id": "ad294891-c5a2-4316-aefb-62b7bc1ce5c0",
                   "object": "fulfillment",
                   "awaiting_label": false,
                   "g_weight": 0.0,
                   "notifications_enabled": false,
                   "number": "0000-F",
                   "shipment_status": "unshippable",
-                  "order": "19fc928d-14a0-4d20-befe-f535cedb31fc",
-                  "created_at": 1793086865,
-                  "updated_at": 1793086865
+                  "order": "0943fbd5-f412-4983-af59-d6f40f86c40e",
+                  "created_at": 1793622868,
+                  "updated_at": 1793622868
                 },
                 "schema": {
                   "$ref": "#/components/schemas/fulfillment_response"
@@ -12234,7 +12357,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "41365020-62d2-4b75-8256-39fa3f80a56e",
+                  "id": "b4426459-04bd-4997-8507-f73d28c8c43b",
                   "object": "fulfillment",
                   "deleted": true
                 },
@@ -12302,7 +12425,7 @@
                   },
                   "data": [
                     {
-                      "id": "2abc852c-fbaa-460b-b37e-457f61e44e20",
+                      "id": "3c55e0ff-428e-4bcb-b327-abc82b900d20",
                       "object": "parcel_template",
                       "default": false,
                       "dimensions": {
@@ -12320,8 +12443,8 @@
                       "carrier_name": null,
                       "carrier_logo_url": null,
                       "shipping_provider": null,
-                      "created_at": 1793086886,
-                      "updated_at": 1793086886
+                      "created_at": 1793622929,
+                      "updated_at": 1793622929
                     }
                   ]
                 },
@@ -12347,7 +12470,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f848c00f-c6fd-4cd9-9288-49d544aed1bd",
+                  "id": "5e822b6e-45b4-4f3b-a54d-2c699d797381",
                   "object": "parcel_template",
                   "default": false,
                   "dimensions": {
@@ -12364,9 +12487,9 @@
                   "carrier_token": null,
                   "carrier_name": null,
                   "carrier_logo_url": null,
-                  "shipping_provider": "ffddda08-a3fa-462c-8a8f-61296b98d60d",
-                  "created_at": 1793086886,
-                  "updated_at": 1793086886
+                  "shipping_provider": "be73005e-4899-4621-b22b-cd0c631467ca",
+                  "created_at": 1793622929,
+                  "updated_at": 1793622929
                 },
                 "schema": {
                   "$ref": "#/components/schemas/parcel_template_response"
@@ -12398,7 +12521,7 @@
                       "height": 6,
                       "unit": "in"
                     },
-                    "shipping_provider": "ffddda08-a3fa-462c-8a8f-61296b98d60d"
+                    "shipping_provider": "be73005e-4899-4621-b22b-cd0c631467ca"
                   }
                 }
               }
@@ -12431,7 +12554,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "098fa86a-3740-4475-b06d-c89c7fd01267",
+                  "id": "5649ad68-c7f3-48eb-8fc8-16406e89f1ba",
                   "object": "parcel_template",
                   "default": false,
                   "dimensions": {
@@ -12449,8 +12572,8 @@
                   "carrier_name": null,
                   "carrier_logo_url": null,
                   "shipping_provider": null,
-                  "created_at": 1793086887,
-                  "updated_at": 1793086887
+                  "created_at": 1793622931,
+                  "updated_at": 1793622931
                 },
                 "schema": {
                   "$ref": "#/components/schemas/parcel_template_response"
@@ -12483,7 +12606,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2d4955c6-ca62-48f2-9466-57c2c48b4335",
+                  "id": "05488c18-d122-4057-a7f5-1a9a0539fe27",
                   "object": "parcel_template",
                   "default": false,
                   "dimensions": {
@@ -12501,8 +12624,8 @@
                   "carrier_name": null,
                   "carrier_logo_url": null,
                   "shipping_provider": null,
-                  "created_at": 1793086887,
-                  "updated_at": 1793086887
+                  "created_at": 1793622933,
+                  "updated_at": 1793622933
                 },
                 "schema": {
                   "$ref": "#/components/schemas/parcel_template_response"
@@ -12558,7 +12681,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "56d0b2c4-45aa-4c3d-80f5-7e569367ef6f",
+                  "id": "802b22b3-0bef-4111-913f-8dee61dff1fe",
                   "object": "parcel_template",
                   "deleted": true
                 },
@@ -12638,16 +12761,16 @@
                   },
                   "data": [
                     {
-                      "id": "e23b14c0-ecef-49a1-b044-ec7f9607a117",
+                      "id": "a3ece1dd-ebe6-42f2-a4e6-677072069195",
                       "object": "return_item",
                       "note": null,
                       "return_reason": "wrong_item",
                       "return_reason_description": "Received the wrong item",
                       "quantity": 1,
-                      "return_request": "95565abe-d7a2-4506-bb35-b27fe7df1d15",
-                      "line_item": "50206be8-8eaa-4270-8778-9f11be2ff3a2",
-                      "created_at": 1793086922,
-                      "updated_at": 1793086922
+                      "return_request": "fc065d90-5a62-434a-af51-53fc003d9c15",
+                      "line_item": "72f830fb-a94e-425c-95e6-27a21d9e79b0",
+                      "created_at": 1793623035,
+                      "updated_at": 1793623035
                     }
                   ]
                 },
@@ -12684,16 +12807,16 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b21a4ab9-390a-4225-8a08-cb8a105272a5",
+                  "id": "b2e0f3db-aaa9-4712-b067-60aa2c38538e",
                   "object": "return_item",
                   "note": null,
                   "return_reason": "wrong_item",
                   "return_reason_description": "Received the wrong item",
                   "quantity": 1,
-                  "return_request": "af42fd9a-5bca-40e3-8ab3-90d757d4ec02",
-                  "line_item": "b853282d-28af-412d-afff-0c2db4d4bf9b",
-                  "created_at": 1793086922,
-                  "updated_at": 1793086922
+                  "return_request": "b7eb68ce-3c4b-419f-8852-ab30ce60422a",
+                  "line_item": "5b27e66f-d837-4cb6-a4f6-1586dccf0f11",
+                  "created_at": 1793623037,
+                  "updated_at": 1793623037
                 },
                 "schema": {
                   "$ref": "#/components/schemas/return_item_response"
@@ -12783,13 +12906,13 @@
                   },
                   "data": [
                     {
-                      "id": "c74d2905-9b3a-4a0b-93f9-f7aa925fd3ed",
+                      "id": "f4cef513-a400-4ca2-9efb-a084b4d350bd",
                       "object": "return_request",
                       "number": "0000-R",
                       "status": "open",
-                      "order": "ee17594b-2f48-4985-bc69-621e99a1f1a6",
-                      "created_at": 1793086923,
-                      "updated_at": 1793086923
+                      "order": "76412e0d-835c-4633-ba9d-8f38faaa5e76",
+                      "created_at": 1793623039,
+                      "updated_at": 1793623039
                     }
                   ]
                 },
@@ -12815,13 +12938,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2d2cc710-7a57-4da2-a570-4d9adb407ba1",
+                  "id": "2f131ea5-dd19-4668-9637-37ae55c834e0",
                   "object": "return_request",
                   "number": "0000-R1",
                   "status": "open",
-                  "order": "bedb9086-f63f-41ba-82e2-97a7b25fbdce",
-                  "created_at": 1793086924,
-                  "updated_at": 1793086924
+                  "order": "ff5fa98a-550e-4ee0-ac23-98bbeefada73",
+                  "created_at": 1793623041,
+                  "updated_at": 1793623041
                 },
                 "schema": {
                   "$ref": "#/components/schemas/return_request_response"
@@ -12846,10 +12969,10 @@
                 },
                 "example": {
                   "return_request": {
-                    "order": "bedb9086-f63f-41ba-82e2-97a7b25fbdce",
+                    "order": "ff5fa98a-550e-4ee0-ac23-98bbeefada73",
                     "return_items": [
                       {
-                        "line_item": "3c734770-f791-451c-8dbf-9ce4c0976c3b",
+                        "line_item": "6046f588-81eb-425d-81c8-c49911c9c880",
                         "quantity": 1,
                         "return_reason_id": "wrong_item"
                       }
@@ -12886,13 +13009,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "46f4a655-0fd1-4d3a-9d4d-5adc55e30cba",
+                  "id": "720fe5e7-2ab6-49c0-8c72-ff728c6a69db",
                   "object": "return_request",
                   "number": "0000-R",
                   "status": "open",
-                  "order": "3c118689-2a23-4413-a61f-385a725b595c",
-                  "created_at": 1793086925,
-                  "updated_at": 1793086925
+                  "order": "c6ba84de-5269-43c8-8163-6cc3586a34ab",
+                  "created_at": 1793623042,
+                  "updated_at": 1793623042
                 },
                 "schema": {
                   "$ref": "#/components/schemas/return_request_response"
@@ -12916,13 +13039,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bfbc9b49-b777-4ab5-9ab6-cb4a876849b5",
+                  "id": "9ab42650-e661-430f-8fe5-d35c4b22a1fe",
                   "object": "return_request",
                   "number": "0000-R",
                   "status": "open",
-                  "order": "748d3845-0da5-4cb9-aaab-000170b30f78",
-                  "created_at": 1793086926,
-                  "updated_at": 1793086926
+                  "order": "70e79188-e6c5-4269-9857-d46469a502fc",
+                  "created_at": 1793623044,
+                  "updated_at": 1793623044
                 },
                 "schema": {
                   "$ref": "#/components/schemas/return_request_response"
@@ -12970,7 +13093,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3862d92a-1d42-4b40-af14-5e5dd13dfb98",
+                  "id": "09c05b51-89ef-4e1b-a6ca-6fb74cb4934b",
                   "object": "return_request",
                   "deleted": true
                 },
@@ -13007,13 +13130,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bdd9264c-d03c-4237-ac67-14c81c99ff9b",
+                  "id": "63c6a70e-a613-4dfb-a6eb-758985d72fc2",
                   "object": "return_request",
                   "number": "0000-R",
                   "status": "open",
-                  "order": "97fd9b57-2abf-40f6-9e82-c7c96b5cd9b2",
-                  "created_at": 1793086927,
-                  "updated_at": 1793086927
+                  "order": "29f123c4-9bf0-45e9-bfef-d9d2a0308133",
+                  "created_at": 1793623046,
+                  "updated_at": 1793623046
                 },
                 "schema": {
                   "$ref": "#/components/schemas/return_request_response"
@@ -13048,13 +13171,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "544a3bde-d81e-45cc-aa1e-de731d1cc50e",
+                  "id": "593de995-1b5a-412a-955b-8e43beb1e89f",
                   "object": "return_request",
                   "number": "0000-R",
                   "status": "completed",
-                  "order": "7f8e5004-a58f-4498-9e60-0efe5d36a146",
-                  "created_at": 1793086928,
-                  "updated_at": 1793086928
+                  "order": "d7b37fe9-a4b2-4684-95f7-d321a2289f0b",
+                  "created_at": 1793623047,
+                  "updated_at": 1793623047
                 },
                 "schema": {
                   "$ref": "#/components/schemas/return_request_response"
@@ -13211,7 +13334,7 @@
                   },
                   "data": [
                     {
-                      "id": "38720971-c7af-42a4-b0c4-18a2dc48b15f",
+                      "id": "bf7c2f17-07a0-4c39-9385-ebdc1c3f599c",
                       "object": "shipment",
                       "carrier": null,
                       "carrier_messages": [],
@@ -13222,6 +13345,9 @@
                         "height": 5.0,
                         "unit": "in"
                       },
+                      "customs_declaration": null,
+                      "international": false,
+                      "customs_required": false,
                       "eta": null,
                       "inherit_weight": false,
                       "label_file_type": "PDF",
@@ -13229,7 +13355,7 @@
                       "live_mode": true,
                       "rates": [],
                       "selected_rate": null,
-                      "shipping_date": 1793059200,
+                      "shipping_date": 1793577600,
                       "status": "draft",
                       "tracking_number": null,
                       "tracking_status": null,
@@ -13237,13 +13363,13 @@
                       "weight": "2.0",
                       "weight_unit": "lb",
                       "carrier_parcel_template_token": null,
-                      "from_contact": "45fab601-29c5-4759-a333-5ee5815c357b",
-                      "fulfillment": "9a46a9b5-383e-4b93-b562-27bd15e5226d",
+                      "from_contact": "d3013134-345e-431a-a254-5fc6c36bc0ed",
+                      "fulfillment": "ad34cf45-d2ee-47b1-810a-edde2924e605",
                       "parcel_template": null,
-                      "shipping_provider": "8753f5c3-76fd-413d-af72-d13ee3a976c8",
-                      "to_contact": "d801bfc8-5565-4b07-b723-f544be6313c6",
-                      "created_at": 1793086934,
-                      "updated_at": 1793086934
+                      "shipping_provider": "7a284954-8852-40fd-bc02-f1f26766e4a6",
+                      "to_contact": "c1ac1baf-45e0-46e4-95f2-5c0ad2e298a9",
+                      "created_at": 1793623062,
+                      "updated_at": 1793623062
                     }
                   ]
                 },
@@ -13269,7 +13395,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "7d084a62-f2ff-4c7a-9577-173b8fa1b5e4",
+                  "id": "27aea9a8-faa0-4eca-abd3-f7a7c4abb74c",
                   "object": "shipment",
                   "carrier": null,
                   "carrier_messages": [
@@ -13324,6 +13450,26 @@
                     "height": 5.0,
                     "unit": "in"
                   },
+                  "customs_declaration": {
+                    "certify": true,
+                    "certify_signer": "Sender Name",
+                    "contents_type": "MERCHANDISE",
+                    "non_delivery_option": "RETURN",
+                    "eel_pfc": "NOEEI_30_37_a",
+                    "items": [
+                      {
+                        "description": "T-Shirt",
+                        "quantity": 1,
+                        "net_weight": "1",
+                        "mass_unit": "lb",
+                        "value_amount": "20",
+                        "value_currency": "USD",
+                        "origin_country": "US"
+                      }
+                    ]
+                  },
+                  "international": false,
+                  "customs_required": false,
                   "eta": null,
                   "inherit_weight": false,
                   "label_file_type": "PDF",
@@ -13370,7 +13516,7 @@
                     }
                   ],
                   "selected_rate": null,
-                  "shipping_date": 1792972800,
+                  "shipping_date": 1793491200,
                   "status": "quoted",
                   "tracking_number": null,
                   "tracking_status": null,
@@ -13378,13 +13524,13 @@
                   "weight": "2.0",
                   "weight_unit": "lb",
                   "carrier_parcel_template_token": null,
-                  "from_contact": "b8df99cb-9707-4e31-a93e-bea0f9c421ab",
-                  "fulfillment": "2048b11c-b59c-4f4d-8556-ea63c1200a07",
+                  "from_contact": "db3f4394-239a-411c-912e-e2709f700dcc",
+                  "fulfillment": "686c3c95-588c-4ee7-b020-6f6e3f11e860",
                   "parcel_template": null,
-                  "shipping_provider": "855f641c-efb2-41b4-986c-a3089ba59ca1",
-                  "to_contact": "def65c20-0543-413c-bacb-38e41d0fcec5",
-                  "created_at": 1793086936,
-                  "updated_at": 1793086936
+                  "shipping_provider": "f794f679-2c12-4b3a-a8a9-6596b2f7babd",
+                  "to_contact": "6cf6a8a7-2250-4ef4-824d-149a99fc4187",
+                  "created_at": 1793623064,
+                  "updated_at": 1793623064
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipment_response"
@@ -13409,8 +13555,8 @@
                 },
                 "example": {
                   "shipment": {
-                    "fulfillment": "2048b11c-b59c-4f4d-8556-ea63c1200a07",
-                    "shipping_provider": "855f641c-efb2-41b4-986c-a3089ba59ca1",
+                    "fulfillment": "686c3c95-588c-4ee7-b020-6f6e3f11e860",
+                    "shipping_provider": "f794f679-2c12-4b3a-a8a9-6596b2f7babd",
                     "inherit_weight": false,
                     "weight": 2,
                     "weight_unit": "lb",
@@ -13420,7 +13566,25 @@
                       "height": 5,
                       "unit": "in"
                     },
-                    "shipping_date": "2026-10-27",
+                    "shipping_date": "2026-11-02",
+                    "customs_declaration": {
+                      "certify": true,
+                      "certify_signer": "Sender Name",
+                      "contents_type": "MERCHANDISE",
+                      "non_delivery_option": "RETURN",
+                      "eel_pfc": "NOEEI_30_37_a",
+                      "items": [
+                        {
+                          "description": "T-Shirt",
+                          "quantity": 1,
+                          "net_weight": "1",
+                          "mass_unit": "lb",
+                          "value_amount": "20",
+                          "value_currency": "USD",
+                          "origin_country": "US"
+                        }
+                      ]
+                    },
                     "from_contact": {
                       "name": "Sender Name",
                       "email": "sender@example.com",
@@ -13477,7 +13641,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "445c29be-ddf7-40bd-9f75-a393ec31fdab",
+                  "id": "2e5e47e2-6b86-41c9-a8ac-4e672ecaf1f7",
                   "object": "shipment",
                   "carrier": null,
                   "carrier_messages": [],
@@ -13488,6 +13652,9 @@
                     "height": 5.0,
                     "unit": "in"
                   },
+                  "customs_declaration": null,
+                  "international": false,
+                  "customs_required": false,
                   "eta": null,
                   "inherit_weight": false,
                   "label_file_type": "PDF",
@@ -13495,7 +13662,7 @@
                   "live_mode": true,
                   "rates": [],
                   "selected_rate": null,
-                  "shipping_date": 1793059200,
+                  "shipping_date": 1793577600,
                   "status": "draft",
                   "tracking_number": null,
                   "tracking_status": null,
@@ -13503,13 +13670,13 @@
                   "weight": "2.0",
                   "weight_unit": "lb",
                   "carrier_parcel_template_token": null,
-                  "from_contact": "ed6137e0-0701-4a97-a5ae-0380f6500768",
-                  "fulfillment": "c2c96b06-0e6a-475d-aaea-9ae6ac373cab",
+                  "from_contact": "e08f5850-b36b-42b2-8cc2-f696fb84f767",
+                  "fulfillment": "c16c36c6-1a1b-46cd-acf1-a894465b8661",
                   "parcel_template": null,
-                  "shipping_provider": "734488b3-5667-419c-b670-f4546525fff6",
-                  "to_contact": "2b79a99c-7751-49e9-a765-80bb74f0e9d4",
-                  "created_at": 1793086936,
-                  "updated_at": 1793086936
+                  "shipping_provider": "ba6eef5d-1c07-475d-8de7-8d3b78e1d0cf",
+                  "to_contact": "cda9bd95-844d-4f97-b8ed-7aad73464d36",
+                  "created_at": 1793623065,
+                  "updated_at": 1793623065
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipment_response"
@@ -13533,7 +13700,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "669cdf03-be9a-4ba7-8b90-36475858750a",
+                  "id": "9a0cc0d5-ae67-4d56-baa8-a15e6f4691ca",
                   "object": "shipment",
                   "carrier": null,
                   "carrier_messages": [],
@@ -13544,6 +13711,9 @@
                     "height": 5.0,
                     "unit": "in"
                   },
+                  "customs_declaration": null,
+                  "international": false,
+                  "customs_required": false,
                   "eta": null,
                   "inherit_weight": false,
                   "label_file_type": "PNG",
@@ -13551,7 +13721,7 @@
                   "live_mode": true,
                   "rates": [],
                   "selected_rate": null,
-                  "shipping_date": 1793059200,
+                  "shipping_date": 1793577600,
                   "status": "draft",
                   "tracking_number": null,
                   "tracking_status": null,
@@ -13559,13 +13729,13 @@
                   "weight": "2.0",
                   "weight_unit": "lb",
                   "carrier_parcel_template_token": null,
-                  "from_contact": "594e976a-fee1-477b-b45e-10f6b4e337dc",
-                  "fulfillment": "b2dd9238-0de5-4935-827a-20c6af307cf8",
+                  "from_contact": "7a2d39f4-5c76-412f-a862-f3d70cccb53f",
+                  "fulfillment": "7da083cd-edeb-480d-b14c-afa3d9af5b1e",
                   "parcel_template": null,
-                  "shipping_provider": "46d4482d-9d01-4483-919d-d5d172eb34bd",
-                  "to_contact": "6a662e57-9565-4b3a-8cf3-055af70cc0f0",
-                  "created_at": 1793086937,
-                  "updated_at": 1793086937
+                  "shipping_provider": "98536b4a-d4b7-4a02-a0ba-5226ff518bae",
+                  "to_contact": "c9cd79de-6b41-4eaf-9772-33aae140e949",
+                  "created_at": 1793623066,
+                  "updated_at": 1793623066
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipment_response"
@@ -13623,7 +13793,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cca4174e-2d59-465a-bc6a-150bd4ee1692",
+                  "id": "e8920fb4-fb36-4bd4-8643-9563247f4c59",
                   "object": "shipment",
                   "carrier": null,
                   "carrier_messages": [
@@ -13678,6 +13848,9 @@
                     "height": 5.0,
                     "unit": "in"
                   },
+                  "customs_declaration": null,
+                  "international": false,
+                  "customs_required": false,
                   "eta": null,
                   "inherit_weight": false,
                   "label_file_type": "PDF",
@@ -13724,7 +13897,7 @@
                     }
                   ],
                   "selected_rate": null,
-                  "shipping_date": 1793059200,
+                  "shipping_date": 1793577600,
                   "status": "quoted",
                   "tracking_number": null,
                   "tracking_status": null,
@@ -13732,13 +13905,13 @@
                   "weight": "2.0",
                   "weight_unit": "lb",
                   "carrier_parcel_template_token": null,
-                  "from_contact": "4b9b34c1-b612-4121-bb8d-6279f73b8d7a",
-                  "fulfillment": "19b32068-d6ce-4785-a902-269888261409",
+                  "from_contact": "b755a032-f426-4dec-9af9-dd893d2e5aca",
+                  "fulfillment": "c25a09e7-66f1-41f2-ba96-cd19d339b72d",
                   "parcel_template": null,
-                  "shipping_provider": "9ab68003-be85-4ed5-95a2-5e9642a8491a",
-                  "to_contact": "04a1cd4d-758b-418b-abd3-e5509344e2aa",
-                  "created_at": 1793086938,
-                  "updated_at": 1793086938
+                  "shipping_provider": "fd88e29c-f0f8-4027-bd42-67ab922a39b2",
+                  "to_contact": "e5263a76-58c1-4327-92ff-de1ea91f9d03",
+                  "created_at": 1793623068,
+                  "updated_at": 1793623068
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipment_response"
@@ -13774,7 +13947,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8a72b686-db1b-4574-9f64-6edb4bdae111",
+                  "id": "bce30fd8-046d-43b6-b975-5b59f08da0ac",
                   "object": "shipment",
                   "carrier": "USPS",
                   "carrier_messages": [],
@@ -13785,6 +13958,9 @@
                     "height": 5.0,
                     "unit": "in"
                   },
+                  "customs_declaration": null,
+                  "international": false,
+                  "customs_required": false,
                   "eta": null,
                   "inherit_weight": false,
                   "label_file_type": "PDF",
@@ -13818,7 +13994,7 @@
                     "duration_terms": null,
                     "provider_logo_url": "https://example.com/usps.png"
                   },
-                  "shipping_date": 1793059200,
+                  "shipping_date": 1793577600,
                   "status": "purchased",
                   "tracking_number": "9234690396055702568186",
                   "tracking_status": null,
@@ -13826,13 +14002,13 @@
                   "weight": "2.0",
                   "weight_unit": "lb",
                   "carrier_parcel_template_token": null,
-                  "from_contact": "566e5d4e-d039-4c7f-9ff4-71e1ca527d42",
-                  "fulfillment": "1c5f1fe3-418f-4c49-bc4e-c4914ccd92b7",
+                  "from_contact": "c1641a0d-a60f-4aec-8fe8-c77c4533d117",
+                  "fulfillment": "86b86072-a517-4c5a-9f89-b6d80a594f06",
                   "parcel_template": null,
-                  "shipping_provider": "60d5f8de-870f-47a3-ad36-d7038479ba9f",
-                  "to_contact": "7aab7ea7-5d2b-432f-bf06-d3f1cc99c57d",
-                  "created_at": 1793086939,
-                  "updated_at": 1793086939
+                  "shipping_provider": "f8dad33b-8433-4003-932c-9cfee0422f5c",
+                  "to_contact": "446978a5-0769-43e1-9a51-7bb3240863c7",
+                  "created_at": 1793623069,
+                  "updated_at": 1793623069
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipment_response"
@@ -13891,7 +14067,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8d1fe163-c391-42e9-9b35-c27402f00e44",
+                  "id": "aa97398d-f08c-4362-9356-02722c99f72f",
                   "object": "shipment",
                   "carrier": "USPS",
                   "carrier_messages": [],
@@ -13902,6 +14078,9 @@
                     "height": 5.0,
                     "unit": "in"
                   },
+                  "customs_declaration": null,
+                  "international": false,
+                  "customs_required": false,
                   "eta": null,
                   "inherit_weight": false,
                   "label_file_type": "PDF",
@@ -13935,7 +14114,7 @@
                     "duration_terms": null,
                     "provider_logo_url": "https://example.com/usps.png"
                   },
-                  "shipping_date": 1793059200,
+                  "shipping_date": 1793577600,
                   "status": "voided",
                   "tracking_number": "1Z999AA10123456784",
                   "tracking_status": null,
@@ -13943,13 +14122,13 @@
                   "weight": "2.0",
                   "weight_unit": "lb",
                   "carrier_parcel_template_token": null,
-                  "from_contact": "d3aa3570-7044-49a5-b6c0-a1dd9395b0cb",
-                  "fulfillment": "e49da700-ef39-4417-af0c-df03304f5004",
+                  "from_contact": "3aa84af2-6254-4f11-9999-452b6a121474",
+                  "fulfillment": "6a40869a-d0ea-4cab-b026-8cdbe2c75ae9",
                   "parcel_template": null,
-                  "shipping_provider": "17c72285-c418-44d2-9446-4298ebc64640",
-                  "to_contact": "bce041b5-5296-4932-9f10-c106343f74a7",
-                  "created_at": 1793086940,
-                  "updated_at": 1793086940
+                  "shipping_provider": "fb900277-a930-4289-960a-12c74480b706",
+                  "to_contact": "97fb43e2-92fc-4607-a1c9-45f550da9c30",
+                  "created_at": 1793623070,
+                  "updated_at": 1793623071
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipment_response"
@@ -14027,16 +14206,16 @@
                   },
                   "data": [
                     {
-                      "id": "b6e4b7c2-1300-4c8e-ba6c-416a072e3a41",
+                      "id": "f5211b0a-65cf-46df-87d7-68731b7056cd",
                       "object": "shipping_choice",
                       "amount": 500,
                       "currency": "usd",
                       "live": false,
                       "carrier_quotes": [],
-                      "checkout": "f8da3d62-24cf-47f1-8e6e-19ea62656133",
+                      "checkout": "572f09f0-5ce2-4130-b7da-215a448b0ce1",
                       "shipping_method": null,
-                      "created_at": 1793086940,
-                      "updated_at": 1793086940
+                      "created_at": 1793623071,
+                      "updated_at": 1793623071
                     }
                   ]
                 },
@@ -14072,12 +14251,12 @@
                   },
                   "data": [
                     {
-                      "id": "80dfea8a-4af3-406f-b2ef-48abdaed25d3",
+                      "id": "f2c1d1c0-e747-45bf-92d4-8de25cbc8a63",
                       "object": "shipping_method",
                       "description": "Deliver within 1-2 days",
                       "name": "Express",
-                      "created_at": 1793086941,
-                      "updated_at": 1793086941
+                      "created_at": 1793623074,
+                      "updated_at": 1793623074
                     }
                   ]
                 },
@@ -14103,12 +14282,12 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ad1fe913-9a6a-462e-a145-af78dae4f8f3",
+                  "id": "28846384-3cbe-49eb-aebe-6648537dff01",
                   "object": "shipping_method",
                   "description": null,
                   "name": "Standard",
-                  "created_at": 1793086941,
-                  "updated_at": 1793086941
+                  "created_at": 1793623074,
+                  "updated_at": 1793623074
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_method_response"
@@ -14166,12 +14345,12 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f4b3b8d9-5d70-45bc-bcb5-2a3cccebd1cf",
+                  "id": "0da30363-c161-405b-ad1d-7574848a2310",
                   "object": "shipping_method",
                   "description": "Deliver within 1-2 days",
                   "name": "Express",
-                  "created_at": 1793086942,
-                  "updated_at": 1793086942
+                  "created_at": 1793623074,
+                  "updated_at": 1793623074
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_method_response"
@@ -14195,12 +14374,12 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a2132804-b597-458b-b264-0a2c850d8a82",
+                  "id": "7765748e-59ae-4894-ab4a-9a62c38fa1ff",
                   "object": "shipping_method",
                   "description": "Deliver within 1-2 days",
                   "name": "Fast",
-                  "created_at": 1793086942,
-                  "updated_at": 1793086942
+                  "created_at": 1793623074,
+                  "updated_at": 1793623074
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_method_response"
@@ -14257,13 +14436,13 @@
                   },
                   "data": [
                     {
-                      "id": "dbbe6abe-9136-4275-8486-6bfb00feba73",
+                      "id": "9ec61fc4-0355-4f25-aa54-c861199cd60d",
                       "object": "shipping_profile",
                       "default": false,
                       "name": "General",
                       "fallback_shipping_zone": null,
-                      "created_at": 1793086942,
-                      "updated_at": 1793086942
+                      "created_at": 1793623075,
+                      "updated_at": 1793623075
                     }
                   ]
                 },
@@ -14289,13 +14468,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8f23b29e-c523-40b0-be54-829d550971ff",
+                  "id": "db807fd9-d11c-49ed-ab9c-b4cd541c6fa8",
                   "object": "shipping_profile",
                   "default": false,
                   "name": "EU",
                   "fallback_shipping_zone": null,
-                  "created_at": 1793086942,
-                  "updated_at": 1793086942
+                  "created_at": 1793623075,
+                  "updated_at": 1793623075
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_profile_response"
@@ -14353,13 +14532,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2bb59921-4774-4ba6-9efd-17203ef89776",
+                  "id": "72dbf7f8-af5b-406f-881a-1d8e20aff4ff",
                   "object": "shipping_profile",
                   "default": false,
                   "name": "General",
                   "fallback_shipping_zone": null,
-                  "created_at": 1793086942,
-                  "updated_at": 1793086942
+                  "created_at": 1793623076,
+                  "updated_at": 1793623076
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_profile_response"
@@ -14383,13 +14562,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4282b876-d3fc-40e1-8cb8-d007d1e5f8b6",
+                  "id": "6054b25c-2d0b-437f-9d7f-a1ed1e9319cc",
                   "object": "shipping_profile",
                   "default": false,
                   "name": "India",
                   "fallback_shipping_zone": null,
-                  "created_at": 1793086942,
-                  "updated_at": 1793086942
+                  "created_at": 1793623076,
+                  "updated_at": 1793623076
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_profile_response"
@@ -14445,7 +14624,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f0effefe-42f0-4d7b-b4e0-cd9e3939a918",
+                  "id": "518cd00a-6d2c-4418-bff3-56515badb927",
                   "object": "shipping_profile",
                   "deleted": true
                 },
@@ -14472,11 +14651,11 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "080ae2bd-1c33-4dfa-a426-3779b2b2e4e5",
+                  "id": "07c8da39-2555-4744-92a8-4e601dcbb1ec",
                   "object": "shipping_protocol",
                   "shipping_enabled": false,
-                  "created_at": 1793086942,
-                  "updated_at": 1793086942
+                  "created_at": 1793623077,
+                  "updated_at": 1793623077
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_protocol_response"
@@ -14500,11 +14679,11 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1e003d12-d541-4e2d-b07f-f8d1bdec28a1",
+                  "id": "c834763f-c7df-4ba3-8e1e-11b927bf2cf7",
                   "object": "shipping_protocol",
                   "shipping_enabled": true,
-                  "created_at": 1793086943,
-                  "updated_at": 1793086943
+                  "created_at": 1793623077,
+                  "updated_at": 1793623077
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_protocol_response"
@@ -14715,14 +14894,14 @@
                   },
                   "data": [
                     {
-                      "id": "82a4986b-2bcb-49be-bf92-a057dd0e935d",
+                      "id": "de968db7-600f-4637-8365-ec36b5fede6f",
                       "object": "shipping_provider",
                       "approved": true,
                       "enabled": true,
                       "live_mode": false,
                       "provider_type": "shippo",
-                      "created_at": 1793086943,
-                      "updated_at": 1793086943
+                      "created_at": 1793623079,
+                      "updated_at": 1793623079
                     }
                   ]
                 },
@@ -14759,14 +14938,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a7f68757-f37a-49b1-ba38-56fd7b9c915e",
+                  "id": "c6b43a2d-d27d-449e-8493-b357ca5c8321",
                   "object": "shipping_provider",
                   "approved": true,
                   "enabled": true,
                   "live_mode": false,
                   "provider_type": "shippo",
-                  "created_at": 1793086943,
-                  "updated_at": 1793086943
+                  "created_at": 1793623079,
+                  "updated_at": 1793623079
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_provider_response"
@@ -14832,17 +15011,17 @@
                   },
                   "data": [
                     {
-                      "id": "2554d7da-7333-40db-9875-c8b88bd6c519",
+                      "id": "af7d5a7c-53b0-4ffd-bdd8-024aac39fcbe",
                       "object": "shipping_rate",
                       "calculatable_type": "flat",
                       "calculatable": {
                         "currency": "usd",
                         "amount": 750
                       },
-                      "shipping_method": "69de8d61-4faf-4f71-96ae-36ad14eacf4c",
-                      "shipping_zone": "e01e1536-810f-43a8-91f6-dddb41882434",
-                      "created_at": 1793086943,
-                      "updated_at": 1793086943
+                      "shipping_method": "715283f9-a04e-485e-9b9b-43be614ca1fc",
+                      "shipping_zone": "3d8d54f6-3ddc-4ffe-b777-d85c7d397855",
+                      "created_at": 1793623079,
+                      "updated_at": 1793623079
                     }
                   ]
                 },
@@ -14868,7 +15047,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a54a2bfd-c26c-4fcc-bec3-b704da1269d0",
+                  "id": "e020195c-9629-49e9-b114-2133b7069c6d",
                   "object": "shipping_rate",
                   "calculatable_type": "amount",
                   "calculatable": {
@@ -14877,10 +15056,10 @@
                     "min_amount": 0,
                     "max_amount": 5000
                   },
-                  "shipping_method": "630c247a-eabb-4e27-a65f-8210556e0890",
-                  "shipping_zone": "2c899acd-1cb3-49d4-b452-3901b3d00606",
-                  "created_at": 1793086943,
-                  "updated_at": 1793086943
+                  "shipping_method": "4df11818-1c6c-4960-ba3a-f9296f247111",
+                  "shipping_zone": "185d934a-8699-437c-99e4-2f9dc8790876",
+                  "created_at": 1793623080,
+                  "updated_at": 1793623080
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_rate_response"
@@ -14906,8 +15085,8 @@
                 "example": {
                   "shipping_rate": {
                     "calculatable_type": "amount",
-                    "shipping_zone_id": "2c899acd-1cb3-49d4-b452-3901b3d00606",
-                    "shipping_method_id": "630c247a-eabb-4e27-a65f-8210556e0890",
+                    "shipping_zone_id": "185d934a-8699-437c-99e4-2f9dc8790876",
+                    "shipping_method_id": "4df11818-1c6c-4960-ba3a-f9296f247111",
                     "calculatable": {
                       "amount": 650,
                       "min_amount": 0,
@@ -14945,17 +15124,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "09ff4805-ee52-44b5-b6cf-cc5e9c95650b",
+                  "id": "65634ccf-b556-4ec5-90c8-212a4ec5f103",
                   "object": "shipping_rate",
                   "calculatable_type": "flat",
                   "calculatable": {
                     "currency": "usd",
                     "amount": 750
                   },
-                  "shipping_method": "c6e47b94-48c4-43a3-b8dd-e1547b23e07f",
-                  "shipping_zone": "bd29ee91-a357-4243-a231-a303c194a134",
-                  "created_at": 1793086944,
-                  "updated_at": 1793086944
+                  "shipping_method": "e7af9e27-66b8-4893-9671-0d931239e3eb",
+                  "shipping_zone": "ccd3cb68-18af-4dca-bf39-44813e310b86",
+                  "created_at": 1793623080,
+                  "updated_at": 1793623080
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_rate_response"
@@ -14979,17 +15158,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "27625dc1-346a-491b-b41e-cda1f36c5a52",
+                  "id": "a51e9377-5ee2-4b02-aed9-12a264ca1b3f",
                   "object": "shipping_rate",
                   "calculatable_type": "flat",
                   "calculatable": {
                     "currency": "usd",
                     "amount": 950
                   },
-                  "shipping_method": "75957e3a-5204-44a8-8479-6ff11ca40634",
-                  "shipping_zone": "effa0710-81c2-471d-a8f2-9c295851eaf8",
-                  "created_at": 1793086944,
-                  "updated_at": 1793086944
+                  "shipping_method": "ea130a73-3d44-42ab-afb9-c3df28b35ec6",
+                  "shipping_zone": "52a7449f-d257-4369-bc35-cc4e179fa077",
+                  "created_at": 1793623080,
+                  "updated_at": 1793623080
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_rate_response"
@@ -15047,7 +15226,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a7b55060-25f1-4439-a67c-b768f86310f8",
+                  "id": "381d45ff-ff31-41d8-8117-8843c1f28e07",
                   "object": "shipping_rate",
                   "deleted": true
                 },
@@ -15115,7 +15294,7 @@
                   },
                   "data": [
                     {
-                      "id": "ef2a3fc4-69f7-4fa0-9301-5cc0475172a2",
+                      "id": "8c32dba6-a012-4892-bafb-aeeb8b933561",
                       "object": "shipping_zone",
                       "name": "USA",
                       "territories": [
@@ -15128,9 +15307,9 @@
                         }
                       ],
                       "postal_codes": [],
-                      "shipping_profile": "91d2dd6b-b9d8-4c41-a9b9-f08d91e425e8",
-                      "created_at": 1793086944,
-                      "updated_at": 1793086944
+                      "shipping_profile": "9bdea0c4-6361-4a42-b925-6ca9b1086a1f",
+                      "created_at": 1793623081,
+                      "updated_at": 1793623081
                     }
                   ]
                 },
@@ -15156,7 +15335,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "54fbab32-6fd9-460b-9d6e-0d539e78dc36",
+                  "id": "ff13a7e7-a267-433a-8466-e2c10093ef3c",
                   "object": "shipping_zone",
                   "name": "Canada",
                   "territories": [
@@ -15168,9 +15347,9 @@
                     }
                   ],
                   "postal_codes": [],
-                  "shipping_profile": "d919e442-6569-4ef5-bc04-7c90090d2410",
-                  "created_at": 1793086945,
-                  "updated_at": 1793086945
+                  "shipping_profile": "a5e62db4-28be-4aab-a0ad-cd4ded6e0f43",
+                  "created_at": 1793623081,
+                  "updated_at": 1793623081
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_zone_response"
@@ -15196,7 +15375,7 @@
                 "example": {
                   "shipping_zone": {
                     "name": "Canada",
-                    "shipping_profile_id": "d919e442-6569-4ef5-bc04-7c90090d2410",
+                    "shipping_profile_id": "a5e62db4-28be-4aab-a0ad-cd4ded6e0f43",
                     "territories": [
                       {
                         "country": "US",
@@ -15237,7 +15416,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "2c373d9b-b7ff-49f0-ba63-61d6371c8699",
+                  "id": "345b1918-c997-491b-a140-49dd05616af3",
                   "object": "shipping_zone",
                   "name": "USA",
                   "territories": [
@@ -15250,9 +15429,9 @@
                     }
                   ],
                   "postal_codes": [],
-                  "shipping_profile": "85d3840a-9d44-46ff-8821-e60e358c9537",
-                  "created_at": 1793086945,
-                  "updated_at": 1793086945
+                  "shipping_profile": "4d3c96e7-8919-4814-bd93-ecbab10de6bf",
+                  "created_at": 1793623081,
+                  "updated_at": 1793623081
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_zone_response"
@@ -15276,7 +15455,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f96919b5-6e51-42d3-8645-6d38d000db7c",
+                  "id": "af094217-9d72-4246-8c77-19dde0f2b411",
                   "object": "shipping_zone",
                   "name": "USA",
                   "territories": [
@@ -15289,9 +15468,9 @@
                     }
                   ],
                   "postal_codes": [],
-                  "shipping_profile": "b171b0c9-0ff4-4936-ac1c-2d32eece6105",
-                  "created_at": 1793086945,
-                  "updated_at": 1793086945
+                  "shipping_profile": "03ae414e-1d0c-468c-99b5-ee081ef97db8",
+                  "created_at": 1793623081,
+                  "updated_at": 1793623081
                 },
                 "schema": {
                   "$ref": "#/components/schemas/shipping_zone_response"
@@ -15347,7 +15526,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "50152afa-3058-4019-addf-f52ee5486ed3",
+                  "id": "f89735bd-8807-4032-9450-85adedbfff5a",
                   "object": "shipping_zone",
                   "deleted": true
                 },
@@ -15427,14 +15606,14 @@
                   },
                   "data": [
                     {
-                      "id": "8989d9cc-34dd-43ee-9fc5-604bc43c0381",
+                      "id": "dd8690dd-fc75-455e-aced-36066ce222e5",
                       "object": "tracking",
                       "courier_name": "UPS",
                       "number": "1Z879E930346834440",
                       "url": "https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=1Z879E930346834440",
-                      "fulfillment": "07f5a20b-b1ab-47a3-8a62-18006cbf581b",
-                      "created_at": 1793086956,
-                      "updated_at": 1793086956
+                      "fulfillment": "d0e89aa7-ba79-4dbd-87c6-87650b9165c3",
+                      "created_at": 1793623112,
+                      "updated_at": 1793623112
                     }
                   ]
                 },
@@ -15471,14 +15650,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "69097bfc-140b-41d9-85a4-273391e017e7",
+                  "id": "9324a843-17f2-49f6-bb52-346703d441fc",
                   "object": "tracking",
                   "courier_name": "UPS",
                   "number": "1Z879E930346834440",
                   "url": "https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=1Z879E930346834440",
-                  "fulfillment": "fda845c1-9fd5-470d-9d6d-1cc53f8a8177",
-                  "created_at": 1793086957,
-                  "updated_at": 1793086957
+                  "fulfillment": "23ec77a1-3ffb-45e9-914e-0a46b1e47a01",
+                  "created_at": 1793623113,
+                  "updated_at": 1793623113
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tracking_response"
@@ -15544,13 +15723,13 @@
                   },
                   "data": [
                     {
-                      "id": "c111c4ea-cec2-4fdf-b100-c0b061b86e84",
+                      "id": "b478cae1-b349-4c00-a309-41be8e989c4f",
                       "object": "warehouse",
                       "label": "Main Warehouse",
                       "default": false,
-                      "contact": "1d32f7aa-05d4-4782-b1f7-d29991e665c5",
-                      "created_at": 1793086960,
-                      "updated_at": 1793086960
+                      "contact": "82695d1b-727c-4e8a-abb3-6b310121499f",
+                      "created_at": 1793623127,
+                      "updated_at": 1793623127
                     }
                   ]
                 },
@@ -15576,13 +15755,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ab027870-d607-4064-abaf-4f4300a46ecd",
+                  "id": "adb45aeb-9356-4286-ad7d-8292d834b645",
                   "object": "warehouse",
                   "label": "Main Warehouse",
                   "default": false,
-                  "contact": "522afccb-15d1-48ab-883e-c0212bdbf6aa",
-                  "created_at": 1793086960,
-                  "updated_at": 1793086960
+                  "contact": "a5d8be5f-f0f2-4e7e-8242-c750e09b7cc8",
+                  "created_at": 1793623127,
+                  "updated_at": 1793623127
                 },
                 "schema": {
                   "$ref": "#/components/schemas/warehouse_response"
@@ -15653,13 +15832,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "4b1059b1-c986-43b5-baee-b798e607fef8",
+                  "id": "4781bfb4-ba27-430b-927b-48ee9eb4b7f6",
                   "object": "warehouse",
                   "label": "Main Warehouse",
                   "default": false,
-                  "contact": "09867e7f-d542-4c99-98ae-ff3f008ddb2b",
-                  "created_at": 1793086961,
-                  "updated_at": 1793086961
+                  "contact": "b01f512d-caf9-4420-abdb-fa579e5de098",
+                  "created_at": 1793623128,
+                  "updated_at": 1793623128
                 },
                 "schema": {
                   "$ref": "#/components/schemas/warehouse_response"
@@ -15692,13 +15871,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1502ea81-86c0-4c44-b816-926e9619afec",
+                  "id": "6d67168c-ad2d-486e-8d1a-5b4cde7a1a96",
                   "object": "warehouse",
                   "label": "Updated Warehouse",
                   "default": false,
-                  "contact": "a66f9b85-c3ae-41b9-9ab6-dd5183fb3bb5",
-                  "created_at": 1793086961,
-                  "updated_at": 1793086961
+                  "contact": "a7a0a9cb-7bba-4cc9-b108-0fea3fd0e5d4",
+                  "created_at": 1793623128,
+                  "updated_at": 1793623128
                 },
                 "schema": {
                   "$ref": "#/components/schemas/warehouse_response"
@@ -15754,7 +15933,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "fd294f0d-4a92-45c8-8f5e-5338fb228238",
+                  "id": "ca9786ed-23c4-4b9d-a6f8-cc3d69f94960",
                   "object": "warehouse",
                   "deleted": true
                 },
