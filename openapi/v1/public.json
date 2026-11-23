@@ -2883,7 +2883,8 @@
           },
           "external_enabled": {
             "type": "boolean",
-            "description": "Whether or not an external checkout portal is being used."
+            "readOnly": true,
+            "description": "Whether or not an external checkout portal is being used. This is always `true` and cannot be changed."
           },
           "external_url": {
             "type": "string",
@@ -3624,11 +3625,12 @@
           "back_url": {
             "type": "string",
             "nullable": true,
-            "description": "The back URL that is shown to customers on the customer portal. This can be overridden by a `back_url` on a `CustomerPortalSession`."
+            "description": "The back URL that is shown to customers on the customer portal."
           },
           "external_enabled": {
             "type": "boolean",
-            "description": "Whether or not an external customer portal is being used."
+            "readOnly": true,
+            "description": "Whether or not an external customer portal is being used. This is always `true` and cannot be changed."
           },
           "external_url": {
             "type": "string",
@@ -3637,7 +3639,7 @@
           },
           "login_enabled": {
             "type": "boolean",
-            "description": "Whether or not customer's can login with their email and a verification code on the hosted customer portal. If disabled, the only way to authenticate a customer is with a `CustomerPortalSession`."
+            "description": "Whether or not customers can login with their email and a verification code on the customer portal."
           },
           "privacy_url": {
             "type": "string",
@@ -5926,6 +5928,16 @@
                 "type": "boolean",
                 "description": "Indicates whether or not this period paid off all remaining periods."
               },
+              "proration_method": {
+                "type": "string",
+                "enum": [
+                  "unused_amount_paid",
+                  "unused_renewal_price",
+                  "price_difference",
+                  "none"
+                ],
+                "description": "How this period's checkout was credited for the unused part of the previous period."
+              },
               "quantity": {
                 "type": "integer",
                 "description": "The quantity of products being purchased."
@@ -5942,10 +5954,6 @@
               "restoral": {
                 "type": "boolean",
                 "description": "Whether or not this period was generated from a subscription restoral."
-              },
-              "skip_proration": {
-                "type": "boolean",
-                "description": "Whether or not proration should be skipped when generating this period's checkout."
               },
               "start_at": {
                 "type": "integer",
@@ -6059,6 +6067,16 @@
                 "type": "integer",
                 "nullable": true,
                 "description": "The ordering position of this price when displayed to customers."
+              },
+              "proration_method": {
+                "type": "string",
+                "enum": [
+                  "unused_amount_paid",
+                  "unused_renewal_price",
+                  "price_difference",
+                  "none"
+                ],
+                "description": "How a subscription switching to this price is credited for the unused part of its current period. `unused_amount_paid` credits the unused part of what was paid for the previous period, `unused_renewal_price` credits the unused part of the previous plan's renewal price, `price_difference` credits the previous plan's full renewal price so only the price difference is charged, and `none` gives no credit. The two price-based methods never reduce the charge below zero (for fixed-payment prices, below the total of all payments)."
               },
               "recurring_interval": {
                 "type": "string",
@@ -11992,14 +12010,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cd46a47f-fe48-44ca-ad74-b1995bae18ee",
+                  "id": "18c1ca1a-d3c7-43ab-9235-9a3960b2c26f",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "2d817f3d-26e4-46e9-8c8c-b46c59a23a40",
-                  "created_at": 1793796943,
-                  "updated_at": 1793796943
+                  "license": "b15f894d-c459-4578-9716-8a428ddeaeee",
+                  "created_at": 1794901826,
+                  "updated_at": 1794901826
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12026,7 +12044,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "2d817f3d-26e4-46e9-8c8c-b46c59a23a40"
+                    "license_id": "b15f894d-c459-4578-9716-8a428ddeaeee"
                   }
                 }
               }
@@ -12059,14 +12077,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "07d7cee2-0a4f-4b0a-9442-51e46348272f",
+                  "id": "a0a777bf-1ea4-4e22-b5a8-deb3718e1543",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "1792031a-2590-4175-9926-e5ec2b18c1b3",
-                  "created_at": 1793796944,
-                  "updated_at": 1793796944
+                  "license": "e5c96898-873a-441f-b510-a1c76b0e2c32",
+                  "created_at": 1794901827,
+                  "updated_at": 1794901827
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12099,14 +12117,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "57fab0f8-8d47-4d1f-bfd6-a27ce5eadbd1",
+                  "id": "a133a9c6-2046-46f0-a4f6-bed87eb38bc4",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "0e7f381c-f583-4ad0-91f7-8f009829f87f",
-                  "created_at": 1793796945,
-                  "updated_at": 1793796945
+                  "license": "3261f94c-55eb-4fc1-864e-57ee1a505548",
+                  "created_at": 1794901828,
+                  "updated_at": 1794901828
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12162,7 +12180,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "70c1312f-a569-4c76-b84f-a2ce6d72fdaa",
+                  "id": "2def38a4-ce36-45c7-a510-7a423a133fe0",
                   "object": "activation",
                   "deleted": true
                 },
@@ -13760,14 +13778,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3517d751-22ef-47a4-b701-4a8d00a7b145",
+                  "id": "36144088-f8de-44e6-836e-be89a74eff28",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1796388947,
+                  "expires_at": 1797493830,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1793796947,
-                  "updated_at": 1793796947
+                  "created_at": 1794901830,
+                  "updated_at": 1794901830
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -13792,7 +13810,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "E47D52B8",
+                    "affiliation_code": "10F58DB4",
                     "url": "http://example.com"
                   }
                 }
@@ -13826,19 +13844,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "e40f8b92-985c-4bd5-ac67-cb554b79aec3",
+                  "id": "9b83a261-4ca1-4403-a40f-2266f4786a4a",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "bb85309e-80e0-4e45-9335-290843d4a048",
+                  "key": "ebafedda-e057-4aed-bbf8-fe342b025fdd",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "3d65acf4-cfc3-4c62-92ed-6129b13ad99d",
-                  "product": "942740e7-a02c-4773-a3ee-36d64aecf3a8",
+                  "price": "9eb1dcb6-1b39-477e-b54b-dfbdf14b66fd",
+                  "product": "653ae3df-e744-4fc6-a50b-e4f0aee22b2a",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1793796949,
-                  "updated_at": 1793796949
+                  "created_at": 1794901832,
+                  "updated_at": 1794901832
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -13891,7 +13909,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "5518b773-18ec-41c7-9bbd-4062bdd8af47",
+                  "id": "c89651ad-07b2-4d7c-9c1a-bcfda4921aac",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -13902,11 +13920,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjM5MTUzNzU1LWE3ZGItNDVmNC04ODYzLTYwMjMwN2VkODMwMSIsImV4cCI6IjIwMjYtMTEtMDRUMTM6MTA6NTAuNTczWiIsInB1ciI6ImJsb2JfaWQifX0=--7400b5c833f83af75bae70268f7de64e6efe59e2/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImVhZWMyNTE3LTJiZWEtNDBhZC1iYjhjLTM4MGFjYmRmODMwNCIsImV4cCI6IjIwMjYtMTEtMTdUMDg6MDU6MzMuMzUzWiIsInB1ciI6ImJsb2JfaWQifX0=--5b587c668b801f1c8bf361477394bcbb2764df83/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1793797850,
-                  "created_at": 1793796949,
-                  "updated_at": 1793796949
+                  "url_expires_at": 1794902733,
+                  "created_at": 1794901832,
+                  "updated_at": 1794901832
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"

@@ -2883,7 +2883,8 @@
           },
           "external_enabled": {
             "type": "boolean",
-            "description": "Whether or not an external checkout portal is being used."
+            "readOnly": true,
+            "description": "Whether or not an external checkout portal is being used. This is always `true` and cannot be changed."
           },
           "external_url": {
             "type": "string",
@@ -3624,11 +3625,12 @@
           "back_url": {
             "type": "string",
             "nullable": true,
-            "description": "The back URL that is shown to customers on the customer portal. This can be overridden by a `back_url` on a `CustomerPortalSession`."
+            "description": "The back URL that is shown to customers on the customer portal."
           },
           "external_enabled": {
             "type": "boolean",
-            "description": "Whether or not an external customer portal is being used."
+            "readOnly": true,
+            "description": "Whether or not an external customer portal is being used. This is always `true` and cannot be changed."
           },
           "external_url": {
             "type": "string",
@@ -3637,7 +3639,7 @@
           },
           "login_enabled": {
             "type": "boolean",
-            "description": "Whether or not customer's can login with their email and a verification code on the hosted customer portal. If disabled, the only way to authenticate a customer is with a `CustomerPortalSession`."
+            "description": "Whether or not customers can login with their email and a verification code on the customer portal."
           },
           "privacy_url": {
             "type": "string",
@@ -5926,6 +5928,16 @@
                 "type": "boolean",
                 "description": "Indicates whether or not this period paid off all remaining periods."
               },
+              "proration_method": {
+                "type": "string",
+                "enum": [
+                  "unused_amount_paid",
+                  "unused_renewal_price",
+                  "price_difference",
+                  "none"
+                ],
+                "description": "How this period's checkout was credited for the unused part of the previous period."
+              },
               "quantity": {
                 "type": "integer",
                 "description": "The quantity of products being purchased."
@@ -5942,10 +5954,6 @@
               "restoral": {
                 "type": "boolean",
                 "description": "Whether or not this period was generated from a subscription restoral."
-              },
-              "skip_proration": {
-                "type": "boolean",
-                "description": "Whether or not proration should be skipped when generating this period's checkout."
               },
               "start_at": {
                 "type": "integer",
@@ -6059,6 +6067,16 @@
                 "type": "integer",
                 "nullable": true,
                 "description": "The ordering position of this price when displayed to customers."
+              },
+              "proration_method": {
+                "type": "string",
+                "enum": [
+                  "unused_amount_paid",
+                  "unused_renewal_price",
+                  "price_difference",
+                  "none"
+                ],
+                "description": "How a subscription switching to this price is credited for the unused part of its current period. `unused_amount_paid` credits the unused part of what was paid for the previous period, `unused_renewal_price` credits the unused part of the previous plan's renewal price, `price_difference` credits the previous plan's full renewal price so only the price difference is charged, and `none` gives no credit. The two price-based methods never reduce the charge below zero (for fixed-payment prices, below the total of all payments)."
               },
               "recurring_interval": {
                 "type": "string",
@@ -12044,14 +12062,14 @@
                   },
                   "data": [
                     {
-                      "id": "6a8fbec3-3901-47c6-bb01-676e79b2e424",
+                      "id": "24e7192d-f94c-46f5-b1bd-c4dc330d96bc",
                       "object": "activation",
                       "counted": true,
                       "name": null,
                       "fingerprint": "example.com",
-                      "license": "947f0c05-8f5c-40ff-aaae-e604716e504e",
-                      "created_at": 1793796834,
-                      "updated_at": 1793796834
+                      "license": "92d20cdb-e821-4fce-a2a5-0cb393aecdf6",
+                      "created_at": 1794901728,
+                      "updated_at": 1794901728
                     }
                   ]
                 },
@@ -12077,14 +12095,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bf141e2f-f2b7-4c49-a7a6-d9e1ee9c791b",
+                  "id": "9494372d-50d9-41d2-aec8-1cbb9af76d62",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "98d27cdb-9770-4039-9b8e-1999e31dd920",
-                  "created_at": 1793796835,
-                  "updated_at": 1793796835
+                  "license": "76f90356-3124-47dd-a6ae-b3e74076fe39",
+                  "created_at": 1794901729,
+                  "updated_at": 1794901729
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12111,7 +12129,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "98d27cdb-9770-4039-9b8e-1999e31dd920"
+                    "license_id": "76f90356-3124-47dd-a6ae-b3e74076fe39"
                   }
                 }
               }
@@ -12144,14 +12162,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ce3cf100-4359-48fa-8846-d7fb31aea780",
+                  "id": "337c5633-d111-45e7-9baf-7a435bbfea4e",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "5addbce5-5920-4d00-8b80-677a9aeb52f3",
-                  "created_at": 1793796837,
-                  "updated_at": 1793796837
+                  "license": "0a44cbd6-771d-4842-b084-d2ee5c81ee81",
+                  "created_at": 1794901730,
+                  "updated_at": 1794901730
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12184,14 +12202,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "42eab8c9-72c7-4ea4-b320-c176210eec4c",
+                  "id": "3419bf4b-8bfc-4b83-852a-5a6151cc1db2",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "4c56cf7c-58af-4f99-a2d2-748399598c62",
-                  "created_at": 1793796838,
-                  "updated_at": 1793796838
+                  "license": "de000eae-2c49-44ae-813b-10af58c9ae1b",
+                  "created_at": 1794901732,
+                  "updated_at": 1794901732
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12247,7 +12265,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "314b32dc-c4dd-4381-b316-1daf8c10461a",
+                  "id": "9b3c3f9b-4179-4a1e-a3a0-8a4e85bdf7f9",
                   "object": "activation",
                   "deleted": true
                 },
@@ -12378,17 +12396,17 @@
                   },
                   "data": [
                     {
-                      "id": "963c53a6-a6e1-4909-82c0-19ae84b10361",
+                      "id": "57a01d53-44f0-41d6-8c6c-cbbc4a772290",
                       "object": "license",
                       "activations_count": 0,
                       "activation_limit": null,
-                      "key": "989b9df7-d71f-4c5f-a2f0-0c7ad6fe8e60",
+                      "key": "10a97d47-3744-4997-9a8c-8adb28c0eff3",
                       "revokes_at": null,
                       "status": "inactive",
-                      "customer": "48a74d0c-552a-46f3-bab1-a78589fcf59f",
-                      "purchase": "9eb0e448-8bb0-4047-8266-1117ecf69250",
-                      "created_at": 1793796907,
-                      "updated_at": 1793796907
+                      "customer": "e67c2ada-f481-4cf8-b165-f60027a0390c",
+                      "purchase": "2e0d6408-c704-4e93-915c-d2e465ea94b9",
+                      "created_at": 1794901791,
+                      "updated_at": 1794901791
                     }
                   ]
                 },
@@ -12414,17 +12432,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d70b7adb-5400-46b4-920a-c82ae55c779a",
+                  "id": "210b7b0c-e9c5-4942-9109-df63054e5e52",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
                   "key": "abc-123-def-456",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "d68d3b00-49bc-4544-bc51-ac2f7ffe9f3d",
-                  "purchase": "96f5451c-5336-48bc-ac6c-ba4eb5fe6666",
-                  "created_at": 1793796909,
-                  "updated_at": 1793796909
+                  "customer": "a6d403c6-06d3-44d7-b4b3-0762150a5f08",
+                  "purchase": "2ab01780-8074-44f9-bc12-050c011bd33d",
+                  "created_at": 1794901793,
+                  "updated_at": 1794901793
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12450,7 +12468,7 @@
                 "example": {
                   "license": {
                     "key": "abc-123-def-456",
-                    "purchase": "96f5451c-5336-48bc-ac6c-ba4eb5fe6666"
+                    "purchase": "2ab01780-8074-44f9-bc12-050c011bd33d"
                   }
                 }
               }
@@ -12483,17 +12501,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "34b1a02f-842c-49fd-bb72-4acca3422729",
+                  "id": "77ae21b5-b109-4d71-ba0e-b836f557570d",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "d5c529c7-9dd6-4d8e-8d4a-c0f400302aaa",
+                  "key": "d4619618-450c-445e-97a4-d4e50fb2241b",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "abb6e5f3-8c6f-4ac9-ac74-4d42bbf2ba35",
-                  "purchase": "b1b8106a-2663-4e0f-9cfc-1c043b0c5571",
-                  "created_at": 1793796910,
-                  "updated_at": 1793796910
+                  "customer": "7b6a4ec8-a315-4aee-9aa9-0ad07eff6bc8",
+                  "purchase": "12720a03-b826-4bd0-83e8-54b5309f9636",
+                  "created_at": 1794901794,
+                  "updated_at": 1794901794
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12526,17 +12544,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "29388350-7a47-4ebf-9189-fe892d31de2c",
+                  "id": "582ab2aa-aed4-4c40-87c4-8c44ae6cb794",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": 10,
-                  "key": "853d0f63-5ba3-4061-adcf-96898423202b",
+                  "key": "b5a01748-343b-4a7b-b89f-3b807a752a2b",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "697d7d9f-593a-4823-b5f7-5b732aa93de9",
-                  "purchase": "5643f62f-dbe8-4e52-a3c0-a5e1d34d19ae",
-                  "created_at": 1793796912,
-                  "updated_at": 1793796912
+                  "customer": "bb8c7b8e-21f0-4183-bd87-29dd0b0c082a",
+                  "purchase": "c44ee6b2-433b-413c-833c-4c3f6018aaa5",
+                  "created_at": 1794901795,
+                  "updated_at": 1794901795
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12592,7 +12610,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "37d4bed0-50bd-4342-9c01-3c7e0f4522f6",
+                  "id": "c2982d85-0da5-404b-b0e8-4b83eb97a1cc",
                   "object": "license",
                   "deleted": true
                 },

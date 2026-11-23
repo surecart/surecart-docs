@@ -2883,7 +2883,8 @@
           },
           "external_enabled": {
             "type": "boolean",
-            "description": "Whether or not an external checkout portal is being used."
+            "readOnly": true,
+            "description": "Whether or not an external checkout portal is being used. This is always `true` and cannot be changed."
           },
           "external_url": {
             "type": "string",
@@ -3624,11 +3625,12 @@
           "back_url": {
             "type": "string",
             "nullable": true,
-            "description": "The back URL that is shown to customers on the customer portal. This can be overridden by a `back_url` on a `CustomerPortalSession`."
+            "description": "The back URL that is shown to customers on the customer portal."
           },
           "external_enabled": {
             "type": "boolean",
-            "description": "Whether or not an external customer portal is being used."
+            "readOnly": true,
+            "description": "Whether or not an external customer portal is being used. This is always `true` and cannot be changed."
           },
           "external_url": {
             "type": "string",
@@ -3637,7 +3639,7 @@
           },
           "login_enabled": {
             "type": "boolean",
-            "description": "Whether or not customer's can login with their email and a verification code on the hosted customer portal. If disabled, the only way to authenticate a customer is with a `CustomerPortalSession`."
+            "description": "Whether or not customers can login with their email and a verification code on the customer portal."
           },
           "privacy_url": {
             "type": "string",
@@ -5926,6 +5928,16 @@
                 "type": "boolean",
                 "description": "Indicates whether or not this period paid off all remaining periods."
               },
+              "proration_method": {
+                "type": "string",
+                "enum": [
+                  "unused_amount_paid",
+                  "unused_renewal_price",
+                  "price_difference",
+                  "none"
+                ],
+                "description": "How this period's checkout was credited for the unused part of the previous period."
+              },
               "quantity": {
                 "type": "integer",
                 "description": "The quantity of products being purchased."
@@ -5942,10 +5954,6 @@
               "restoral": {
                 "type": "boolean",
                 "description": "Whether or not this period was generated from a subscription restoral."
-              },
-              "skip_proration": {
-                "type": "boolean",
-                "description": "Whether or not proration should be skipped when generating this period's checkout."
               },
               "start_at": {
                 "type": "integer",
@@ -6059,6 +6067,16 @@
                 "type": "integer",
                 "nullable": true,
                 "description": "The ordering position of this price when displayed to customers."
+              },
+              "proration_method": {
+                "type": "string",
+                "enum": [
+                  "unused_amount_paid",
+                  "unused_renewal_price",
+                  "price_difference",
+                  "none"
+                ],
+                "description": "How a subscription switching to this price is credited for the unused part of its current period. `unused_amount_paid` credits the unused part of what was paid for the previous period, `unused_renewal_price` credits the unused part of the previous plan's renewal price, `price_difference` credits the previous plan's full renewal price so only the price difference is charged, and `none` gives no credit. The two price-based methods never reduce the charge below zero (for fixed-payment prices, below the total of all payments)."
               },
               "recurring_interval": {
                 "type": "string",
@@ -12056,17 +12074,17 @@
                   },
                   "data": [
                     {
-                      "id": "a753ed61-03ea-4041-b3c5-6b967e2badf4",
+                      "id": "1c7ce934-1f8c-4aa9-a9fc-4109757c0365",
                       "object": "balance_transaction",
                       "amount": 2000,
                       "currency": "usd",
                       "ending_balance_amount": 0,
                       "transaction_type": "adjustment",
-                      "balance": "64454106-24f9-4f2e-9505-e6d104350851",
-                      "customer": "11101df4-01a2-45fa-a193-d65e3c76313f",
+                      "balance": "c64117ac-b552-467f-a276-74d9ede72f2d",
+                      "customer": "ccc24a3f-aad3-447e-b0e2-40668d664d23",
                       "checkout": null,
-                      "created_at": 1793796847,
-                      "updated_at": 1793796847
+                      "created_at": 1794901739,
+                      "updated_at": 1794901739
                     }
                   ]
                 },
@@ -12092,17 +12110,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "f470dae3-3af0-4e1a-bbae-dfb6544bc8a6",
+                  "id": "a0b0ffa5-50f5-4069-92d7-bfb120f0605e",
                   "object": "balance_transaction",
                   "amount": 5000,
                   "currency": "usd",
                   "ending_balance_amount": 5000,
                   "transaction_type": "adjustment",
-                  "balance": "6d2ba6d4-f135-407f-8d7f-bf331783d890",
-                  "customer": "abde1b37-f904-439f-a69a-afd171df8bd9",
+                  "balance": "16c9a442-579f-4722-801e-d6e08ae07da7",
+                  "customer": "d0dd9a6d-bce7-43ad-82cd-218c995a35d6",
                   "checkout": null,
-                  "created_at": 1793796847,
-                  "updated_at": 1793796847
+                  "created_at": 1794901739,
+                  "updated_at": 1794901739
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -12129,7 +12147,7 @@
                   "balance_transaction": {
                     "amount": 5000,
                     "currency": "usd",
-                    "customer": "abde1b37-f904-439f-a69a-afd171df8bd9"
+                    "customer": "d0dd9a6d-bce7-43ad-82cd-218c995a35d6"
                   }
                 }
               }
@@ -12162,17 +12180,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "641c6a04-1026-485e-bbfd-394784ce8c1b",
+                  "id": "e496c0f7-3213-425b-913b-66f5fcf338c1",
                   "object": "balance_transaction",
                   "amount": 2000,
                   "currency": "usd",
                   "ending_balance_amount": 0,
                   "transaction_type": "adjustment",
-                  "balance": "5041f9a8-2a71-4dc4-b47f-024188e0496e",
-                  "customer": "cdb82e0d-5c85-4dbc-9e6e-2b80b4e44980",
+                  "balance": "21a25a96-e98b-4ac6-acc5-eff1c31f3f6b",
+                  "customer": "1206970a-7ad7-43ad-8668-207f07f16975",
                   "checkout": null,
-                  "created_at": 1793796848,
-                  "updated_at": 1793796848
+                  "created_at": 1794901739,
+                  "updated_at": 1794901739
                 },
                 "schema": {
                   "$ref": "#/components/schemas/balance_transaction_response"
@@ -12262,13 +12280,13 @@
                   },
                   "data": [
                     {
-                      "id": "56fc4d80-d39f-4cd1-9315-9d4c0c27a307",
+                      "id": "80937c75-9b11-4e8d-a291-203282d863fa",
                       "object": "balance",
                       "amount": 0,
                       "currency": "usd",
-                      "customer": "d7612e66-af16-4c70-9802-4f0d158b685f",
-                      "created_at": 1793796848,
-                      "updated_at": 1793796848
+                      "customer": "defc6700-f773-4d32-8252-d0aa2441fda9",
+                      "created_at": 1794901739,
+                      "updated_at": 1794901739
                     }
                   ]
                 },
@@ -12295,7 +12313,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "14c1b228-ea56-4546-b5aa-d49ab6fdafd8",
+                  "id": "9cb0d8ba-55e3-4815-ae98-a9cacb67e1fc",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": null,
@@ -12304,13 +12322,13 @@
                   "payment_failure_enabled": true,
                   "purchase_enabled": true,
                   "refund_enabled": true,
-                  "reply_to_email": "reply_to@wilderman-prosacco.test",
+                  "reply_to_email": "reply.to@klocko.test",
                   "subscription_cancellation_enabled": false,
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1793796870,
-                  "updated_at": 1793796870
+                  "created_at": 1794901759,
+                  "updated_at": 1794901759
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -12334,7 +12352,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "931b1ffe-b002-40c8-9487-9b9a3bc39c76",
+                  "id": "5f25ac4a-4bad-4408-9a07-326f464bab18",
                   "object": "customer_notification_protocol",
                   "free_order_enabled": true,
                   "from_name": "Support Team",
@@ -12348,8 +12366,8 @@
                   "subscription_reminder_enabled": false,
                   "subscription_renewal_enabled": false,
                   "upsell_accepted_enabled": true,
-                  "created_at": 1793796870,
-                  "updated_at": 1793796870
+                  "created_at": 1794901759,
+                  "updated_at": 1794901759
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_notification_protocol_response"
@@ -12398,7 +12416,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b466c1f8-9925-459f-a46a-c588ae952769",
+                  "id": "dc08b4f7-9be0-48d4-91f8-a589c5c6d65f",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -12410,8 +12428,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1793796870,
-                  "updated_at": 1793796870
+                  "created_at": 1794901759,
+                  "updated_at": 1794901759
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -12435,7 +12453,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "040bd239-fe52-42e6-b9fe-f339734483b1",
+                  "id": "b42ac7c4-011c-4588-b978-c75fd215b856",
                   "object": "customer_portal_protocol",
                   "back_url": null,
                   "external_enabled": true,
@@ -12447,8 +12465,8 @@
                   "subscription_quantity_updates_enabled": true,
                   "terms_url": null,
                   "wordpress_plugin_enabled": true,
-                  "created_at": 1793796870,
-                  "updated_at": 1793796870
+                  "created_at": 1794901759,
+                  "updated_at": 1794901759
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_portal_protocol_response"
@@ -12837,7 +12855,7 @@
                   },
                   "data": [
                     {
-                      "id": "9022eb02-d118-4d39-81f2-373b936476a8",
+                      "id": "7a13a2a5-9047-443c-9f72-d65ad5fd4da2",
                       "object": "customer",
                       "affiliation_expires_at": null,
                       "billing_matches_shipping": true,
@@ -12850,15 +12868,15 @@
                       "phone": null,
                       "unsubscribed": false,
                       "tax_enabled": true,
-                      "portal_url": "http://app.example.com/portal_redirect/customers/9022eb02-d118-4d39-81f2-373b936476a8",
+                      "portal_url": "http://app.example.com/portal_redirect/customers/7a13a2a5-9047-443c-9f72-d65ad5fd4da2",
                       "affiliation": null,
-                      "billing_address": "77c2ae33-54b0-4181-b8b0-84384ca89851",
+                      "billing_address": "1319ca40-a93c-4be7-92d3-33d3e90b776d",
                       "default_payment_method": null,
                       "default_saved_list": null,
                       "shipping_address": null,
                       "tax_identifier": null,
-                      "created_at": 1793796871,
-                      "updated_at": 1793796871
+                      "created_at": 1794901761,
+                      "updated_at": 1794901761
                     }
                   ]
                 },
@@ -12884,7 +12902,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "14f56520-ec06-4643-87ba-455e2ed06f52",
+                  "id": "c12b5ab9-bbbc-4d7c-bcd6-9078e99f97d8",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -12897,15 +12915,15 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/14f56520-ec06-4643-87ba-455e2ed06f52",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/c12b5ab9-bbbc-4d7c-bcd6-9078e99f97d8",
                   "affiliation": null,
                   "billing_address": null,
                   "default_payment_method": null,
-                  "default_saved_list": "bc93c987-f014-471f-9590-c34f362aeb80",
+                  "default_saved_list": "0a15d4e0-416e-440b-8899-dcf7b50553d3",
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1793796874,
-                  "updated_at": 1793796874
+                  "created_at": 1794901763,
+                  "updated_at": 1794901763
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -12964,7 +12982,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1b8c8797-63eb-475b-a1ff-3a3b526533c9",
+                  "id": "b3452736-eb3b-4888-bd0f-1651d9c5a9f3",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -12977,15 +12995,15 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/1b8c8797-63eb-475b-a1ff-3a3b526533c9",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/b3452736-eb3b-4888-bd0f-1651d9c5a9f3",
                   "affiliation": null,
-                  "billing_address": "9674b084-9f6a-4bf1-a53e-99f43a9c7583",
+                  "billing_address": "5fd5f572-c28d-4f3a-b192-71cf5fa1abde",
                   "default_payment_method": null,
                   "default_saved_list": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1793796875,
-                  "updated_at": 1793796875
+                  "created_at": 1794901763,
+                  "updated_at": 1794901763
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -13027,7 +13045,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "65d34b8d-b22c-4bf1-b020-247e5c544638",
+                  "id": "6e71c283-cc41-4ea4-be89-f4565b656c36",
                   "object": "customer",
                   "affiliation_expires_at": null,
                   "billing_matches_shipping": true,
@@ -13040,15 +13058,15 @@
                   "phone": null,
                   "unsubscribed": false,
                   "tax_enabled": true,
-                  "portal_url": "http://app.example.com/portal_redirect/customers/65d34b8d-b22c-4bf1-b020-247e5c544638",
+                  "portal_url": "http://app.example.com/portal_redirect/customers/6e71c283-cc41-4ea4-be89-f4565b656c36",
                   "affiliation": null,
-                  "billing_address": "b1a05a90-ca35-4a53-8034-41aa818750b1",
+                  "billing_address": "bf79eb3b-66af-46ec-8de8-a6124cf9851c",
                   "default_payment_method": null,
                   "default_saved_list": null,
                   "shipping_address": null,
                   "tax_identifier": null,
-                  "created_at": 1793796876,
-                  "updated_at": 1793796877
+                  "created_at": 1794901764,
+                  "updated_at": 1794901764
                 },
                 "schema": {
                   "$ref": "#/components/schemas/customer_response"
@@ -13104,7 +13122,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "1daad98c-0473-4832-b3cc-bf2639692c0e",
+                  "id": "f86467e5-50ef-44f9-b7bf-da7a79135d58",
                   "object": "customer",
                   "deleted": true
                 },
@@ -13160,7 +13178,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3532968a-dbb1-4f8f-ae42-3ace4f589a7c",
+                  "id": "8777c53a-ebae-45d2-9e4e-f5a59b4e8b3d",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -13171,11 +13189,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImY3OGFkMDE4LTI3OTMtNDdiMi1iYTQ4LWE2MmNmYmI0NjJjOSIsImV4cCI6IjIwMjYtMTEtMDRUMTM6MDk6NDEuMjgwWiIsInB1ciI6ImJsb2JfaWQifX0=--5eade8af6b536cad69d6b141f29efd891e6847ca/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6IjRjMDAzZDk3LTBhMWQtNGVmYi1iODdhLWY4N2IwOTcwMjk5NiIsImV4cCI6IjIwMjYtMTEtMTdUMDg6MDQ6MjguMDExWiIsInB1ciI6ImJsb2JfaWQifX0=--4df8e68b87f55961b13ed78871a4ebec787d9839/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1793797781,
-                  "created_at": 1793796879,
-                  "updated_at": 1793796879
+                  "url_expires_at": 1794902668,
+                  "created_at": 1794901766,
+                  "updated_at": 1794901766
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"
@@ -13265,7 +13283,7 @@
                   },
                   "data": [
                     {
-                      "id": "50302fc1-5bdc-425d-8e9b-c9ea3c097353",
+                      "id": "55640299-25d1-4d22-8b11-a341d66e8532",
                       "object": "saved_item",
                       "ad_hoc_amount": null,
                       "bundle_component_variants": {},
@@ -13275,12 +13293,12 @@
                       "purchasable_status": "purchasable",
                       "quantity": 1,
                       "variant_changed": false,
-                      "saved_list": "643a77e1-45ca-4627-8501-797b84ee6ca1",
-                      "product": "9347bf2f-0535-4637-9631-80302ca64457",
-                      "price": "d1b146a4-2de6-4b6c-9154-197816f06078",
+                      "saved_list": "18c93a5e-caae-4389-b978-c0df749d2751",
+                      "product": "9d753d6d-a66b-4dd3-ac83-b9ae7503656a",
+                      "price": "2177feb0-6bcc-42cb-accf-6040513c1121",
                       "variant": null,
-                      "created_at": 1793796984,
-                      "updated_at": 1793796984
+                      "created_at": 1794901866,
+                      "updated_at": 1794901866
                     }
                   ]
                 },
@@ -13306,7 +13324,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d2895f4e-7fc3-42dd-9118-327565e1f4c3",
+                  "id": "e9ec2707-8c8d-48c1-8185-0f6e2365e0f1",
                   "object": "saved_item",
                   "ad_hoc_amount": null,
                   "bundle_component_variants": {},
@@ -13316,12 +13334,12 @@
                   "purchasable_status": "purchasable",
                   "quantity": 2,
                   "variant_changed": false,
-                  "saved_list": "bd40eb37-94e8-4fd5-90cc-259faf593dfd",
-                  "product": "b7ca6eed-96a6-4114-afe8-34457d6eff9b",
-                  "price": "308d14be-cfcb-4dc7-bf24-32f4c136d9b2",
+                  "saved_list": "c74fae78-fdb5-4490-b7a5-1db8759b3577",
+                  "product": "74aa0aa8-8f65-42a4-bef0-5afec5d7d92f",
+                  "price": "7a7a263f-a7e7-4a10-ba91-5b4c54925a21",
                   "variant": null,
-                  "created_at": 1793796985,
-                  "updated_at": 1793796985
+                  "created_at": 1794901866,
+                  "updated_at": 1794901866
                 },
                 "schema": {
                   "$ref": "#/components/schemas/saved_item_response"
@@ -13346,9 +13364,9 @@
                 },
                 "example": {
                   "saved_item": {
-                    "saved_list": "bd40eb37-94e8-4fd5-90cc-259faf593dfd",
-                    "product": "b7ca6eed-96a6-4114-afe8-34457d6eff9b",
-                    "price": "308d14be-cfcb-4dc7-bf24-32f4c136d9b2",
+                    "saved_list": "c74fae78-fdb5-4490-b7a5-1db8759b3577",
+                    "product": "74aa0aa8-8f65-42a4-bef0-5afec5d7d92f",
+                    "price": "7a7a263f-a7e7-4a10-ba91-5b4c54925a21",
                     "quantity": 2
                   }
                 }
@@ -13382,7 +13400,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cb936fb4-b5a5-49c9-87f3-c9717e4c46a8",
+                  "id": "b6b0623e-1667-43c6-8b63-09d44a53475b",
                   "object": "saved_item",
                   "ad_hoc_amount": null,
                   "bundle_component_variants": {},
@@ -13392,12 +13410,12 @@
                   "purchasable_status": "purchasable",
                   "quantity": 1,
                   "variant_changed": false,
-                  "saved_list": "2f74fbff-2a94-4bc7-87e0-22152201d324",
-                  "product": "f1d1329a-8176-4861-be66-a4d1bcf396dc",
-                  "price": "fba0491b-b5b3-4e74-8ef3-05279f171875",
+                  "saved_list": "badd83ae-17ce-41ff-82f6-ec8bdf9bba1a",
+                  "product": "29ef607d-96ba-43ef-a64c-563242d3701a",
+                  "price": "12ab5d79-88c2-4712-a2f3-70c730e2ce97",
                   "variant": null,
-                  "created_at": 1793796985,
-                  "updated_at": 1793796985
+                  "created_at": 1794901866,
+                  "updated_at": 1794901866
                 },
                 "schema": {
                   "$ref": "#/components/schemas/saved_item_response"
@@ -13430,7 +13448,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "84dde764-a0f4-47f0-bfd0-05d583a0a8ba",
+                  "id": "098c374d-6feb-4ecf-829b-29d9c46c22fd",
                   "object": "saved_item",
                   "ad_hoc_amount": null,
                   "bundle_component_variants": {},
@@ -13440,12 +13458,12 @@
                   "purchasable_status": "purchasable",
                   "quantity": 3,
                   "variant_changed": false,
-                  "saved_list": "f645e1d2-8397-41c0-90d3-3702497e362e",
-                  "product": "4a210828-bb00-419d-8cc8-077735bd9e49",
-                  "price": "df7b7a11-aa9d-4cf8-897e-79ad893cde2a",
+                  "saved_list": "a3901737-e794-4614-a9e3-2ed0c5a51033",
+                  "product": "88a847dd-82f4-42bf-b2d6-b72d84b126ad",
+                  "price": "72e037b1-d22c-4497-a468-f3db1051faf9",
                   "variant": null,
-                  "created_at": 1793796985,
-                  "updated_at": 1793796985
+                  "created_at": 1794901867,
+                  "updated_at": 1794901867
                 },
                 "schema": {
                   "$ref": "#/components/schemas/saved_item_response"
@@ -13501,7 +13519,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b3b2a85b-3ffc-4531-9b87-a0fdcca5d2bd",
+                  "id": "2856c61b-3eaa-4c6f-b64f-41701b732e0d",
                   "object": "saved_item",
                   "deleted": true
                 },
@@ -13676,15 +13694,15 @@
                   },
                   "data": [
                     {
-                      "id": "30bbe22f-3677-498b-9ee9-781166a4cfa1",
+                      "id": "1feb0967-3bdf-4105-a92a-c3ba000051f4",
                       "object": "saved_list",
                       "default": false,
                       "live_mode": true,
                       "metadata": {},
                       "name": "Gift ideas",
-                      "customer": "f35c69af-e9eb-4485-b66c-56bcb361e401",
-                      "created_at": 1793796987,
-                      "updated_at": 1793796987
+                      "customer": "bc33c8ed-400d-47fe-a782-0d701bd69829",
+                      "created_at": 1794901868,
+                      "updated_at": 1794901868
                     }
                   ]
                 },
@@ -13710,15 +13728,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d59adbbe-7169-4133-a353-f46b3c350d1b",
+                  "id": "92fbd5fc-2cf9-4c55-993f-6352d60d976a",
                   "object": "saved_list",
                   "default": false,
                   "live_mode": true,
                   "metadata": {},
                   "name": "Birthday ideas",
-                  "customer": "36140ce0-22d3-449f-913d-386d794a4cc9",
-                  "created_at": 1793796987,
-                  "updated_at": 1793796987
+                  "customer": "c9503174-53e1-4eaf-8756-d1114d8ae2c9",
+                  "created_at": 1794901869,
+                  "updated_at": 1794901869
                 },
                 "schema": {
                   "$ref": "#/components/schemas/saved_list_response"
@@ -13743,7 +13761,7 @@
                 },
                 "example": {
                   "saved_list": {
-                    "customer": "36140ce0-22d3-449f-913d-386d794a4cc9",
+                    "customer": "c9503174-53e1-4eaf-8756-d1114d8ae2c9",
                     "name": "Birthday ideas"
                   }
                 }
@@ -13777,15 +13795,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a091cf63-9e38-4556-8636-72ae07ed105d",
+                  "id": "630355a4-77a7-486b-aa16-6d74e07d851a",
                   "object": "saved_list",
                   "default": false,
                   "live_mode": true,
                   "metadata": {},
                   "name": "Gift ideas",
-                  "customer": "02a10c1a-9439-472d-9240-42fd9eecb75d",
-                  "created_at": 1793796987,
-                  "updated_at": 1793796987
+                  "customer": "0ca170bd-62ed-412a-bd40-94570e9cee49",
+                  "created_at": 1794901869,
+                  "updated_at": 1794901869
                 },
                 "schema": {
                   "$ref": "#/components/schemas/saved_list_response"
@@ -13818,15 +13836,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3013fb57-a499-459b-939c-49b2e15119fd",
+                  "id": "c69bb6c6-174b-459c-accd-48aa9d9c64ff",
                   "object": "saved_list",
                   "default": false,
                   "live_mode": true,
                   "metadata": {},
                   "name": "Holiday ideas",
-                  "customer": "641e27f6-1afa-44d4-b355-6d9609226a9a",
-                  "created_at": 1793796987,
-                  "updated_at": 1793796987
+                  "customer": "08b0503e-11d7-47cd-afad-7b91d7d6363b",
+                  "created_at": 1794901869,
+                  "updated_at": 1794901869
                 },
                 "schema": {
                   "$ref": "#/components/schemas/saved_list_response"
@@ -13882,7 +13900,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "215bfc1b-8456-4698-b968-81708e9f6384",
+                  "id": "5b280431-d86b-4294-a361-56fae0b52f46",
                   "object": "saved_list",
                   "deleted": true
                 },
@@ -13953,14 +13971,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ed944d2c-66e8-4ba1-89cc-d727eebd0301",
+                  "id": "38e33315-1154-4cd7-b308-887d8aedcd1b",
                   "object": "verification_code",
                   "email": "test@example.com",
                   "verified": false,
                   "verified_at": null,
-                  "resend_available_at": 1793797082,
-                  "created_at": 1793797022,
-                  "updated_at": 1793797022
+                  "resend_available_at": 1794901968,
+                  "created_at": 1794901908,
+                  "updated_at": 1794901908
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -14009,14 +14027,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cfeb7059-3176-4c10-84c4-6c9567cfc728",
+                  "id": "3216fb91-312e-4ee4-b5de-8b2751804721",
                   "object": "verification_code",
                   "email": "test-1@example.com",
                   "verified": true,
-                  "verified_at": 1793797022,
-                  "resend_available_at": 1793797022,
-                  "created_at": 1793797022,
-                  "updated_at": 1793797022
+                  "verified_at": 1794901908,
+                  "resend_available_at": 1794901908,
+                  "created_at": 1794901908,
+                  "updated_at": 1794901908
                 },
                 "schema": {
                   "$ref": "#/components/schemas/verification_code_response"
@@ -14041,7 +14059,7 @@
                 },
                 "example": {
                   "verification_code": {
-                    "code": 265054,
+                    "code": 790097,
                     "email": "test-1@example.com"
                   }
                 }
