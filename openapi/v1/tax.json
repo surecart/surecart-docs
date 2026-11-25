@@ -6410,6 +6410,125 @@
                 "nullable": true,
                 "description": "The product identifier assigned by the manufacturer, up to 100 characters. Used to build customs declarations; required with `sku` for consumer shipments into the EU. If the `Product` has variants, each variant's own `manufacturer_code` takes precedence when set."
               },
+              "google_product_data": {
+                "type": "object",
+                "nullable": true,
+                "description": "Google Merchant Center product data. The GTIN and the keys with listed values are validated against Google's product data specification; text keys only check Google's length limits. Writes only change the keys sent. A key sent as `null` is cleared, and `null` for the whole object clears every key.",
+                "properties": {
+                  "gtin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "The Global Trade Item Number, 8, 12, 13 or 14 digits with a valid GS1 check digit. Spaces and dashes are removed, and an ISBN-10 is stored as its ISBN-13. Restricted (`2`, `02`, `04`) and coupon (`05`, `98`, `99`) prefixes are rejected. Only applies to products without variants, because each variant has its own GTIN."
+                  },
+                  "mpn": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The manufacturer part number, up to 70 characters. Required by Google when there is no GTIN."
+                  },
+                  "condition": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "new",
+                      "refurbished",
+                      "used"
+                    ],
+                    "description": "The condition of the product. Reads as `new` when not set."
+                  },
+                  "age_group": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "newborn",
+                      "infant",
+                      "toddler",
+                      "kids",
+                      "adult"
+                    ],
+                    "description": "The age group the product is for."
+                  },
+                  "gender": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "description": "The gender the product is for."
+                  },
+                  "color": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Up to 100 characters. Google expects up to 3 colors separated by `/`, primary first."
+                  },
+                  "size": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One size value, up to 100 characters."
+                  },
+                  "size_type": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "regular",
+                        "petite",
+                        "plus",
+                        "tall",
+                        "big",
+                        "maternity"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "Up to 2 size types, such as `big` and `tall`."
+                  },
+                  "size_system": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "AU",
+                      "BR",
+                      "CN",
+                      "DE",
+                      "EU",
+                      "FR",
+                      "IT",
+                      "JP",
+                      "MEX",
+                      "UK",
+                      "US"
+                    ],
+                    "description": "The sizing system the `size` uses."
+                  },
+                  "material": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Up to 3 materials separated by `/`, primary first."
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One pattern value, up to 100 characters."
+                  },
+                  "brand": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The brand name, up to 70 characters."
+                  },
+                  "adult": {
+                    "type": "boolean",
+                    "description": "Whether the product contains adult content. Reads as `false` when not set."
+                  }
+                }
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -11321,6 +11440,115 @@
                 "nullable": true,
                 "description": "The product identifier assigned by the manufacturer for this variant, up to 100 characters. If `null`, inherits from the product."
               },
+              "google_product_data": {
+                "type": "object",
+                "nullable": true,
+                "description": "Google Merchant Center product data for this variant. Writes only change the keys sent, and a key sent as `null` is cleared. A key that is `null` inherits the product's value, except `gtin`, which never inherits.",
+                "properties": {
+                  "gtin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "This variant's Global Trade Item Number, with the same rules as the product's `gtin`. Never inherits from the product."
+                  },
+                  "mpn": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The manufacturer part number, up to 70 characters. Required by Google when there is no GTIN. If `null`, inherits from the product."
+                  },
+                  "condition": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "new",
+                      "refurbished",
+                      "used"
+                    ],
+                    "description": "The condition of this variant. If `null`, inherits from the product."
+                  },
+                  "age_group": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "newborn",
+                      "infant",
+                      "toddler",
+                      "kids",
+                      "adult"
+                    ],
+                    "description": "The age group the product is for. If `null`, inherits from the product."
+                  },
+                  "gender": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "description": "The gender the product is for. If `null`, inherits from the product."
+                  },
+                  "color": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Up to 100 characters. Google expects up to 3 colors separated by `/`, primary first. If `null`, inherits from the product."
+                  },
+                  "size": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One size value, up to 100 characters. If `null`, inherits from the product."
+                  },
+                  "size_type": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "regular",
+                        "petite",
+                        "plus",
+                        "tall",
+                        "big",
+                        "maternity"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "Up to 2 size types, such as `big` and `tall`. If `null`, inherits from the product."
+                  },
+                  "size_system": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "AU",
+                      "BR",
+                      "CN",
+                      "DE",
+                      "EU",
+                      "FR",
+                      "IT",
+                      "JP",
+                      "MEX",
+                      "UK",
+                      "US"
+                    ],
+                    "description": "The sizing system the `size` uses. If `null`, inherits from the product."
+                  },
+                  "material": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Up to 3 materials separated by `/`, primary first. If `null`, inherits from the product."
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One pattern value, up to 100 characters. If `null`, inherits from the product."
+                  }
+                }
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -12098,15 +12326,15 @@
                   },
                   "data": [
                     {
-                      "id": "f95bc22b-e4cb-4d78-99ef-d3114818082c",
+                      "id": "4b9f3e75-31d3-41fc-aaa5-bb65200f1522",
                       "object": "tax_override",
                       "label": null,
                       "shipping": false,
                       "rate": 7.5,
-                      "product_collection": "e13d9472-c8cc-4717-8b33-83cdd551546a",
-                      "tax_zone": "70640752-bc68-4b1a-b6a0-c1445e3745b8",
-                      "created_at": 1795616786,
-                      "updated_at": 1795616786
+                      "product_collection": "9b3022e7-47fa-4ba6-90e3-9afa0eff6223",
+                      "tax_zone": "63b37a5e-ef96-4575-9c84-075f57e90ac9",
+                      "created_at": 1795639291,
+                      "updated_at": 1795639291
                     }
                   ]
                 },
@@ -12132,15 +12360,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "a84b300f-fdaa-47cc-847b-d348d1c5bc65",
+                  "id": "76aad70e-0d3b-4ed6-b13a-f6699d79e4ed",
                   "object": "tax_override",
                   "label": "GST + PST",
                   "shipping": false,
                   "rate": 10.0,
-                  "product_collection": "48107a0e-48f6-412b-ba1b-ed232ca28ce3",
-                  "tax_zone": "80e52cef-6a23-4d0a-af99-cddac8dd1bc1",
-                  "created_at": 1795616786,
-                  "updated_at": 1795616786
+                  "product_collection": "ba1fb270-4040-4f16-807b-fc4a20595e39",
+                  "tax_zone": "bf47467f-597e-4283-8688-a5d498aca37c",
+                  "created_at": 1795639291,
+                  "updated_at": 1795639291
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -12165,8 +12393,8 @@
                 },
                 "example": {
                   "tax_override": {
-                    "tax_zone": "80e52cef-6a23-4d0a-af99-cddac8dd1bc1",
-                    "product_collection": "48107a0e-48f6-412b-ba1b-ed232ca28ce3",
+                    "tax_zone": "bf47467f-597e-4283-8688-a5d498aca37c",
+                    "product_collection": "ba1fb270-4040-4f16-807b-fc4a20595e39",
                     "rate": 10,
                     "label": "GST + PST"
                   }
@@ -12201,15 +12429,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "98aac9f5-d1b6-4f77-858b-d4d04093a473",
+                  "id": "b667e251-6de1-4096-9e1c-f911a8db5cd5",
                   "object": "tax_override",
                   "label": null,
                   "shipping": false,
                   "rate": 7.5,
-                  "product_collection": "10fdcd08-c4d9-4537-a529-5f3bf65e97a8",
-                  "tax_zone": "a887ff39-b774-4341-84dc-64bf4f84833e",
-                  "created_at": 1795616787,
-                  "updated_at": 1795616787
+                  "product_collection": "0024f76f-89d7-4a9a-8ab4-e97571321e05",
+                  "tax_zone": "ee3c7616-7c38-4df5-b8e2-b79393f5a8e6",
+                  "created_at": 1795639291,
+                  "updated_at": 1795639291
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -12233,15 +12461,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "eb7acfd4-cf67-4314-ba71-07f1f1855623",
+                  "id": "98d6d401-6542-4317-b798-fb93ce484a87",
                   "object": "tax_override",
                   "label": "GST + PST",
                   "shipping": false,
                   "rate": 5.0,
-                  "product_collection": "d05c2223-bccc-425f-9e6c-c788d56023b1",
-                  "tax_zone": "8b09b56f-143f-48c2-af4c-9630686617b2",
-                  "created_at": 1795616787,
-                  "updated_at": 1795616787
+                  "product_collection": "a0964fa1-8cab-45df-bb7b-6e5dce95a59e",
+                  "tax_zone": "285e1629-5ec8-44be-b009-d299913db989",
+                  "created_at": 1795639291,
+                  "updated_at": 1795639291
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_override_response"
@@ -12288,7 +12516,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "93ef94c1-a266-4077-abff-f0600aaebb8e",
+                  "id": "94443a73-3315-49c4-b47f-f4e7479db701",
                   "object": "tax_override",
                   "deleted": true
                 },
@@ -12315,7 +12543,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ab5e2a41-f256-4b41-bc17-43e523bbebbb",
+                  "id": "ec6dd1f0-edac-47a3-8c72-406749c1b2d7",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -12327,11 +12555,11 @@
                   "tax_enabled": false,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "49c94054-5f8e-42f7-98e8-cdbe62619093",
+                  "address": "b16497a3-abe3-482b-88a8-eee042191d48",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1795616787,
-                  "updated_at": 1795616787
+                  "created_at": 1795639291,
+                  "updated_at": 1795639291
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -12355,7 +12583,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "793e6704-eda0-45ba-831e-582972cad283",
+                  "id": "7dba21e3-0038-41cd-a4af-18d6c0a8c131",
                   "object": "tax_protocol",
                   "ca_tax_enabled": false,
                   "eu_micro_exemption_enabled": false,
@@ -12367,11 +12595,11 @@
                   "tax_enabled": true,
                   "default_tax_enabled": false,
                   "default_rate": null,
-                  "address": "2faa5491-6da6-4f39-b9dc-3cd113076d20",
+                  "address": "c751de2d-bd32-4245-9cb9-5c1e1eb613c6",
                   "ca_tax_identifier": null,
                   "eu_tax_identifier": null,
-                  "created_at": 1795616787,
-                  "updated_at": 1795616787
+                  "created_at": 1795639292,
+                  "updated_at": 1795639292
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_protocol_response"
@@ -12460,15 +12688,15 @@
                   },
                   "data": [
                     {
-                      "id": "638d51ee-ca8f-43cc-8a2e-8e65469e2daa",
+                      "id": "741e3c3a-688c-4ba5-b2a8-af91ec6abe80",
                       "object": "tax_registration",
                       "label": null,
                       "manual_rate": 5.5,
                       "tax_components": [],
                       "tax_identifier": null,
-                      "tax_zone": "f47a62a1-12a7-4493-94ed-58673dd4f4e9",
-                      "created_at": 1795616787,
-                      "updated_at": 1795616787
+                      "tax_zone": "2c17ef3d-036b-4782-8b48-daeba50a5e43",
+                      "created_at": 1795639292,
+                      "updated_at": 1795639292
                     }
                   ]
                 },
@@ -12494,7 +12722,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "bf2b01a9-567a-472d-9228-f3ec82352105",
+                  "id": "18c6e091-e042-4585-b2e1-3032fd348c4c",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 12.0,
@@ -12509,9 +12737,9 @@
                     }
                   ],
                   "tax_identifier": null,
-                  "tax_zone": "b50ad82f-73e5-4ff1-aa00-a49058464d3a",
-                  "created_at": 1795616787,
-                  "updated_at": 1795616787
+                  "tax_zone": "fc88fe5c-14c8-4440-a9d5-fa6041c75d59",
+                  "created_at": 1795639292,
+                  "updated_at": 1795639292
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -12536,7 +12764,7 @@
                 },
                 "example": {
                   "tax_registration": {
-                    "tax_zone": "b50ad82f-73e5-4ff1-aa00-a49058464d3a",
+                    "tax_zone": "fc88fe5c-14c8-4440-a9d5-fa6041c75d59",
                     "manual_rate": 12,
                     "tax_components": [
                       {
@@ -12580,15 +12808,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "856f6729-fb15-4883-9924-cefd94cec5ff",
+                  "id": "652ffb11-60a7-4110-9ea6-4b34bb250799",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_components": [],
                   "tax_identifier": null,
-                  "tax_zone": "a194482c-d845-4ed0-94d7-b006ef2915a6",
-                  "created_at": 1795616788,
-                  "updated_at": 1795616788
+                  "tax_zone": "002ade4a-ce5c-4bae-a3e5-ee6ac556ea88",
+                  "created_at": 1795639292,
+                  "updated_at": 1795639292
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -12612,15 +12840,15 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "09c351ba-ad04-46ab-8415-30ad64ca79e4",
+                  "id": "b1d26aee-95bb-43bc-a1c3-3d78c1d15362",
                   "object": "tax_registration",
                   "label": null,
                   "manual_rate": 5.5,
                   "tax_components": [],
-                  "tax_identifier": "9983a3d3-6dd6-4e59-8c4c-f0a217105564",
-                  "tax_zone": "42ede69b-cee9-44e6-b24e-1d9502d02297",
-                  "created_at": 1795616788,
-                  "updated_at": 1795616788
+                  "tax_identifier": "ead9d1a2-f717-4596-a429-d21337dba65a",
+                  "tax_zone": "186aa1af-692c-4030-bbec-88ff71b306ce",
+                  "created_at": 1795639292,
+                  "updated_at": 1795639292
                 },
                 "schema": {
                   "$ref": "#/components/schemas/tax_registration_response"
@@ -12669,7 +12897,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ac06cbfd-a12a-4f95-888e-5739e70d83e1",
+                  "id": "f12a859b-a501-492f-a3ca-2184541354b1",
                   "object": "tax_registration",
                   "deleted": true
                 },

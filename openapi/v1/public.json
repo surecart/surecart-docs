@@ -6410,6 +6410,125 @@
                 "nullable": true,
                 "description": "The product identifier assigned by the manufacturer, up to 100 characters. Used to build customs declarations; required with `sku` for consumer shipments into the EU. If the `Product` has variants, each variant's own `manufacturer_code` takes precedence when set."
               },
+              "google_product_data": {
+                "type": "object",
+                "nullable": true,
+                "description": "Google Merchant Center product data. The GTIN and the keys with listed values are validated against Google's product data specification; text keys only check Google's length limits. Writes only change the keys sent. A key sent as `null` is cleared, and `null` for the whole object clears every key.",
+                "properties": {
+                  "gtin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "The Global Trade Item Number, 8, 12, 13 or 14 digits with a valid GS1 check digit. Spaces and dashes are removed, and an ISBN-10 is stored as its ISBN-13. Restricted (`2`, `02`, `04`) and coupon (`05`, `98`, `99`) prefixes are rejected. Only applies to products without variants, because each variant has its own GTIN."
+                  },
+                  "mpn": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The manufacturer part number, up to 70 characters. Required by Google when there is no GTIN."
+                  },
+                  "condition": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "new",
+                      "refurbished",
+                      "used"
+                    ],
+                    "description": "The condition of the product. Reads as `new` when not set."
+                  },
+                  "age_group": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "newborn",
+                      "infant",
+                      "toddler",
+                      "kids",
+                      "adult"
+                    ],
+                    "description": "The age group the product is for."
+                  },
+                  "gender": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "description": "The gender the product is for."
+                  },
+                  "color": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Up to 100 characters. Google expects up to 3 colors separated by `/`, primary first."
+                  },
+                  "size": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One size value, up to 100 characters."
+                  },
+                  "size_type": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "regular",
+                        "petite",
+                        "plus",
+                        "tall",
+                        "big",
+                        "maternity"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "Up to 2 size types, such as `big` and `tall`."
+                  },
+                  "size_system": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "AU",
+                      "BR",
+                      "CN",
+                      "DE",
+                      "EU",
+                      "FR",
+                      "IT",
+                      "JP",
+                      "MEX",
+                      "UK",
+                      "US"
+                    ],
+                    "description": "The sizing system the `size` uses."
+                  },
+                  "material": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Up to 3 materials separated by `/`, primary first."
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One pattern value, up to 100 characters."
+                  },
+                  "brand": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The brand name, up to 70 characters."
+                  },
+                  "adult": {
+                    "type": "boolean",
+                    "description": "Whether the product contains adult content. Reads as `false` when not set."
+                  }
+                }
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -11321,6 +11440,115 @@
                 "nullable": true,
                 "description": "The product identifier assigned by the manufacturer for this variant, up to 100 characters. If `null`, inherits from the product."
               },
+              "google_product_data": {
+                "type": "object",
+                "nullable": true,
+                "description": "Google Merchant Center product data for this variant. Writes only change the keys sent, and a key sent as `null` is cleared. A key that is `null` inherits the product's value, except `gtin`, which never inherits.",
+                "properties": {
+                  "gtin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "This variant's Global Trade Item Number, with the same rules as the product's `gtin`. Never inherits from the product."
+                  },
+                  "mpn": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The manufacturer part number, up to 70 characters. Required by Google when there is no GTIN. If `null`, inherits from the product."
+                  },
+                  "condition": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "new",
+                      "refurbished",
+                      "used"
+                    ],
+                    "description": "The condition of this variant. If `null`, inherits from the product."
+                  },
+                  "age_group": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "newborn",
+                      "infant",
+                      "toddler",
+                      "kids",
+                      "adult"
+                    ],
+                    "description": "The age group the product is for. If `null`, inherits from the product."
+                  },
+                  "gender": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "description": "The gender the product is for. If `null`, inherits from the product."
+                  },
+                  "color": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Up to 100 characters. Google expects up to 3 colors separated by `/`, primary first. If `null`, inherits from the product."
+                  },
+                  "size": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One size value, up to 100 characters. If `null`, inherits from the product."
+                  },
+                  "size_type": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "regular",
+                        "petite",
+                        "plus",
+                        "tall",
+                        "big",
+                        "maternity"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "Up to 2 size types, such as `big` and `tall`. If `null`, inherits from the product."
+                  },
+                  "size_system": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "AU",
+                      "BR",
+                      "CN",
+                      "DE",
+                      "EU",
+                      "FR",
+                      "IT",
+                      "JP",
+                      "MEX",
+                      "UK",
+                      "US"
+                    ],
+                    "description": "The sizing system the `size` uses. If `null`, inherits from the product."
+                  },
+                  "material": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Up to 3 materials separated by `/`, primary first. If `null`, inherits from the product."
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One pattern value, up to 100 characters. If `null`, inherits from the product."
+                  }
+                }
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -12049,14 +12277,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "655eebbc-09b2-41d4-a852-57952392eca7",
+                  "id": "bb4bfb04-a192-4c17-9d0c-69f03a812219",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "bd68394f-7ab9-4f5e-afe1-f9f0d1fc3171",
-                  "created_at": 1795616724,
-                  "updated_at": 1795616724
+                  "license": "a9c3ddff-b57b-4b10-be71-b634856dba4a",
+                  "created_at": 1795639231,
+                  "updated_at": 1795639231
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12083,7 +12311,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "bd68394f-7ab9-4f5e-afe1-f9f0d1fc3171"
+                    "license_id": "a9c3ddff-b57b-4b10-be71-b634856dba4a"
                   }
                 }
               }
@@ -12116,14 +12344,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d3696a21-62fc-4fc3-a958-0274c1d7474e",
+                  "id": "2f9da9f1-dde8-48c3-8411-410e8a075c82",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "4cc373db-ccfd-4931-bcd3-e6c3c7ae4674",
-                  "created_at": 1795616725,
-                  "updated_at": 1795616725
+                  "license": "7d820dd2-fe9c-4c47-b302-1aa330e10c95",
+                  "created_at": 1795639232,
+                  "updated_at": 1795639232
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12156,14 +12384,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b66b730a-6bd0-42b1-b14a-bbe6d02ed9fb",
+                  "id": "4000e727-a1af-4d4c-b426-a255cd28a5df",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "80800b4b-9dc9-48ee-b2f2-9014e3e5fc7c",
-                  "created_at": 1795616726,
-                  "updated_at": 1795616726
+                  "license": "6069b56c-645a-431b-b060-5cfa56d2d803",
+                  "created_at": 1795639234,
+                  "updated_at": 1795639234
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12219,7 +12447,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "91a29d0a-1914-42e6-801e-93a2493f734f",
+                  "id": "ef25ec15-95ea-455a-b840-fb3d81ab0533",
                   "object": "activation",
                   "deleted": true
                 },
@@ -13817,14 +14045,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "b63c9ae6-01c5-4f0c-9a5e-4175287cf447",
+                  "id": "70198228-f2fc-4ff3-81ba-800bbb252b4d",
                   "object": "click",
                   "domain": "example.com",
-                  "expires_at": 1798208728,
+                  "expires_at": 1798231236,
                   "referrer": null,
                   "url": "http://example.com",
-                  "created_at": 1795616728,
-                  "updated_at": 1795616728
+                  "created_at": 1795639236,
+                  "updated_at": 1795639236
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/click_response"
@@ -13849,7 +14077,7 @@
                 },
                 "example": {
                   "click": {
-                    "affiliation_code": "081EC91B",
+                    "affiliation_code": "8021B6BE",
                     "url": "http://example.com"
                   }
                 }
@@ -13883,19 +14111,19 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8631db06-bc04-4600-a0bc-ec017db154db",
+                  "id": "38e788d6-e327-4812-b6ac-e21569d1d8ef",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "39af2af7-8eb6-4737-803c-68dcaeb8a591",
+                  "key": "e96c3c15-a49a-4d92-95dd-2b53f4e047fc",
                   "revokes_at": null,
                   "status": "inactive",
-                  "price": "f2e89df4-f36e-4e10-9490-b675f858b12c",
-                  "product": "f4622e9c-5cba-4ab3-afc2-7fbbb17bbb18",
+                  "price": "32e68e19-fc2e-402b-b493-15f83f4ea1cb",
+                  "product": "1e95e17c-9e79-4614-b158-ec60db5388d8",
                   "variant": null,
                   "current_release": null,
-                  "created_at": 1795616729,
-                  "updated_at": 1795616729
+                  "created_at": 1795639237,
+                  "updated_at": 1795639237
                 },
                 "schema": {
                   "$ref": "#/components/schemas/public/license_response"
@@ -13948,7 +14176,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "0c5a061f-abf9-4694-8f85-1ec71253431d",
+                  "id": "1e722575-351c-41cc-bbbf-4b336e99a733",
                   "object": "media",
                   "alt": null,
                   "byte_size": 12254,
@@ -13959,11 +14187,11 @@
                   "public_access": false,
                   "release_json": null,
                   "title": null,
-                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImZiNTY0N2ZiLTA2MGQtNDRhZC1iN2MyLTA1MDZjMTFkZTIwNCIsImV4cCI6IjIwMjYtMTEtMjVUMTQ6NDA6MzAuNTk4WiIsInB1ciI6ImJsb2JfaWQifX0=--c8858f69f0d6234346090cc2f5e39bfd4a78d980/test.png?disposition=attachment",
+                  "url": "http://app.example.com/file_redirect/eyJfcmFpbHMiOnsiZGF0YSI6ImEyMjhjMzdjLWFmYzAtNDQ0Ny1iOWYyLWRkYzVkYjBlYzNlZiIsImV4cCI6IjIwMjYtMTEtMjVUMjA6NTU6MzguMjI5WiIsInB1ciI6ImJsb2JfaWQifX0=--78fbc9c0c2c5aed909a8c5f92303e86272116e22/test.png?disposition=attachment",
                   "width": null,
-                  "url_expires_at": 1795617630,
-                  "created_at": 1795616729,
-                  "updated_at": 1795616729
+                  "url_expires_at": 1795640138,
+                  "created_at": 1795639237,
+                  "updated_at": 1795639237
                 },
                 "schema": {
                   "$ref": "#/components/schemas/media_response"

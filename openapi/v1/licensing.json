@@ -6410,6 +6410,125 @@
                 "nullable": true,
                 "description": "The product identifier assigned by the manufacturer, up to 100 characters. Used to build customs declarations; required with `sku` for consumer shipments into the EU. If the `Product` has variants, each variant's own `manufacturer_code` takes precedence when set."
               },
+              "google_product_data": {
+                "type": "object",
+                "nullable": true,
+                "description": "Google Merchant Center product data. The GTIN and the keys with listed values are validated against Google's product data specification; text keys only check Google's length limits. Writes only change the keys sent. A key sent as `null` is cleared, and `null` for the whole object clears every key.",
+                "properties": {
+                  "gtin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "The Global Trade Item Number, 8, 12, 13 or 14 digits with a valid GS1 check digit. Spaces and dashes are removed, and an ISBN-10 is stored as its ISBN-13. Restricted (`2`, `02`, `04`) and coupon (`05`, `98`, `99`) prefixes are rejected. Only applies to products without variants, because each variant has its own GTIN."
+                  },
+                  "mpn": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The manufacturer part number, up to 70 characters. Required by Google when there is no GTIN."
+                  },
+                  "condition": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "new",
+                      "refurbished",
+                      "used"
+                    ],
+                    "description": "The condition of the product. Reads as `new` when not set."
+                  },
+                  "age_group": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "newborn",
+                      "infant",
+                      "toddler",
+                      "kids",
+                      "adult"
+                    ],
+                    "description": "The age group the product is for."
+                  },
+                  "gender": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "description": "The gender the product is for."
+                  },
+                  "color": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Up to 100 characters. Google expects up to 3 colors separated by `/`, primary first."
+                  },
+                  "size": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One size value, up to 100 characters."
+                  },
+                  "size_type": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "regular",
+                        "petite",
+                        "plus",
+                        "tall",
+                        "big",
+                        "maternity"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "Up to 2 size types, such as `big` and `tall`."
+                  },
+                  "size_system": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "AU",
+                      "BR",
+                      "CN",
+                      "DE",
+                      "EU",
+                      "FR",
+                      "IT",
+                      "JP",
+                      "MEX",
+                      "UK",
+                      "US"
+                    ],
+                    "description": "The sizing system the `size` uses."
+                  },
+                  "material": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Up to 3 materials separated by `/`, primary first."
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One pattern value, up to 100 characters."
+                  },
+                  "brand": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The brand name, up to 70 characters."
+                  },
+                  "adult": {
+                    "type": "boolean",
+                    "description": "Whether the product contains adult content. Reads as `false` when not set."
+                  }
+                }
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "description": "If set to `true` this product is considered taxable."
@@ -11321,6 +11440,115 @@
                 "nullable": true,
                 "description": "The product identifier assigned by the manufacturer for this variant, up to 100 characters. If `null`, inherits from the product."
               },
+              "google_product_data": {
+                "type": "object",
+                "nullable": true,
+                "description": "Google Merchant Center product data for this variant. Writes only change the keys sent, and a key sent as `null` is cleared. A key that is `null` inherits the product's value, except `gtin`, which never inherits.",
+                "properties": {
+                  "gtin": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "This variant's Global Trade Item Number, with the same rules as the product's `gtin`. Never inherits from the product."
+                  },
+                  "mpn": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 70,
+                    "description": "The manufacturer part number, up to 70 characters. Required by Google when there is no GTIN. If `null`, inherits from the product."
+                  },
+                  "condition": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "new",
+                      "refurbished",
+                      "used"
+                    ],
+                    "description": "The condition of this variant. If `null`, inherits from the product."
+                  },
+                  "age_group": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "newborn",
+                      "infant",
+                      "toddler",
+                      "kids",
+                      "adult"
+                    ],
+                    "description": "The age group the product is for. If `null`, inherits from the product."
+                  },
+                  "gender": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "description": "The gender the product is for. If `null`, inherits from the product."
+                  },
+                  "color": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "Up to 100 characters. Google expects up to 3 colors separated by `/`, primary first. If `null`, inherits from the product."
+                  },
+                  "size": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One size value, up to 100 characters. If `null`, inherits from the product."
+                  },
+                  "size_type": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "regular",
+                        "petite",
+                        "plus",
+                        "tall",
+                        "big",
+                        "maternity"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "Up to 2 size types, such as `big` and `tall`. If `null`, inherits from the product."
+                  },
+                  "size_system": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "AU",
+                      "BR",
+                      "CN",
+                      "DE",
+                      "EU",
+                      "FR",
+                      "IT",
+                      "JP",
+                      "MEX",
+                      "UK",
+                      "US"
+                    ],
+                    "description": "The sizing system the `size` uses. If `null`, inherits from the product."
+                  },
+                  "material": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200,
+                    "description": "Up to 3 materials separated by `/`, primary first. If `null`, inherits from the product."
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100,
+                    "description": "One pattern value, up to 100 characters. If `null`, inherits from the product."
+                  }
+                }
+              },
               "tax_enabled": {
                 "type": "boolean",
                 "nullable": true,
@@ -12101,14 +12329,14 @@
                   },
                   "data": [
                     {
-                      "id": "ea3b802d-7027-495c-a18f-d1879cb86c75",
+                      "id": "4cb6dd66-95bf-48fb-90da-44e8755a2acb",
                       "object": "activation",
                       "counted": true,
                       "name": null,
                       "fingerprint": "example.com",
-                      "license": "41e9546c-ee11-4566-a641-b4e40e6f9adf",
-                      "created_at": 1795616632,
-                      "updated_at": 1795616632
+                      "license": "635715fe-b2d9-4444-a6ce-c234d9581734",
+                      "created_at": 1795639153,
+                      "updated_at": 1795639153
                     }
                   ]
                 },
@@ -12134,14 +12362,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "330f900c-8deb-4707-b802-40e40b5c4b32",
+                  "id": "9e682e4b-7d99-4eea-b773-f5a98268b9b3",
                   "object": "activation",
                   "counted": true,
                   "name": "My Site",
                   "fingerprint": "mysite.com",
-                  "license": "5537d495-79b8-442d-8bd5-b5381d0bc22e",
-                  "created_at": 1795616633,
-                  "updated_at": 1795616633
+                  "license": "5aa82022-457f-4045-b44f-7d9f8aca06f8",
+                  "created_at": 1795639154,
+                  "updated_at": 1795639154
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12168,7 +12396,7 @@
                   "activation": {
                     "name": "My Site",
                     "fingerprint": "mysite.com",
-                    "license_id": "5537d495-79b8-442d-8bd5-b5381d0bc22e"
+                    "license_id": "5aa82022-457f-4045-b44f-7d9f8aca06f8"
                   }
                 }
               }
@@ -12201,14 +12429,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "8d12033e-328a-497c-8920-d699f1e97667",
+                  "id": "98cd6b89-495a-450f-9125-bcf7cb9db16e",
                   "object": "activation",
                   "counted": true,
                   "name": null,
                   "fingerprint": "example.com",
-                  "license": "0702a853-6459-4b1a-9d70-71aaadccd805",
-                  "created_at": 1795616634,
-                  "updated_at": 1795616634
+                  "license": "26775057-c50a-4ebe-abea-7e8db791e7dd",
+                  "created_at": 1795639155,
+                  "updated_at": 1795639155
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12241,14 +12469,14 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "da2c1240-ece7-4f5c-bd90-4e4c364467ae",
+                  "id": "e99d75a2-fa1d-46b8-8d52-e1ed643bffdf",
                   "object": "activation",
                   "counted": true,
                   "name": "New Activation Name",
                   "fingerprint": "example.com",
-                  "license": "aa16247a-e003-4be8-9a95-0048f8397a38",
-                  "created_at": 1795616636,
-                  "updated_at": 1795616636
+                  "license": "6e48dea7-1bc4-485e-8f97-de18c6d748f0",
+                  "created_at": 1795639156,
+                  "updated_at": 1795639156
                 },
                 "schema": {
                   "$ref": "#/components/schemas/activation_response"
@@ -12304,7 +12532,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "3cc7d4da-6fc4-42dc-9eb6-96ca87f82507",
+                  "id": "57c66430-caf3-46a5-8815-9f363d034bba",
                   "object": "activation",
                   "deleted": true
                 },
@@ -12435,17 +12663,17 @@
                   },
                   "data": [
                     {
-                      "id": "3a033348-ade2-45ec-8e82-61e66e92bbe6",
+                      "id": "df6e103f-2321-4a62-a325-8069c9286ca5",
                       "object": "license",
                       "activations_count": 0,
                       "activation_limit": null,
-                      "key": "b77ef4eb-96a1-45e9-8374-fd41a8577be9",
+                      "key": "db5f71d9-4f11-4d5f-9714-4f1095d82a82",
                       "revokes_at": null,
                       "status": "inactive",
-                      "customer": "9bb140ca-2e4e-4f13-ac6e-dad85cdd6ffb",
-                      "purchase": "84af62b2-2da1-4914-9130-3bb7a750b8f1",
-                      "created_at": 1795616690,
-                      "updated_at": 1795616690
+                      "customer": "4978ae31-a20b-4d2f-a547-2c81b988cb59",
+                      "purchase": "5d285dcb-2577-49ce-be40-22c55f7e3d1f",
+                      "created_at": 1795639203,
+                      "updated_at": 1795639203
                     }
                   ]
                 },
@@ -12471,17 +12699,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d007e35f-4059-44fa-b0b5-a284d0737890",
+                  "id": "347a6dbc-bea0-46c7-ba83-ae938db1d625",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
                   "key": "abc-123-def-456",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "1535898f-637a-4aa9-ad07-e9d35b55ebf6",
-                  "purchase": "e54c1c2a-1c3d-49d3-aa87-142df41359f4",
-                  "created_at": 1795616692,
-                  "updated_at": 1795616692
+                  "customer": "11ea0fcb-81f3-463b-b805-a0224dc6f8ef",
+                  "purchase": "1de4b189-fe73-46e1-a8c2-c1f923e3a263",
+                  "created_at": 1795639205,
+                  "updated_at": 1795639205
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12507,7 +12735,7 @@
                 "example": {
                   "license": {
                     "key": "abc-123-def-456",
-                    "purchase": "e54c1c2a-1c3d-49d3-aa87-142df41359f4"
+                    "purchase": "1de4b189-fe73-46e1-a8c2-c1f923e3a263"
                   }
                 }
               }
@@ -12540,17 +12768,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "ec33fb1b-32c3-4b3d-b8d6-e2f1b1f151bc",
+                  "id": "7bb2f3b1-10c1-4d9f-8c02-3f8722b94dc6",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": null,
-                  "key": "9000ce9b-c7f9-44c6-8c9a-24e45d34c879",
+                  "key": "7a139c4f-4fef-4d26-a307-a851e59b691e",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "d1bd40f7-b8a4-47e4-a67e-53fd51951750",
-                  "purchase": "c590b21a-01e4-4232-8169-0791cb91aa0c",
-                  "created_at": 1795616693,
-                  "updated_at": 1795616693
+                  "customer": "76b6755c-9695-4b85-984f-a50c19504918",
+                  "purchase": "118ba3a3-5d3e-444c-a113-19124fde3b78",
+                  "created_at": 1795639206,
+                  "updated_at": 1795639206
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12583,17 +12811,17 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "cb513918-8cbb-4ad7-84d4-b202520e8168",
+                  "id": "8510bbb2-cc66-4670-81e9-79363a264eb0",
                   "object": "license",
                   "activations_count": 0,
                   "activation_limit": 10,
-                  "key": "cb02ef40-ebf3-448c-a6fd-5c71c6fabb7d",
+                  "key": "729c688b-7a6a-484b-a1e6-ef0eb9ea22fb",
                   "revokes_at": null,
                   "status": "inactive",
-                  "customer": "3c185cac-6a20-4d6c-8a45-e248ee084af3",
-                  "purchase": "5da01af9-8717-4c14-ac44-55f0cb60dc74",
-                  "created_at": 1795616695,
-                  "updated_at": 1795616695
+                  "customer": "e17612da-0b22-4155-9b7a-3d7c203b08d1",
+                  "purchase": "a89c2971-99f9-41de-8a61-b3ce3f25944d",
+                  "created_at": 1795639207,
+                  "updated_at": 1795639207
                 },
                 "schema": {
                   "$ref": "#/components/schemas/license_response"
@@ -12649,7 +12877,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "d22516e3-076a-43fc-84ae-d0b9ee0a8220",
+                  "id": "e918bd97-a3a8-49be-a690-4670759bf62e",
                   "object": "license",
                   "deleted": true
                 },
